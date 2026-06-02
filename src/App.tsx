@@ -56,6 +56,36 @@ function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [isSavingToDb, setIsSavingToDb] = useState<boolean>(false);
   const [highlightedRowId, setHighlightedRowId] = useState<string | null>(null);
+  
+  const [leftWidth, setLeftWidth] = useState<number>(50); // initial 50% split width
+
+  const handleResizerMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const resizer = e.currentTarget;
+    resizer.classList.add('resizing');
+    const startX = e.clientX;
+    const startLeftWidth = leftWidth;
+    const containerWidth = document.querySelector('.app-main')?.getBoundingClientRect().width || window.innerWidth;
+
+    document.body.classList.add('resizing-col');
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const deltaX = moveEvent.clientX - startX;
+      const deltaPercentage = (deltaX / containerWidth) * 100;
+      const newWidth = Math.max(25, Math.min(75, startLeftWidth + deltaPercentage)); // restrict between 25% and 75%
+      setLeftWidth(newWidth);
+    };
+
+    const handleMouseUp = () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.classList.remove('resizing-col');
+      resizer.classList.remove('resizing');
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
 
   // Custom searchable selector states
   const [isSelectorOpen, setIsSelectorOpen] = useState<boolean>(false);
@@ -560,7 +590,7 @@ function App() {
 
       {/* Split Screens Panel */}
       <main className="app-main">
-        <section className="data-entry-panel">
+        <section className="data-entry-panel" style={{ width: `${leftWidth}%` }}>
           <nav className="tab-navigation" onWheel={(e) => { e.currentTarget.scrollLeft += e.deltaY; }}>
             {['Collar', 'Survey', 'Lithology', 'TCR / RQD', 'Assay', 'Sample Preparation', 'Sample Prep Metallic', 'QA/QC Dashboard'].map(tab => {
               const errCount = getTabErrorCount(tab);
@@ -672,8 +702,13 @@ function App() {
           </div>
         </section>
 
+        <div
+          className="main-pane-resizer"
+          onMouseDown={handleResizerMouseDown}
+        />
+
         {/* Visual Charts & Warnings Panel (Right, 40% Width) */}
-        <section className="visuals-panel">
+        <section className="visuals-panel" style={{ width: `${100 - leftWidth}%` }}>
           <div className="visuals-tab-toggle">
             <button
               className={`toggle-btn ${rightPanelTab === 'columnlog' ? 'active' : ''}`}

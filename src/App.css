@@ -74,11 +74,9 @@
 
 /* Data Entry (Left Panel) */
 .data-entry-panel {
-  width: 50%;
   display: flex;
   flex-direction: column;
   background-color: var(--bg-card);
-  border-right: 1px solid var(--border-light);
 }
 
 /* Navigation Tabs */
@@ -142,7 +140,6 @@
 
 /* Visualization & Audit Log (Right Panel) */
 .visuals-panel {
-  width: 50%;
   display: flex;
   flex-direction: column;
   background-color: var(--bg-sidebar);
@@ -951,6 +948,34 @@
 body.resizing-col * {
   user-select: none !important;
   -webkit-user-select: none !important;
+}
+
+/* Split Pane Resizer Between Left and Right Panels */
+.main-pane-resizer {
+  width: 6px;
+  background-color: var(--border-light);
+  cursor: col-resize;
+  z-index: 10;
+  flex-shrink: 0;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+  position: relative;
+}
+
+.main-pane-resizer:hover, .main-pane-resizer.resizing {
+  background-color: var(--primary);
+  box-shadow: 0 0 8px var(--primary);
+}
+
+.main-pane-resizer::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 2px;
+  height: 24px;
+  background-color: var(--text-muted);
+  border-radius: 1px;
 }
 
 

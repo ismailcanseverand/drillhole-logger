@@ -89,7 +89,15 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
         throw new Error('Workbook constructor not found in loaded exceljs module.');
       }
       const workbook = new ExcelJS.Workbook();
-      const worksheet = workbook.addWorksheet('Sondaj Logu');
+      const worksheet = workbook.addWorksheet('Sondaj Logu', {
+        pageSetup: {
+          paperSize: 9, // A4
+          orientation: 'portrait',
+          fitToPage: true,
+          fitToWidth: 1,
+          fitToHeight: 0
+        }
+      });
 
       const hasAssays = assays && assays.some(a => a.sampleType === 'Core' && a.to > a.from);
 
@@ -141,17 +149,17 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
       // Set columns
       worksheet.columns = [
         { width: 3 }, // spacer Col A
-        { key: 'depth', width: 12 }, // Col B
-        { key: 'interval', width: 18 }, // Col C
-        { key: 'sampleNo', width: 15 }, // Col D
-        { key: 'colE', width: 15 }, // Col E (Strength or Analyte 1)
-        { key: 'colF', width: 15 }, // Col F (Weathering or Analyte 2)
-        { key: 'colG', width: 15 }, // Col G (Fracture or Analyte 3)
-        { key: 'tcr', width: 12 }, // Col H
-        { key: 'scr', width: 12 }, // Col I
-        { key: 'rqd', width: 12 }, // Col J
-        { key: 'lithology', width: 18 }, // Col K
-        { key: 'description', width: 45 } // Col L
+        { key: 'depth', width: 11 }, // Col B
+        { key: 'interval', width: 13 }, // Col C
+        { key: 'sampleNo', width: 13 }, // Col D
+        { key: 'colE', width: 12 }, // Col E
+        { key: 'colF', width: 12 }, // Col F
+        { key: 'colG', width: 12 }, // Col G
+        { key: 'tcr', width: 9 }, // Col H
+        { key: 'scr', width: 9 }, // Col I
+        { key: 'rqd', width: 9 }, // Col J
+        { key: 'lithology', width: 15 }, // Col K
+        { key: 'description', width: 38 } // Col L
       ];
 
       // Enable grid lines
@@ -701,7 +709,7 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
 
       const sigCell = worksheet.getCell(`L${footerStartRow + 1}`);
       worksheet.mergeCells(`L${footerStartRow + 1}:L${footerStartRow + 5}`);
-      sigCell.value = `Hazırlayan:\n${logger}\n\nKontrol Eden:\nLevent CAN`;
+      sigCell.value = `Hazırlayan:\n${logger}\n\nKontrol Eden:\nİsmailcan SEVER`;
       sigCell.font = { name: 'Segoe UI', size: 8, bold: true };
       sigCell.alignment = { horizontal: 'left', vertical: 'top', wrapText: true };
       sigCell.border = thinBorder;

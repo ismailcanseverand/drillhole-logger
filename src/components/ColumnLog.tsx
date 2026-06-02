@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import type { LithologyState, GeotechState, AssayState } from '../hooks/useDrillholeData';
-import { ChevronLeft, ChevronRight, Eye, EyeOff, SlidersHorizontal } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Eye, EyeOff, SlidersHorizontal, Download } from 'lucide-react';
 
 interface ColumnLogProps {
   totalDepth: number;
@@ -67,6 +67,135 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
   const [selectedAnalytes, setSelectedAnalytes] = useState<string[]>(isMetallic ? ['au_ppm'] : ['al2o3']);
   const [visualStyle, setVisualStyle] = useState<'bars' | 'line'>('bars');
   const [showConfig, setShowConfig] = useState<boolean>(false);
+  const [showExportMenu, setShowExportMenu] = useState<boolean>(false);
+
+  const headerSvgRef = useRef<SVGSVGElement>(null);
+  const bodySvgRef = useRef<SVGSVGElement>(null);
+
+  const handleExportSVG = () => {
+    const headerSvg = headerSvgRef.current;
+    const bodySvg = bodySvgRef.current;
+    if (!headerSvg || !bodySvg) {
+      alert("Charts not rendered yet!");
+      return;
+    }
+
+    const headerHeightVal = headerHeight;
+    const bodyHeightVal = Math.max(200, totalDepth * scaleY) + bodyPaddingTop;
+    const totalHeight = headerHeightVal + bodyHeightVal;
+
+    const headerClone = headerSvg.cloneNode(true) as SVGSVGElement;
+    const bodyClone = bodySvg.cloneNode(true) as SVGSVGElement;
+
+    // Set background color in clones explicitly
+    headerClone.style.background = '#0f172a';
+    bodyClone.style.background = '#0b0f19';
+
+    const defsElement = bodyClone.querySelector('defs');
+    const defsXml = defsElement ? defsElement.outerHTML : '';
+    if (defsElement) defsElement.remove();
+
+    const svgXml = `
+<svg xmlns="http://www.w3.org/2000/svg" width="${svgWidth}" height="${totalHeight}">
+  <style>
+    text { font-family: var(--font-primary, 'Plus Jakarta Sans', sans-serif); fill: #94a3b8; }
+    .readonly-value { fill: #94a3b8; }
+    line { stroke: #1e293b; }
+  </style>
+  ${defsXml}
+  <rect width="${svgWidth}" height="${totalHeight}" fill="#0f172a" />
+  <g id="header-group">
+    ${headerClone.innerHTML}
+  </g>
+  <g id="body-group" transform="translate(0, ${headerHeightVal})">
+    <rect width="${svgWidth}" height="${bodyHeightVal}" fill="#0b0f19" />
+    ${bodyClone.innerHTML}
+  </g>
+</svg>
+    `.trim();
+
+    const blob = new Blob([svgXml], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${holeId || 'Drillhole'}_Column_Log.svg`;
+    document.body.appendChild(a);
+    a.click();
+    URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  };
+
+  const handleExportPNG = () => {
+    const headerSvg = headerSvgRef.current;
+    const bodySvg = bodySvgRef.current;
+    if (!headerSvg || !bodySvg) return;
+
+    const headerHeightVal = headerHeight;
+    const bodyHeightVal = Math.max(200, totalDepth * scaleY) + bodyPaddingTop;
+    const totalHeight = headerHeightVal + bodyHeightVal;
+
+    const headerClone = headerSvg.cloneNode(true) as SVGSVGElement;
+    const bodyClone = bodySvg.cloneNode(true) as SVGSVGElement;
+
+    // Set backgrounds explicitly
+    headerClone.style.background = '#0f172a';
+    bodyClone.style.background = '#0b0f19';
+
+    const defsElement = bodyClone.querySelector('defs');
+    const defsXml = defsElement ? defsElement.outerHTML : '';
+    if (defsElement) defsElement.remove();
+
+    const svgXml = `
+<svg xmlns="http://www.w3.org/2000/svg" width="${svgWidth}" height="${totalHeight}">
+  <style>
+    text { font-family: var(--font-primary, 'Plus Jakarta Sans', sans-serif); fill: #94a3b8; }
+    .readonly-value { fill: #94a3b8; }
+    line { stroke: #1e293b; }
+  </style>
+  ${defsXml}
+  <rect width="${svgWidth}" height="${totalHeight}" fill="#0f172a" />
+  <g id="header-group">
+    ${headerClone.innerHTML}
+  </g>
+  <g id="body-group" transform="translate(0, ${headerHeightVal})">
+    <rect width="${svgWidth}" height="${bodyHeightVal}" fill="#0b0f19" />
+    ${bodyClone.innerHTML}
+  </g>
+</svg>
+    `.trim();
+
+    const img = new Image();
+    const svgBlob = new Blob([svgXml], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(svgBlob);
+
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = svgWidth;
+      canvas.height = totalHeight;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.fillStyle = '#0b0f19';
+        ctx.fillRect(0, 0, svgWidth, totalHeight);
+        ctx.drawImage(img, 0, 0);
+
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const pngUrl = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = pngUrl;
+            a.download = `${holeId || 'Drillhole'}_Column_Log.png`;
+            document.body.appendChild(a);
+            a.click();
+            URL.revokeObjectURL(pngUrl);
+            document.body.removeChild(a);
+          }
+        }, 'image/png');
+      }
+      URL.revokeObjectURL(url);
+    };
+
+    img.src = url;
+  };
 
   const handleAnalyteToggle = (key: string) => {
     if (selectedAnalytes.includes(key)) {
@@ -116,7 +245,7 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
       case 'OB':
         return '#fde047'; // Sand yellow
       case 'ALBIT':
-        return '#ffffff'; // Pure white (feldspar)
+        return '#e2e8f0'; // Clean feldspar off-white
       case 'GNAYS':
         return '#94a3b8'; // Slate grey
       case 'ANDEZIT':
@@ -153,6 +282,8 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
   const getRockPatternUrl = (code: string) => {
     const clean = code.toUpperCase();
     if (clean === 'GNAYS') return 'url(#pat-gnays)';
+    if (clean === 'ALBIT') return 'url(#pat-albit)';
+    if (clean === 'KAOLEN' || clean === 'KAO') return 'url(#pat-kaolen)';
     if (['GRANIT', 'GNT', 'SUBVOLKANIK', 'SIYENIT', 'GRANODIYORIT', 'RIYOLIT', 'DASIT', 'INTRUZIF'].includes(clean)) return 'url(#pat-granit)';
     if (clean === 'BRES' || clean === 'BXS') return 'url(#pat-bres)';
     if (clean === 'KUVARSIT' || clean === 'QVN') return 'url(#pat-kuvarsit)';
@@ -212,23 +343,87 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
   return (
     <div className="strip-log-container" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       {/* Header Area */}
-      <div className="strip-log-header" style={{ borderBottom: '1px solid var(--border-light)', padding: '12px 16px', background: '#fff' }}>
+      <div className="strip-log-header" style={{ borderBottom: '1px solid var(--border-light)', padding: '12px 16px', background: 'var(--bg-card)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-          <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 'bold', color: 'black', fontFamily: 'var(--font-display)' }}>Column Log View</h3>
-          <button
-            className="btn btn-secondary btn-sm"
-            onClick={() => setShowConfig(!showConfig)}
-            style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 8px', fontSize: '11px' }}
-          >
-            <SlidersHorizontal size={12} />
-            Configure Columns
-          </button>
+          <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 'bold', color: 'var(--text-main)', fontFamily: 'var(--font-display)' }}>Column Log View</h3>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              className="btn btn-secondary btn-sm"
+              onClick={() => setShowConfig(!showConfig)}
+              style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 8px', fontSize: '11px' }}
+            >
+              <SlidersHorizontal size={12} />
+              Configure
+            </button>
+            
+            <div style={{ position: 'relative' }}>
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={() => setShowExportMenu(!showExportMenu)}
+                style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 8px', fontSize: '11px' }}
+              >
+                <Download size={12} />
+                Export
+              </button>
+              {showExportMenu && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  right: 0,
+                  marginTop: '4px',
+                  background: 'var(--bg-input)',
+                  border: '1px solid var(--border-medium)',
+                  borderRadius: 'var(--radius-sm)',
+                  boxShadow: 'var(--shadow-lg)',
+                  zIndex: 20,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  width: '120px',
+                  overflow: 'hidden'
+                }}>
+                  <button
+                    onClick={() => { handleExportSVG(); setShowExportMenu(false); }}
+                    style={{
+                      padding: '8px 12px',
+                      fontSize: '11px',
+                      textAlign: 'left',
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--text-main)',
+                      cursor: 'pointer',
+                      width: '100%'
+                    }}
+                    className="export-dropdown-item"
+                  >
+                    Export as SVG
+                  </button>
+                  <button
+                    onClick={() => { handleExportPNG(); setShowExportMenu(false); }}
+                    style={{
+                      padding: '8px 12px',
+                      fontSize: '11px',
+                      textAlign: 'left',
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--text-main)',
+                      cursor: 'pointer',
+                      width: '100%',
+                      borderTop: '1px solid var(--border-light)'
+                    }}
+                    className="export-dropdown-item"
+                  >
+                    Export as PNG
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Dynamic Column Configuration & Settings Panel */}
         {showConfig && (
           <div style={{
-            background: '#f8fafc',
+            background: 'var(--bg-input)',
             border: '1px solid var(--border-medium)',
             borderRadius: 'var(--radius-md)',
             padding: '10px',
@@ -251,8 +446,8 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                         alignItems: 'center',
                         gap: '4px',
                         padding: '3px 8px',
-                        background: isChecked ? 'rgba(99, 102, 241, 0.1)' : '#fff',
-                        border: `1px solid ${isChecked ? 'var(--primary)' : 'var(--border-medium)'}`,
+                        background: isChecked ? 'var(--primary-light)' : 'var(--bg-card)',
+                        border: `1px solid ${isChecked ? 'var(--primary)' : 'var(--border-light)'}`,
                         borderRadius: '12px',
                         cursor: 'pointer',
                         fontSize: '10px',
@@ -296,7 +491,7 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     padding: '4px 8px',
-                    background: '#ffffff',
+                    background: 'var(--bg-card)',
                     border: '1px solid var(--border-light)',
                     borderRadius: '4px'
                   }}>
@@ -308,7 +503,7 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                         onClick={() => moveColumn(idx, 'left')}
                         style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0 }}
                       >
-                        <ChevronLeft size={14} style={{ color: idx === 0 ? '#cbd5e1' : '#64748b' }} />
+                        <ChevronLeft size={14} style={{ color: idx === 0 ? 'var(--border-medium)' : 'var(--text-secondary)' }} />
                       </button>
                       {/* Move right */}
                       <button
@@ -316,7 +511,7 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                         onClick={() => moveColumn(idx, 'right')}
                         style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0 }}
                       >
-                        <ChevronRight size={14} style={{ color: idx === columns.length - 1 ? '#cbd5e1' : '#64748b' }} />
+                        <ChevronRight size={14} style={{ color: idx === columns.length - 1 ? 'var(--border-medium)' : 'var(--text-secondary)' }} />
                       </button>
 
                       {/* Visibility check */}
@@ -360,19 +555,20 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
         }}
       >
         {/* 1. STICKY HEADER SVG CONTAINER */}
-        <div style={{ position: 'sticky', top: 0, zIndex: 10, backgroundColor: '#ffffff', width: svgWidth, flexShrink: 0, paddingTop: '16px', margin: '0 auto' }}>
+        <div style={{ position: 'sticky', top: 0, zIndex: 10, backgroundColor: 'var(--bg-app)', width: svgWidth, flexShrink: 0, paddingTop: '16px', margin: '0 auto' }}>
           <svg
+            ref={headerSvgRef}
             width={svgWidth}
             height={headerHeight}
             style={{
-              background: '#f1f5f9',
+              background: 'var(--bg-card)',
               display: 'block',
-              border: '1px solid #cbd5e1',
-              borderRadius: '4px'
+              border: '1px solid var(--border-light)',
+              borderRadius: 'var(--radius-sm)'
             }}
           >
             {/* Background Rect */}
-            <rect width={svgWidth} height={headerHeight} fill="#f1f5f9" />
+            <rect width={svgWidth} height={headerHeight} fill="var(--bg-card)" />
 
             {/* Divider lines and text labels */}
             {columns.map((col) => {
@@ -387,14 +583,15 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                     y1={0}
                     x2={dividerX}
                     y2={headerHeight}
-                    stroke="#cbd5e1"
+                    stroke="var(--border-light)"
                     strokeWidth="1"
                   />
 
                   {/* Centered header label */}
                   {col.id === 'assays' ? (
                     selectedAnalytes.map((key, i) => {
-                      const analyteDetails = analytesList.find(an => an.key === key)!;
+                      const analyteDetails = analytesList.find(an => an.key === key);
+                      if (!analyteDetails) return null;
                       const subColWidth = pos.width / selectedAnalytes.length;
                       const textX = pos.startX + (i * subColWidth) + (subColWidth / 2);
                       return (
@@ -406,7 +603,7 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                               y1={0}
                               x2={pos.startX + i * subColWidth}
                               y2={headerHeight}
-                              stroke="#cbd5e1"
+                              stroke="var(--border-medium)"
                               strokeWidth="1"
                               strokeDasharray="2,2"
                             />
@@ -430,7 +627,7 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                       x={pos.startX + pos.width / 2}
                       y={21}
                       textAnchor="middle"
-                      fill={col.color || '#1e293b'}
+                      fill="var(--text-main)"
                       fontSize="10"
                       fontWeight="800"
                       fontFamily="var(--font-display)"
@@ -447,20 +644,32 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
         {/* 2. SCROLLABLE BODY SVG CONTAINER */}
         <div style={{ width: svgWidth, flexShrink: 0, margin: '0 auto', marginTop: '4px' }}>
           <svg
+            ref={bodySvgRef}
             width={svgWidth}
             height={Math.max(200, totalDepth * scaleY) + bodyPaddingTop}
             style={{
               background: 'var(--bg-card)',
               display: 'block',
               border: '1px solid var(--border-light)',
-              borderRadius: '4px',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+              borderRadius: 'var(--radius-sm)',
+              boxShadow: 'var(--shadow-md)'
             }}
           >
             {/* Defs for grid and rock patterns */}
             <defs>
               <pattern id="grid-pattern" width="10" height="10" patternUnits="userSpaceOnUse">
                 <path d="M 10 0 L 0 0 0 10" fill="none" stroke="var(--border-light)" strokeWidth="0.5" />
+              </pattern>
+              {/* Feldspar / ALBIT (soft gray diagonal patterns) */}
+              <pattern id="pat-albit" width="20" height="20" patternUnits="userSpaceOnUse">
+                <rect width="20" height="20" fill="#2d3748" />
+                <path d="M 5,2 L 2,5 M 15,12 L 12,15" stroke="#4a5568" strokeWidth="1.5" />
+              </pattern>
+              {/* Kaolin / KAOLEN (soft yellow texture) */}
+              <pattern id="pat-kaolen" width="20" height="20" patternUnits="userSpaceOnUse">
+                <rect width="20" height="20" fill="#3f3f46" />
+                <circle cx="5" cy="5" r="1.5" fill="#facc15" fillOpacity="0.4" />
+                <circle cx="15" cy="15" r="1.5" fill="#facc15" fillOpacity="0.4" />
               </pattern>
               {/* Gneiss / GNAYS (wavy lines on grey) */}
               <pattern id="pat-gnays" width="20" height="20" patternUnits="userSpaceOnUse">
@@ -751,7 +960,8 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                 {visualStyle === 'bars' ? (
                   // HISTOGRAM BARS REPRESENTATION (Grouped / Side-by-Side sub-columns)
                   selectedAnalytes.map((key, i) => {
-                    const analyteDetails = analytesList.find(an => an.key === key)!;
+                    const analyteDetails = analytesList.find(an => an.key === key);
+                    if (!analyteDetails) return null;
                     const pos = colPositions['assays'];
                     const subColWidth = pos.width / selectedAnalytes.length;
                     const subColX = pos.startX + i * subColWidth;
@@ -796,7 +1006,8 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                 ) : (
                   // TREND LINE REPRESENTATION (Overlapping lines)
                   selectedAnalytes.map((key) => {
-                    const analyteDetails = analytesList.find(an => an.key === key)!;
+                    const analyteDetails = analytesList.find(an => an.key === key);
+                    if (!analyteDetails) return null;
                     const pos = colPositions['assays'];
                     const maxValForAnalyte = Math.max(0.1, ...assays.map(item => Number(item[key as keyof AssayState]) || 0));
 
@@ -858,7 +1069,7 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                     y1={0}
                     x2={dividerX}
                     y2={Math.max(200, totalDepth * scaleY) + bodyPaddingTop}
-                    stroke="#cbd5e1"
+                    stroke="var(--border-light)"
                     strokeWidth="1"
                   />
                   {col.id === 'assays' && selectedAnalytes.length > 1 && (
@@ -872,7 +1083,7 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                           y1={0}
                           x2={pos.startX + i * subColWidth}
                           y2={Math.max(200, totalDepth * scaleY) + bodyPaddingTop}
-                          stroke="#cbd5e1"
+                          stroke="var(--border-medium)"
                           strokeWidth="1"
                           strokeDasharray="2,2"
                         />
@@ -888,14 +1099,14 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
 
 
       {/* Interactive Legend panel */}
-      <div className="strip-log-legend" style={{ borderTop: '1px solid var(--border-light)', padding: '12px 16px', background: '#fff' }}>
+      <div className="strip-log-legend" style={{ borderTop: '1px solid var(--border-light)', padding: '12px 16px', background: 'var(--bg-card)' }}>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 14px', alignItems: 'center' }}>
           <div style={{ fontSize: '10px', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase', width: '100%', marginBottom: '2px' }}>Legend Keys</div>
 
           {colPositions['lithology']?.visible && (
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', maxWidth: '400px' }}>
               <div className="legend-item"><span className="legend-color" style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#94a3b8', display: 'inline-block' }}></span><span>GNAYS</span></div>
-              <div className="legend-item"><span className="legend-color" style={{ width: '10px', height: '10px', borderRadius: '2px', border: '1px solid #cbd5e1', background: '#ffffff', display: 'inline-block' }}></span><span>ALBIT</span></div>
+              <div className="legend-item"><span className="legend-color" style={{ width: '10px', height: '10px', borderRadius: '2px', border: '1px solid var(--border-medium)', background: '#e2e8f0', display: 'inline-block' }}></span><span>ALBIT</span></div>
               <div className="legend-item"><span className="legend-color" style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#f87171', display: 'inline-block' }}></span><span>ANDEZIT</span></div>
               <div className="legend-item"><span className="legend-color" style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#fed7aa', display: 'inline-block' }}></span><span>KIL</span></div>
               <div className="legend-item"><span className="legend-color" style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#fde047', display: 'inline-block' }}></span><span>DOLGU</span></div>
@@ -915,7 +1126,8 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
               )}
               {colPositions['assays']?.visible && (
                 selectedAnalytes.map(key => {
-                  const analyteDetails = analytesList.find(an => an.key === key)!;
+                  const analyteDetails = analytesList.find(an => an.key === key);
+                  if (!analyteDetails) return null;
                   return (
                     <div key={`legend-an-${key}`} className="legend-item">
                       <span className="legend-color" style={{ width: '10px', height: '10px', borderRadius: '2px', background: analyteDetails.color, display: 'inline-block' }}></span>

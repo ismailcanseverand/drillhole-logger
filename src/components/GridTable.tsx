@@ -154,6 +154,21 @@ const renderGraphicSwatch = (code: string) => {
         <path d="M0,5 Q5,10 10,5 T20,5 M0,15 Q5,20 10,15 T20,15" fill="none" stroke="#64748b" strokeWidth="1.5" />
       </pattern>
     );
+  } else if (clean === 'ALBIT') {
+    patternContent = (
+      <pattern id={patternId} width="20" height="20" patternUnits="userSpaceOnUse">
+        <rect width="20" height="20" fill="#2d3748" />
+        <path d="M 5,2 L 2,5 M 15,12 L 12,15" stroke="#4a5568" strokeWidth="1.5" />
+      </pattern>
+    );
+  } else if (clean === 'KAOLEN' || clean === 'KAO') {
+    patternContent = (
+      <pattern id={patternId} width="20" height="20" patternUnits="userSpaceOnUse">
+        <rect width="20" height="20" fill="#3f3f46" />
+        <circle cx="5" cy="5" r="1.5" fill="#facc15" fillOpacity="0.4" />
+        <circle cx="15" cy="15" r="1.5" fill="#facc15" fillOpacity="0.4" />
+      </pattern>
+    );
   } else if (['GRANIT', 'GNT', 'SUBVOLKANIK', 'SIYENIT', 'GRANODIYORIT', 'RIYOLIT', 'DASIT', 'INTRUZIF'].includes(clean)) {
     patternContent = (
       <pattern id={patternId} width="20" height="20" patternUnits="userSpaceOnUse">

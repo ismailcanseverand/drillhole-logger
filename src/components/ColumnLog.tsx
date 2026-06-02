@@ -69,28 +69,11 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
   const [selectedAnalytes, setSelectedAnalytes] = useState<string[]>(isMetallic ? ['au_ppm'] : ['al2o3']);
   const [visualStyle, setVisualStyle] = useState<'bars' | 'line'>('bars');
   const [showConfig, setShowConfig] = useState<boolean>(false);
-  const [showExportMenu, setShowExportMenu] = useState<boolean>(false);
 
   const headerSvgRef = useRef<SVGSVGElement>(null);
   const bodySvgRef = useRef<SVGSVGElement>(null);
 
-  const generateExportedSvgXml = (): { svgXml: string; totalHeight: number } | null => {
-    const bodySvg = bodySvgRef.current;
-    if (!bodySvg) {
-      return null;
-    }
-
-    const exportScaleY = 12;
-    const titleHeight = 135;
-    const spacing = 12;
-    const headerHeightVal = 65;
-    const bodyHeightVal = totalDepth * exportScaleY;
-    const footerHeightVal = 120;
-    
-    const totalHeight = 30 + titleHeight + spacing + headerHeightVal + bodyHeightVal + spacing + footerHeightVal + 30;
-    const exportSvgWidth = 900;
-
-    // Collar variables
+  const handleExportExcel = async () => {
     const project = collar?.project || '-';
     const holeIdVal = holeId || collar?.holeId || '-';
     const easting = collar?.easting !== undefined ? `${collar.easting}` : '-';
@@ -99,434 +82,453 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
     const dipAzimuth = collar?.dip !== undefined && collar?.azimuth !== undefined ? `${collar.dip}° / ${collar.azimuth}°` : '-';
     const logger = collar?.logger || '-';
 
-    // Helper function to wrap text
-    const wrapText = (text: string, maxWidth: number, fontSize: number): string[] => {
-      if (!text) return [];
-      const words = text.split(/\s+/);
-      const lines: string[] = [];
-      let currentLine = '';
+    try {
+      const ExcelJSModule = await import('exceljs');
+      const ExcelJS = (ExcelJSModule.default || ExcelJSModule) as any;
+      if (!ExcelJS || typeof ExcelJS.Workbook !== 'function') {
+        throw new Error('Workbook constructor not found in loaded exceljs module.');
+      }
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Sondaj Logu');
+
+      // Set columns
+      worksheet.columns = [
+        { width: 3 }, // spacer Col A
+        { key: 'depth', width: 12 }, // Col B
+        { key: 'interval', width: 18 }, // Col C
+        { key: 'sampleNo', width: 15 }, // Col D
+        { key: 'strength', width: 12 }, // Col E
+        { key: 'weathering', width: 18 }, // Col F
+        { key: 'fracture', width: 14 }, // Col G
+        { key: 'tcr', width: 12 }, // Col H
+        { key: 'scr', width: 12 }, // Col I
+        { key: 'rqd', width: 12 }, // Col J
+        { key: 'lithology', width: 18 }, // Col K
+        { key: 'description', width: 45 } // Col L
+      ];
+
+      // Enable grid lines
+      worksheet.views = [{ showGridLines: true }];
+
+      // Borders & Fills
+      const thinBorder = {
+        top: { style: 'thin', color: { argb: '000000' } },
+        left: { style: 'thin', color: { argb: '000000' } },
+        bottom: { style: 'thin', color: { argb: '000000' } },
+        right: { style: 'thin', color: { argb: '000000' } }
+      };
       
-      const charWidth = fontSize * 0.52;
-      const maxChars = Math.max(5, Math.floor(maxWidth / charWidth));
-      
-      words.forEach(word => {
-        if ((currentLine + ' ' + word).length > maxChars) {
-          if (currentLine) lines.push(currentLine);
-          currentLine = word;
-        } else {
-          currentLine = currentLine ? currentLine + ' ' + word : word;
+      const thickBorder = {
+        top: { style: 'medium', color: { argb: '000000' } },
+        left: { style: 'medium', color: { argb: '000000' } },
+        bottom: { style: 'medium', color: { argb: '000000' } },
+        right: { style: 'medium', color: { argb: '000000' } }
+      };
+
+      const grayFill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'F1F5F9' }
+      };
+
+      // Classification Header
+      worksheet.getCell('B1').value = 'Sınıflandırma: HİZMETE ÖZEL (CONFIDENTIAL)';
+      worksheet.getCell('B1').font = { name: 'Segoe UI', size: 8, bold: true };
+
+      // Title Card
+      worksheet.mergeCells('B2:J3');
+      const titleCell = worksheet.getCell('B2');
+      titleCell.value = 'SONDAJ LOGU';
+      titleCell.font = { name: 'Segoe UI', size: 16, bold: true };
+      titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+      titleCell.border = thickBorder;
+
+      const snoLbl = worksheet.getCell('K2');
+      snoLbl.value = 'Sondaj No';
+      snoLbl.font = { name: 'Segoe UI', size: 8, bold: true };
+      snoLbl.alignment = { horizontal: 'center', vertical: 'middle' };
+      snoLbl.border = thinBorder;
+      snoLbl.fill = grayFill;
+
+      const snoVal = worksheet.getCell('L2');
+      snoVal.value = holeIdVal;
+      snoVal.font = { name: 'Segoe UI', size: 9, bold: true };
+      snoVal.alignment = { horizontal: 'center', vertical: 'middle' };
+      snoVal.border = thinBorder;
+
+      const pnoLbl = worksheet.getCell('K3');
+      pnoLbl.value = 'Sayfa No';
+      pnoLbl.font = { name: 'Segoe UI', size: 8, bold: true };
+      pnoLbl.alignment = { horizontal: 'center', vertical: 'middle' };
+      pnoLbl.border = thinBorder;
+      pnoLbl.fill = grayFill;
+
+      const pnoVal = worksheet.getCell('L3');
+      pnoVal.value = 1;
+      pnoVal.font = { name: 'Segoe UI', size: 9 };
+      pnoVal.alignment = { horizontal: 'center', vertical: 'middle' };
+      pnoVal.border = thinBorder;
+
+      // Metadata Rows
+      const rowData = [
+        {
+          c1Label: 'Yüklenici Firma', c1Val: 'MCB SONDAJ',
+          c2Label: 'Sondaj Derinliği', c2Val: `${collar?.totalDepth !== undefined ? collar.totalDepth : '0'} m`,
+          c3Label: 'Yeraltı Suyu', c3Val: '-'
+        },
+        {
+          c1Label: 'Proje Adı', c1Val: project,
+          c2Label: 'Başlama Tarihi', c2Val: collar?.dateStarted || '-',
+          c3Label: 'Makine Tipi/Metodu', c3Val: '-'
+        },
+        {
+          c1Label: 'İl', c1Val: 'Çanakkale',
+          c2Label: 'Bitiş Tarihi', c2Val: collar?.dateCompleted || '-',
+          c3Label: 'SPT Şahmerdan Tipi', c3Val: '-'
+        },
+        {
+          c1Label: 'İlçe', c1Val: 'Biga',
+          c2Label: 'Sondaj Kotu', c2Val: collar?.elevation !== undefined ? `${collar.elevation} m` : '-',
+          c3Label: 'Delgi Çapı', c3Val: 'HQ'
+        },
+        {
+          c1Label: 'Mahalle/Köy', c1Val: 'Arabaalan',
+          c2Label: 'Koordinat X (N)', c2Val: northing,
+          c3Label: 'Sondör', c3Val: '-'
+        },
+        {
+          c1Label: 'Pafta', c1Val: '-',
+          c2Label: 'Koordinat Y (E)', c2Val: easting,
+          c3Label: 'Sondör Belge No', c3Val: '-'
+        },
+        {
+          c1Label: 'Ada', c1Val: '-',
+          c2Label: 'Koordinat Z (RL)', c2Val: elevation,
+          c3Label: 'Yönelim (Dip/Azim)', c3Val: dipAzimuth
+        },
+        {
+          c1Label: 'Parsel', c1Val: '-',
+          c2Label: 'Drill Status', c2Val: collar?.status || '-',
+          c3Label: 'Logger / Geologist', c3Val: logger
         }
+      ];
+
+      const startY = 4;
+      const writeMetaRow = (rowNum: number, label1: string, val1: any, label2: string, val2: any, label3: string, val3: any) => {
+        worksheet.getRow(rowNum).height = 16;
+        
+        // c1
+        const l1 = worksheet.getCell(`B${rowNum}`);
+        l1.value = label1;
+        l1.font = { name: 'Segoe UI', size: 9, bold: true };
+        l1.alignment = { horizontal: 'left', vertical: 'middle' };
+        l1.border = thinBorder;
+        l1.fill = grayFill;
+        
+        worksheet.mergeCells(`C${rowNum}:D${rowNum}`);
+        const v1 = worksheet.getCell(`C${rowNum}`);
+        v1.value = val1;
+        v1.font = { name: 'Segoe UI', size: 9 };
+        v1.alignment = { horizontal: 'left', vertical: 'middle' };
+        v1.border = thinBorder;
+        
+        // c2
+        worksheet.mergeCells(`E${rowNum}:F${rowNum}`);
+        const l2 = worksheet.getCell(`E${rowNum}`);
+        l2.value = label2;
+        l2.font = { name: 'Segoe UI', size: 9, bold: true };
+        l2.alignment = { horizontal: 'left', vertical: 'middle' };
+        l2.border = thinBorder;
+        l2.fill = grayFill;
+        
+        worksheet.mergeCells(`G${rowNum}:H${rowNum}`);
+        const v2 = worksheet.getCell(`G${rowNum}`);
+        v2.value = val2;
+        v2.font = { name: 'Segoe UI', size: 9 };
+        v2.alignment = { horizontal: 'left', vertical: 'middle' };
+        v2.border = thinBorder;
+
+        // c3
+        worksheet.mergeCells(`I${rowNum}:J${rowNum}`);
+        const l3 = worksheet.getCell(`I${rowNum}`);
+        l3.value = label3;
+        l3.font = { name: 'Segoe UI', size: 9, bold: true };
+        l3.alignment = { horizontal: 'left', vertical: 'middle' };
+        l3.border = thinBorder;
+        l3.fill = grayFill;
+        
+        worksheet.mergeCells(`K${rowNum}:L${rowNum}`);
+        const v3 = worksheet.getCell(`K${rowNum}`);
+        v3.value = val3;
+        v3.font = { name: 'Segoe UI', size: 9 };
+        v3.alignment = { horizontal: 'left', vertical: 'middle' };
+        v3.border = thinBorder;
+      };
+
+      rowData.forEach((row, i) => {
+        writeMetaRow(startY + i, row.c1Label, row.c1Val, row.c2Label, row.c2Val, row.c3Label, row.c3Val);
       });
-      if (currentLine) lines.push(currentLine);
-      return lines;
-    };
 
-    // Metadata Table rows
-    const rowData = [
-      {
-        c1Label: 'Yüklenici Firma', c1Val: 'MCB SONDAJ',
-        c2Label: 'Sondaj Derinliği', c2Val: `${collar?.totalDepth !== undefined ? collar.totalDepth : '0'} m`,
-        c3Label: 'Yeraltı Suyu', c3Val: '-'
-      },
-      {
-        c1Label: 'Proje Adı', c1Val: project,
-        c2Label: 'Başlama Tarihi', c2Val: collar?.dateStarted || '-',
-        c3Label: 'Makine Tipi/Metodu', c3Val: '-'
-      },
-      {
-        c1Label: 'İl', c1Val: 'Çanakkale',
-        c2Label: 'Bitiş Tarihi', c2Val: collar?.dateCompleted || '-',
-        c3Label: 'SPT Şahmerdan Tipi', c3Val: '-'
-      },
-      {
-        c1Label: 'İlçe', c1Val: 'Biga',
-        c2Label: 'Sondaj Kotu', c2Val: collar?.elevation !== undefined ? `${collar.elevation} m` : '-',
-        c3Label: 'Delgi Çapı', c3Val: 'HQ'
-      },
-      {
-        c1Label: 'Mahalle/Köy', c1Val: 'Arabaalan',
-        c2Label: 'Koordinat X (N)', c2Val: northing,
-        c3Label: 'Sondör', c3Val: '-'
-      },
-      {
-        c1Label: 'Pafta', c1Val: '-',
-        c2Label: 'Koordinat Y (E)', c2Val: easting,
-        c3Label: 'Sondör Belge No', c3Val: '-'
-      },
-      {
-        c1Label: 'Ada', c1Val: '-',
-        c2Label: 'Koordinat Z (RL)', c2Val: elevation,
-        c3Label: 'Yönelim (Dip/Azim)', c3Val: dipAzimuth
-      },
-      {
-        c1Label: 'Parsel', c1Val: '-',
-        c2Label: 'Drill Status', c2Val: collar?.status || '-',
-        c3Label: 'Logger / Geologist', c3Val: logger
+      // Headers for Columns
+      worksheet.getRow(13).height = 25;
+      worksheet.getRow(14).height = 25;
+
+      const headerCells = [
+        { cell: 'B13', val: 'Derinlik (m)', merge: 'B13:B14' },
+        { cell: 'C13', val: 'Örnek Derinliği (m)', merge: 'C13:C14' },
+        { cell: 'D13', val: 'Örnek (Karot) No', merge: 'D13:D14' },
+        { cell: 'E13', val: 'KAYA ÖZELLİKLERİ', merge: 'E13:J13' },
+        { cell: 'K13', val: 'LİTOLOJİ', merge: 'K13:K14' },
+        { cell: 'L13', val: 'AÇIKLAMALAR', merge: 'L13:L14' }
+      ];
+
+      headerCells.forEach(hc => {
+        if (hc.merge) worksheet.mergeCells(hc.merge);
+        const cell = worksheet.getCell(hc.cell);
+        cell.value = hc.val;
+        cell.font = { name: 'Segoe UI', size: 9, bold: true };
+        cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+        cell.fill = grayFill;
+        cell.border = thinBorder;
+      });
+
+      const subHeaders = [
+        { cell: 'E14', val: 'Dayanım' },
+        { cell: 'F14', val: 'Ayrışma Derecesi' },
+        { cell: 'G14', val: 'Kırık/30cm' },
+        { cell: 'H14', val: 'TCR (%)' },
+        { cell: 'I14', val: 'SCR (%)' },
+        { cell: 'J14', val: 'RQD (%)' }
+      ];
+
+      subHeaders.forEach(sh => {
+        const cell = worksheet.getCell(sh.cell);
+        cell.value = sh.val;
+        cell.font = { name: 'Segoe UI', size: 8, bold: true };
+        cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+        cell.fill = grayFill;
+        cell.border = thinBorder;
+      });
+
+      // Body initialization
+      const bodyStartRow = 15;
+      const totalDepthVal = Math.ceil(totalDepth);
+
+      for (let m = 0; m < totalDepthVal; m++) {
+        const rowNum = bodyStartRow + m;
+        const row = worksheet.getRow(rowNum);
+        row.height = 20;
+
+        const meterCell = worksheet.getCell(`B${rowNum}`);
+        meterCell.value = m + 1;
+        meterCell.font = { name: 'Segoe UI', size: 8.5, bold: true };
+        meterCell.alignment = { horizontal: 'center', vertical: 'middle' };
+        meterCell.border = thinBorder;
+
+        const cols = ['C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
+        cols.forEach(col => {
+          const cell = worksheet.getCell(`${col}${rowNum}`);
+          cell.border = thinBorder;
+          cell.font = { name: 'Segoe UI', size: 8.5 };
+          cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+        });
       }
-    ];
 
-    let collarRowsXml = '';
-    const startY = 45;
-    const endY = 155;
-    const totalRows = rowData.length;
-    const rowHeight = (endY - startY) / totalRows;
+      // Geotech merges
+      geotech.forEach(g => {
+        if (g.to <= g.from) return;
+        const startR = bodyStartRow + Math.floor(g.from);
+        const endR = bodyStartRow + Math.ceil(g.to) - 1;
+        const clampedEndR = Math.min(bodyStartRow + totalDepthVal - 1, endR);
+        if (clampedEndR < startR) return;
 
-    rowData.forEach((row, i) => {
-      const y = startY + i * rowHeight;
-      const centerY = y + rowHeight / 2 + 3;
-      
-      if (i > 0) {
-        collarRowsXml += `<line x1="20" y1="${y}" x2="880" y2="${y}" stroke="#000000" stroke-width="0.8" />\n`;
-      }
-      
-      collarRowsXml += `
-        <!-- Row ${i+1} -->
-        <text x="25" y="${centerY}" font-size="7.5" font-weight="bold" fill="#000000">${row.c1Label}</text>
-        <text x="135" y="${centerY}" font-size="7.5" fill="#111827">${row.c1Val}</text>
-        
-        <text x="375" y="${centerY}" font-size="7.5" font-weight="bold" fill="#000000">${row.c2Label}</text>
-        <text x="485" y="${centerY}" font-size="7.5" fill="#111827">${row.c2Val}</text>
-        
-        <text x="615" y="${centerY}" font-size="7.5" font-weight="bold" fill="#000000">${row.c3Label}</text>
-        <text x="745" y="${centerY}" font-size="7.5" fill="#111827">${row.c3Val}</text>
-      `;
-    });
+        const geotechCols = ['C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+        const matchingAssay = assays.find(a => Math.abs(a.from - g.from) < 0.1 && Math.abs(a.to - g.to) < 0.1);
+        const sampleNo = matchingAssay ? matchingAssay.sampleId : '-';
 
-    // Body rows XML
-    let bodyRowsXml = '';
-    const bodyStartY = 230;
-
-    // 1. Grid horizontal lines and depth ruler numbers (for every meter)
-    for (let m = 0; m <= totalDepth; m++) {
-      const y = bodyStartY + m * exportScaleY;
-      
-      if (m > 0 && m < totalDepth) {
-        const isMajor = m % 5 === 0;
-        bodyRowsXml += `<line x1="20" y1="${y}" x2="880" y2="${y}" stroke="#000000" stroke-width="${isMajor ? 0.6 : 0.2}" stroke-opacity="${isMajor ? 0.6 : 0.3}" />\n`;
-      }
-      
-      if (m < totalDepth) {
-        const centerY = y + exportScaleY / 2 + 3;
-        bodyRowsXml += `
-          <rect x="20" y="${y}" width="40" height="${exportScaleY}" fill="none" stroke="#000000" stroke-width="0.5" stroke-opacity="0.5" />
-          <text x="40" y="${centerY}" text-anchor="middle" font-size="7.5" font-weight="bold" fill="#000000">${m + 1}</text>
-        `;
-      }
-    }
-
-    // 2. Geotech run intervals
-    geotech.forEach(g => {
-      if (g.to <= g.from) return;
-      const yStart = bodyStartY + g.from * exportScaleY;
-      const yHeight = (g.to - g.from) * exportScaleY;
-
-      // Find matching assay for core sample ID
-      const matchingAssay = assays.find(a => Math.abs(a.from - g.from) < 0.1 && Math.abs(a.to - g.to) < 0.1);
-      const sampleNo = matchingAssay ? matchingAssay.sampleId : '-';
-
-      bodyRowsXml += `
-        <!-- Geotech Interval ${g.from} - ${g.to} -->
-        <rect x="60" y="${yStart}" width="70" height="${yHeight}" fill="none" stroke="#000000" stroke-width="0.5" />
-        <text x="95" y="${yStart + yHeight / 2 + 3}" text-anchor="middle" font-size="8" font-weight="600" fill="#000000">${g.from}-${g.to}</text>
-
-        <rect x="130" y="${yStart}" width="60" height="${yHeight}" fill="none" stroke="#000000" stroke-width="0.5" />
-        <text x="160" y="${yStart + yHeight / 2 + 3}" text-anchor="middle" font-size="8" font-weight="bold" fill="#000000">${sampleNo}</text>
-
-        <rect x="190" y="${yStart}" width="40" height="${yHeight}" fill="none" stroke="#000000" stroke-width="0.5" />
-        <text x="210" y="${yStart + yHeight / 2 + 3}" text-anchor="middle" font-size="8" fill="#111827">-</text>
-
-        <rect x="230" y="${yStart}" width="50" height="${yHeight}" fill="none" stroke="#000000" stroke-width="0.5" />
-        <text x="255" y="${yStart + yHeight / 2 + 3}" text-anchor="middle" font-size="8" fill="#111827">-</text>
-
-        <rect x="280" y="${yStart}" width="40" height="${yHeight}" fill="none" stroke="#000000" stroke-width="0.5" />
-        <text x="300" y="${yStart + yHeight / 2 + 3}" text-anchor="middle" font-size="8" fill="#111827">-</text>
-
-        <rect x="320" y="${yStart}" width="40" height="${yHeight}" fill="none" stroke="#000000" stroke-width="0.5" />
-        <text x="340" y="${yStart + yHeight / 2 + 3}" text-anchor="middle" font-size="8" fill="#000000">${g.tcrPercent.toFixed(1)}</text>
-
-        <rect x="360" y="${yStart}" width="40" height="${yHeight}" fill="none" stroke="#000000" stroke-width="0.5" />
-        <text x="380" y="${yStart + yHeight / 2 + 3}" text-anchor="middle" font-size="8" fill="#111827">-</text>
-
-        <rect x="400" y="${yStart}" width="40" height="${yHeight}" fill="none" stroke="#000000" stroke-width="0.5" />
-        <text x="420" y="${yStart + yHeight / 2 + 3}" text-anchor="middle" font-size="8" fill="#000000">${g.rqdPercent.toFixed(1)}</text>
-      `;
-    });
-
-    // 3. Lithologies patterns
-    lithology.forEach(l => {
-      if (l.to <= l.from) return;
-      const yStart = bodyStartY + l.from * exportScaleY;
-      const yHeight = (l.to - l.from) * exportScaleY;
-      const patternUrl = getRockPatternUrl(l.rockCode);
-
-      bodyRowsXml += `
-        <!-- Lithology ${l.from} - ${l.to} -->
-        <rect x="440" y="${yStart}" width="90" height="${yHeight}" fill="${patternUrl}" stroke="#000000" stroke-width="0.5" />
-      `;
-    });
-
-    // 4. Descriptions (Açıklamalar)
-    lithology.forEach(l => {
-      if (l.to <= l.from) return;
-      const yStart = bodyStartY + l.from * exportScaleY;
-      const yHeight = (l.to - l.from) * exportScaleY;
-
-      const descLines = wrapText(l.description || '', 330, 8);
-      const textElements = descLines.map((line, idx) => {
-        return `<tspan x="540" dy="${idx === 0 ? 0 : 10}">${line}</tspan>`;
-      }).join('');
-
-      const lineCount = descLines.length;
-      const totalTextHeight = lineCount * 10;
-      const textY = yStart + (yHeight - totalTextHeight) / 2 + 8;
-
-      bodyRowsXml += `
-        <!-- Description ${l.from} - ${l.to} -->
-        <rect x="530" y="${yStart}" width="350" height="${yHeight}" fill="none" stroke="#000000" stroke-width="0.5" />
-        <text x="540" y="${textY}" font-size="8" fill="#111827" font-family="'Plus Jakarta Sans', system-ui, sans-serif">
-          ${textElements}
-        </text>
-      `;
-    });
-
-    const bodyClone = bodySvg.cloneNode(true) as SVGSVGElement;
-    const defsElement = bodyClone.querySelector('defs');
-    const defsXml = defsElement ? defsElement.outerHTML : '';
-
-    const footerY = bodyStartY + bodyHeightVal + spacing;
-
-    let svgXml = `
-<svg xmlns="http://www.w3.org/2000/svg" width="${exportSvgWidth}" height="${totalHeight}">
-  <style>
-    text { font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; fill: #000000; }
-    line { stroke: #000000; }
-  </style>
-  ${defsXml}
-  <rect width="${exportSvgWidth}" height="${totalHeight}" fill="#ffffff" />
-  
-  <!-- Classification Header -->
-  <text x="20" y="15" font-size="8" font-weight="bold" fill="#000000">Sınıflandırma: HİZMETE ÖZEL (CONFIDENTIAL)</text>
-
-  <!-- Title Card Group -->
-  <g id="title-card" transform="translate(0, 20)">
-    <rect x="20" y="0" width="860" height="135" fill="none" stroke="#000000" stroke-width="1.2" />
-    
-    <!-- Title Center -->
-    <line x1="20" y1="45" x2="880" y2="45" stroke="#000000" stroke-width="1.2" />
-    <text x="380" y="31" text-anchor="middle" font-size="14" font-weight="bold" fill="#000000" letter-spacing="1">SONDAJ LOGU</text>
-    
-    <line x1="740" y1="0" x2="740" y2="45" stroke="#000000" stroke-width="1.2" />
-    <line x1="810" y1="0" x2="810" y2="45" stroke="#000000" stroke-width="1.2" />
-    <line x1="740" y1="22.5" x2="880" y2="22.5" stroke="#000000" stroke-width="1.2" />
-    
-    <text x="775" y="15" text-anchor="middle" font-size="7.5" font-weight="bold" fill="#000000">Sondaj No</text>
-    <text x="845" y="15" text-anchor="middle" font-size="8.5" font-weight="bold" fill="#000000">${holeIdVal}</text>
-    
-    <text x="775" y="36" text-anchor="middle" font-size="7.5" font-weight="bold" fill="#000000">Sayfa No</text>
-    <text x="845" y="36" text-anchor="middle" font-size="8.5" fill="#000000">1</text>
-    
-    <!-- Vertical partition lines inside metadata -->
-    <line x1="130" y1="45" x2="130" y2="135" stroke="#000000" stroke-width="0.8" />
-    <line x1="370" y1="45" x2="370" y2="135" stroke="#000000" stroke-width="1" />
-    <line x1="480" y1="45" x2="480" y2="135" stroke="#000000" stroke-width="0.8" />
-    <line x1="610" y1="45" x2="610" y2="135" stroke="#000000" stroke-width="1" />
-    <line x1="740" y1="45" x2="740" y2="135" stroke="#000000" stroke-width="0.8" />
-    
-    ${collarRowsXml}
-  </g>
-
-  <!-- Header Column Group -->
-  <g id="header-group" transform="translate(0, 0)">
-    <rect x="20" y="165" width="860" height="65" fill="none" stroke="#000000" stroke-width="1.2" />
-    
-    <line x1="60" y1="165" x2="60" y2="230" stroke="#000000" stroke-width="1" />
-    <line x1="130" y1="165" x2="130" y2="230" stroke="#000000" stroke-width="1" />
-    <line x1="190" y1="165" x2="190" y2="230" stroke="#000000" stroke-width="1" />
-    <line x1="440" y1="165" x2="440" y2="230" stroke="#000000" stroke-width="1.2" />
-    <line x1="530" y1="165" x2="530" y2="230" stroke="#000000" stroke-width="1.2" />
-    
-    <!-- Kaya özellikleri subdivisions -->
-    <line x1="190" y1="185" x2="440" y2="185" stroke="#000000" stroke-width="0.8" />
-    <line x1="230" y1="185" x2="230" y2="230" stroke="#000000" stroke-width="0.8" />
-    <line x1="280" y1="185" x2="280" y2="230" stroke="#000000" stroke-width="0.8" />
-    <line x1="320" y1="185" x2="320" y2="230" stroke="#000000" stroke-width="0.8" />
-    <line x1="360" y1="185" x2="360" y2="230" stroke="#000000" stroke-width="0.8" />
-    <line x1="400" y1="185" x2="400" y2="230" stroke="#000000" stroke-width="0.8" />
-    
-    <!-- Header Labels -->
-    <text x="40" y="195" text-anchor="middle" font-size="8" font-weight="bold" fill="#000000">Derinlik</text>
-    <text x="40" y="210" text-anchor="middle" font-size="8" font-weight="bold" fill="#000000">(m)</text>
-    
-    <text x="95" y="192" text-anchor="middle" font-size="8" font-weight="bold" fill="#000000">Örnek</text>
-    <text x="95" y="204" text-anchor="middle" font-size="8" font-weight="bold" fill="#000000">Derinliği</text>
-    <text x="95" y="216" text-anchor="middle" font-size="8" font-weight="bold" fill="#000000">(m)</text>
-    
-    <text x="160" y="195" text-anchor="middle" font-size="8" font-weight="bold" fill="#000000">Örnek</text>
-    <text x="160" y="206" text-anchor="middle" font-size="8" font-weight="bold" fill="#000000">(Karot) No</text>
-    
-    <text x="315" y="178" text-anchor="middle" font-size="8.5" font-weight="bold" fill="#000000">KAYA ÖZELLİKLERİ</text>
-    
-    <text x="210" y="222" text-anchor="middle" font-size="7.5" font-weight="bold" fill="#000000" transform="rotate(-90, 210, 215)">Dayanım</text>
-    <text x="255" y="222" text-anchor="middle" font-size="7" font-weight="bold" fill="#000000" transform="rotate(-90, 255, 215)">Ayrışma Derecesi</text>
-    <text x="300" y="222" text-anchor="middle" font-size="7.5" font-weight="bold" fill="#000000" transform="rotate(-90, 300, 215)">Kırık/30cm</text>
-    <text x="340" y="222" text-anchor="middle" font-size="7.5" font-weight="bold" fill="#000000" transform="rotate(-90, 340, 215)">TCR (%)</text>
-    <text x="380" y="222" text-anchor="middle" font-size="7.5" font-weight="bold" fill="#000000" transform="rotate(-90, 380, 215)">SCR (%)</text>
-    <text x="420" y="222" text-anchor="middle" font-size="7.5" font-weight="bold" fill="#000000" transform="rotate(-90, 420, 215)">RQD (%)</text>
-    
-    <text x="485" y="202" text-anchor="middle" font-size="8.5" font-weight="bold" fill="#000000">LİTOLOJİ</text>
-    <text x="705" y="202" text-anchor="middle" font-size="8.5" font-weight="bold" fill="#000000">AÇIKLAMALAR</text>
-  </g>
-
-  <!-- Body Column Group -->
-  <g id="body-group" transform="translate(0, 0)">
-    <!-- Main column borders down to the depth -->
-    <line x1="20" y1="230" x2="20" y2="${230 + bodyHeightVal}" stroke="#000000" stroke-width="1.2" />
-    <line x1="60" y1="230" x2="60" y2="${230 + bodyHeightVal}" stroke="#000000" stroke-width="1" />
-    <line x1="130" y1="230" x2="130" y2="${230 + bodyHeightVal}" stroke="#000000" stroke-width="1" />
-    <line x1="190" y1="230" x2="190" y2="${230 + bodyHeightVal}" stroke="#000000" stroke-width="1" />
-    
-    <line x1="230" y1="230" x2="230" y2="${230 + bodyHeightVal}" stroke="#000000" stroke-width="0.5" stroke-opacity="0.8" />
-    <line x1="280" y1="230" x2="280" y2="${230 + bodyHeightVal}" stroke="#000000" stroke-width="0.5" stroke-opacity="0.8" />
-    <line x1="320" y1="230" x2="320" y2="${230 + bodyHeightVal}" stroke="#000000" stroke-width="0.5" stroke-opacity="0.8" />
-    <line x1="360" y1="230" x2="360" y2="${230 + bodyHeightVal}" stroke="#000000" stroke-width="0.5" stroke-opacity="0.8" />
-    <line x1="400" y1="230" x2="400" y2="${230 + bodyHeightVal}" stroke="#000000" stroke-width="0.5" stroke-opacity="0.8" />
-    
-    <line x1="440" y1="230" x2="440" y2="${230 + bodyHeightVal}" stroke="#000000" stroke-width="1.2" />
-    <line x1="530" y1="230" x2="530" y2="${230 + bodyHeightVal}" stroke="#000000" stroke-width="1.2" />
-    <line x1="880" y1="230" x2="880" y2="${230 + bodyHeightVal}" stroke="#000000" stroke-width="1.2" />
-    
-    ${bodyRowsXml}
-  </g>
-
-  <!-- Legend Group -->
-  <g id="legend-group" transform="translate(0, ${footerY})">
-    <rect x="20" y="0" width="860" height="120" fill="none" stroke="#000000" stroke-width="1.2" />
-    
-    <line x1="190" y1="0" x2="190" y2="120" stroke="#000000" stroke-width="0.8" />
-    <line x1="320" y1="0" x2="320" y2="120" stroke="#000000" stroke-width="0.8" />
-    <line x1="440" y1="0" x2="440" y2="120" stroke="#000000" stroke-width="0.8" />
-    <line x1="580" y1="0" x2="580" y2="120" stroke="#000000" stroke-width="0.8" />
-    <line x1="720" y1="0" x2="720" y2="120" stroke="#000000" stroke-width="0.8" />
-    
-    <line x1="20" y1="16" x2="880" y2="16" stroke="#000000" stroke-width="1" />
-    
-    <!-- Table Headers -->
-    <text x="105" y="11" text-anchor="middle" font-size="7.5" font-weight="bold" fill="#000000">Kısaltmalar</text>
-    <text x="255" y="11" text-anchor="middle" font-size="7.5" font-weight="bold" fill="#000000">Kaya Kalitesi Tanımı-RQD(%)</text>
-    <text x="380" y="11" text-anchor="middle" font-size="7.5" font-weight="bold" fill="#000000">Kırık-Eklem / 30 cm</text>
-    <text x="510" y="11" text-anchor="middle" font-size="7.5" font-weight="bold" fill="#000000">Ayrışma derecesi</text>
-    <text x="650" y="11" text-anchor="middle" font-size="7.5" font-weight="bold" fill="#000000">Dayanıklılık</text>
-    <text x="800" y="11" text-anchor="middle" font-size="7.5" font-weight="bold" fill="#000000">Logu Hazırlayan / Onay</text>
-    
-    <!-- Col 1 Values -->
-    <text x="25" y="28" font-size="7" fill="#000000"><tspan font-weight="bold">UD:</tspan> Örselenmemiş Örnek</text>
-    <text x="25" y="42" font-size="7" fill="#000000"><tspan font-weight="bold">DS:</tspan> Örselenmiş Örnek</text>
-    <text x="25" y="56" font-size="7" fill="#000000"><tspan font-weight="bold">TCR:</tspan> Toplam Karot Yüzdesi</text>
-    <text x="25" y="70" font-size="7" fill="#000000"><tspan font-weight="bold">SCR:</tspan> Silindirik Karot Yüzdesi</text>
-    <text x="25" y="84" font-size="7" fill="#000000"><tspan font-weight="bold">RQD:</tspan> Toplam Kaya Kalitesi</text>
-    
-    <!-- Col 2 Values -->
-    <text x="195" y="28" font-size="7" fill="#000000">0-25% Çok Kötü</text>
-    <text x="195" y="42" font-size="7" fill="#000000">25-50% Kötü</text>
-    <text x="195" y="56" font-size="7" fill="#000000">50-75% Orta</text>
-    <text x="195" y="70" font-size="7" fill="#000000">75-90% İyi</text>
-    <text x="195" y="84" font-size="7" fill="#000000">90-100% Çok İyi</text>
-    
-    <!-- Col 3 Values -->
-    <text x="325" y="28" font-size="7" fill="#000000">&lt; 1 Seyrek</text>
-    <text x="325" y="42" font-size="7" fill="#000000">1-2 Orta</text>
-    <text x="325" y="56" font-size="7" fill="#000000">2-10 Sık</text>
-    <text x="325" y="70" font-size="7" fill="#000000">10-20 Çok Sık</text>
-    <text x="325" y="84" font-size="7" fill="#000000">&gt; 20 Parçalı</text>
-    
-    <!-- Col 4 Values -->
-    <text x="445" y="28" font-size="7" fill="#000000">W1 Taze kayaç</text>
-    <text x="445" y="42" font-size="7" fill="#000000">W2 Az ayrışmış</text>
-    <text x="445" y="56" font-size="7" fill="#000000">W3-W4 Orta-Çok Ayrışmış</text>
-    <text x="445" y="70" font-size="7" fill="#000000">W5 Tümüyle Ayrışmış</text>
-    <text x="445" y="84" font-size="7" fill="#000000">W6 Rezidüel Zemin</text>
-    
-    <!-- Col 5 Values -->
-    <text x="585" y="28" font-size="7" fill="#000000">I Çok Zayıf</text>
-    <text x="585" y="42" font-size="7" fill="#000000">II Zayıf</text>
-    <text x="585" y="56" font-size="7" fill="#000000">III Orta</text>
-    <text x="585" y="70" font-size="7" fill="#000000">IV Dayanıklı</text>
-    <text x="585" y="84" font-size="7" fill="#000000">V/VI Çok/Aşırı Dayanıklı</text>
-    
-    <!-- Col 6 Signatures -->
-    <line x1="720" y1="60" x2="880" y2="60" stroke="#000000" stroke-width="0.8" />
-    <text x="725" y="24" font-size="7" font-weight="bold" fill="#000000">Hazırlayan:</text>
-    <text x="725" y="38" font-size="7.5" fill="#111827">${logger}</text>
-    <text x="725" y="50" font-size="7.5" fill="#111827">İmza:</text>
-    
-    <text x="725" y="76" font-size="7" font-weight="bold" fill="#000000">Kontrol Eden:</text>
-    <text x="725" y="90" font-size="7.5" fill="#111827">Levent CAN</text>
-    <text x="725" y="102" font-size="7.5" fill="#111827">İmza:</text>
-  </g>
-
-  <!-- Classification Footer -->
-  <text x="450" y="${totalHeight - 10}" text-anchor="middle" font-size="8" font-weight="bold" fill="#000000">Bu mesaj/doküman HİZMETE ÖZEL (CONFIDENTIAL) etiketi ile sınıflandırılmıştır.</text>
-</svg>
-    `.trim();
-
-    return { svgXml, totalHeight };
-  };
-
-  const handleExportSVG = () => {
-    const result = generateExportedSvgXml();
-    if (!result) {
-      alert("Charts not rendered yet!");
-      return;
-    }
-
-    const blob = new Blob([result.svgXml], { type: 'image/svg+xml;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${holeId || 'Drillhole'}_Column_Log.svg`;
-    document.body.appendChild(a);
-    a.click();
-    URL.revokeObjectURL(url);
-    document.body.removeChild(a);
-  };
-
-  const handleExportPNG = () => {
-    const result = generateExportedSvgXml();
-    if (!result) return;
-
-    const img = new Image();
-    const svgBlob = new Blob([result.svgXml], { type: 'image/svg+xml;charset=utf-8' });
-    const url = URL.createObjectURL(svgBlob);
-
-    img.onload = () => {
-      const scale = 2; // High-DPI 2x scale
-      const canvas = document.createElement('canvas');
-      canvas.width = 900 * scale;
-      canvas.height = result.totalHeight * scale;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.scale(scale, scale);
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, 900, result.totalHeight);
-        ctx.drawImage(img, 0, 0);
-
-        canvas.toBlob((blob) => {
-          if (blob) {
-            const pngUrl = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = pngUrl;
-            a.download = `${holeId || 'Drillhole'}_Column_Log.png`;
-            document.body.appendChild(a);
-            a.click();
-            URL.revokeObjectURL(pngUrl);
-            document.body.removeChild(a);
+        geotechCols.forEach(col => {
+          if (clampedEndR > startR) {
+            worksheet.mergeCells(`${col}${startR}:${col}${clampedEndR}`);
           }
-        }, 'image/png');
-      }
-      URL.revokeObjectURL(url);
-    };
+        });
 
-    img.src = url;
+        worksheet.getCell(`C${startR}`).value = `${g.from}-${g.to}`;
+        worksheet.getCell(`D${startR}`).value = sampleNo;
+        worksheet.getCell(`D${startR}`).font = { name: 'Segoe UI', size: 8.5, bold: true };
+        worksheet.getCell(`E${startR}`).value = '-';
+        worksheet.getCell(`F${startR}`).value = '-';
+        worksheet.getCell(`G${startR}`).value = '-';
+        worksheet.getCell(`H${startR}`).value = g.tcrPercent;
+        worksheet.getCell(`I${startR}`).value = '-';
+        worksheet.getCell(`J${startR}`).value = g.rqdPercent;
+      });
+
+      // Lithology merges
+      lithology.forEach(l => {
+        if (l.to <= l.from) return;
+        const startR = bodyStartRow + Math.floor(l.from);
+        const endR = bodyStartRow + Math.ceil(l.to) - 1;
+        const clampedEndR = Math.min(bodyStartRow + totalDepthVal - 1, endR);
+        if (clampedEndR < startR) return;
+
+        if (clampedEndR > startR) {
+          worksheet.mergeCells(`K${startR}:K${clampedEndR}`);
+          worksheet.mergeCells(`L${startR}:L${clampedEndR}`);
+        }
+
+        const rockLabel = getRockLabel(l.rockCode);
+        const hexColor = getRockColor(l.rockCode).replace('#', '');
+
+        const litCell = worksheet.getCell(`K${startR}`);
+        litCell.value = rockLabel;
+        litCell.font = { name: 'Segoe UI', size: 8.5, bold: true };
+        litCell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: hexColor }
+        };
+
+        const descCell = worksheet.getCell(`L${startR}`);
+        descCell.value = l.description || '';
+        descCell.alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
+      });
+
+      // Footer Legend
+      const footerStartRow = bodyStartRow + totalDepthVal + 2;
+      const fHeaderRow = worksheet.getRow(footerStartRow);
+      fHeaderRow.height = 20;
+
+      const fHeaders = [
+        { start: 'B', end: 'C', val: 'Kısaltmalar' },
+        { start: 'D', end: 'E', val: 'Kaya Kalitesi Tanımı-RQD(%)' },
+        { start: 'F', end: 'G', val: 'Kırık-Eklem / 30 cm' },
+        { start: 'H', end: 'I', val: 'Ayrışma derecesi' },
+        { start: 'J', end: 'K', val: 'Dayanıklılık' }
+      ];
+
+      fHeaders.forEach(fh => {
+        worksheet.mergeCells(`${fh.start}${footerStartRow}:${fh.end}${footerStartRow}`);
+        const cell = worksheet.getCell(`${fh.start}${footerStartRow}`);
+        cell.value = fh.val;
+        cell.font = { name: 'Segoe UI', size: 9, bold: true };
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        cell.fill = grayFill;
+        cell.border = thinBorder;
+      });
+
+      const authCell = worksheet.getCell(`L${footerStartRow}`);
+      authCell.value = 'Logu Hazırlayan / Onay';
+      authCell.font = { name: 'Segoe UI', size: 9, bold: true };
+      authCell.alignment = { horizontal: 'center', vertical: 'middle' };
+      authCell.fill = grayFill;
+      authCell.border = thinBorder;
+
+      const legendData = [
+        [
+          'UD: Örselenmemiş Örnek',
+          '0-25% Çok Kötü',
+          '< 1 Seyrek',
+          'W1 Taze kayaç',
+          'I Çok Zayıf'
+        ],
+        [
+          'DS: Örselenmiş Örnek',
+          '25-50% Kötü',
+          '1-2 Orta',
+          'W2 Az ayrışmış',
+          'II Zayıf'
+        ],
+        [
+          'TCR: Toplam Karot Yüzdesi',
+          '50-75% Orta',
+          '2-10 Sık',
+          'W3-W4 Orta-Çok Ayrışmış',
+          'III Orta'
+        ],
+        [
+          'SCR: Silindirik Karot Yüzdesi',
+          '75-90% İyi',
+          '10-20 Çok Sık',
+          'W5 Tümüyle Ayrışmış',
+          'IV Dayanıklı'
+        ],
+        [
+          'RQD: Toplam Kaya Kalitesi',
+          '90-100% Çok İyi',
+          '> 20 Parçalı',
+          'W6 Rezidüel Zemin',
+          'V/VI Çok/Aşırı Dayanıklı'
+        ]
+      ];
+
+      legendData.forEach((rowData, i) => {
+        const rowNum = footerStartRow + 1 + i;
+        worksheet.getRow(rowNum).height = 15;
+        
+        worksheet.mergeCells(`B${rowNum}:C${rowNum}`);
+        const cellB = worksheet.getCell(`B${rowNum}`);
+        cellB.value = rowData[0];
+        cellB.font = { name: 'Segoe UI', size: 7.5 };
+        cellB.alignment = { horizontal: 'left', vertical: 'middle' };
+        cellB.border = thinBorder;
+        
+        worksheet.mergeCells(`D${rowNum}:E${rowNum}`);
+        const cellD = worksheet.getCell(`D${rowNum}`);
+        cellD.value = rowData[1];
+        cellD.font = { name: 'Segoe UI', size: 7.5 };
+        cellD.alignment = { horizontal: 'left', vertical: 'middle' };
+        cellD.border = thinBorder;
+
+        worksheet.mergeCells(`F${rowNum}:G${rowNum}`);
+        const cellF = worksheet.getCell(`F${rowNum}`);
+        cellF.value = rowData[2];
+        cellF.font = { name: 'Segoe UI', size: 7.5 };
+        cellF.alignment = { horizontal: 'left', vertical: 'middle' };
+        cellF.border = thinBorder;
+
+        worksheet.mergeCells(`H${rowNum}:I${rowNum}`);
+        const cellH = worksheet.getCell(`H${rowNum}`);
+        cellH.value = rowData[3];
+        cellH.font = { name: 'Segoe UI', size: 7.5 };
+        cellH.alignment = { horizontal: 'left', vertical: 'middle' };
+        cellH.border = thinBorder;
+
+        worksheet.mergeCells(`J${rowNum}:K${rowNum}`);
+        const cellJ = worksheet.getCell(`J${rowNum}`);
+        cellJ.value = rowData[4];
+        cellJ.font = { name: 'Segoe UI', size: 7.5 };
+        cellJ.alignment = { horizontal: 'left', vertical: 'middle' };
+        cellJ.border = thinBorder;
+      });
+
+      const sigCell = worksheet.getCell(`L${footerStartRow + 1}`);
+      worksheet.mergeCells(`L${footerStartRow + 1}:L${footerStartRow + 5}`);
+      sigCell.value = `Hazırlayan:\n${logger}\n\nKontrol Eden:\nLevent CAN`;
+      sigCell.font = { name: 'Segoe UI', size: 8, bold: true };
+      sigCell.alignment = { horizontal: 'left', vertical: 'top', wrapText: true };
+      sigCell.border = thinBorder;
+
+      const classificationRow = footerStartRow + 7;
+      worksheet.mergeCells(`B${classificationRow}:L${classificationRow}`);
+      const classCell = worksheet.getCell(`B${classificationRow}`);
+      classCell.value = 'Bu mesaj/doküman HİZMETE ÖZEL (CONFIDENTIAL) etiketi ile sınıflandırılmıştır.';
+      classCell.font = { name: 'Segoe UI', size: 8, bold: true, italic: true };
+      classCell.alignment = { horizontal: 'center', vertical: 'middle' };
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${holeIdVal}_Sondaj_Log_Raporu.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      console.error(err);
+      alert('Excel export failed!');
+    }
   };
 
   const handleAnalyteToggle = (key: string) => {
@@ -745,67 +747,14 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
               Configure
             </button>
             
-            <div style={{ position: 'relative' }}>
-              <button
-                className="btn btn-primary btn-sm"
-                onClick={() => setShowExportMenu(!showExportMenu)}
-                style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 8px', fontSize: '11px' }}
-              >
-                <Download size={12} />
-                Export
-              </button>
-              {showExportMenu && (
-                <div style={{
-                  position: 'absolute',
-                  top: '100%',
-                  right: 0,
-                  marginTop: '4px',
-                  background: 'var(--bg-input)',
-                  border: '1px solid var(--border-medium)',
-                  borderRadius: 'var(--radius-sm)',
-                  boxShadow: 'var(--shadow-lg)',
-                  zIndex: 20,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  width: '120px',
-                  overflow: 'hidden'
-                }}>
-                  <button
-                    onClick={() => { handleExportSVG(); setShowExportMenu(false); }}
-                    style={{
-                      padding: '8px 12px',
-                      fontSize: '11px',
-                      textAlign: 'left',
-                      background: 'none',
-                      border: 'none',
-                      color: 'var(--text-main)',
-                      cursor: 'pointer',
-                      width: '100%'
-                    }}
-                    className="export-dropdown-item"
-                  >
-                    Export as SVG
-                  </button>
-                  <button
-                    onClick={() => { handleExportPNG(); setShowExportMenu(false); }}
-                    style={{
-                      padding: '8px 12px',
-                      fontSize: '11px',
-                      textAlign: 'left',
-                      background: 'none',
-                      border: 'none',
-                      color: 'var(--text-main)',
-                      cursor: 'pointer',
-                      width: '100%',
-                      borderTop: '1px solid var(--border-light)'
-                    }}
-                    className="export-dropdown-item"
-                  >
-                    Export as PNG
-                  </button>
-                </div>
-              )}
-            </div>
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={handleExportExcel}
+              style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 8px', fontSize: '11px' }}
+            >
+              <Download size={12} />
+              Export to Excel
+            </button>
           </div>
         </div>
 

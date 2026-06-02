@@ -135,7 +135,7 @@ function App() {
         { value: 'UNKNOWN', label: 'UNKNOWN - Unspecified' }
       ]
     },
-    { key: 'description', label: 'Description', type: 'text', width: '20%', defaultValue: '', placeholder: 'Texture, grain size...' },
+    { key: 'description', label: 'Description', type: 'text', width: '20%', defaultValue: '', placeholder: 'Input text here...' },
     { key: 'color', label: 'Color', type: 'text', width: '10%', readOnly: true, defaultValue: '' },
     { key: 'graphic', label: 'Graphic', type: 'text', width: '10%', readOnly: true, defaultValue: '' },
     { key: 'photo', label: 'Photograph', type: 'text', width: '12%', readOnly: true, defaultValue: '' }
@@ -183,8 +183,8 @@ function App() {
     { key: 'sampleTag', label: 'Sample Tag', type: 'text', width: '10%', defaultValue: 'S0001' },
     { key: 'from', label: 'Depth From (m)', type: 'number', width: '7%', defaultValue: 0 },
     { key: 'to', label: 'Depth To (m)', type: 'number', width: '7%', defaultValue: 0 },
-    { key: 'oreType', label: 'Ore Type', type: 'text', width: '12%', defaultValue: '', placeholder: 'Şist, Kil...' },
-    { key: 'description', label: 'Description', type: 'text', width: '18%', defaultValue: '', placeholder: 'Altered Gnays, albitic...' },
+    { key: 'oreType', label: 'Ore Type', type: 'text', width: '12%', defaultValue: '', placeholder: 'Input text here...' },
+    { key: 'description', label: 'Description', type: 'text', width: '18%', defaultValue: '', placeholder: 'Input text here...' },
     {
       key: 'chemical',
       label: 'Chemical Analysis',
@@ -236,8 +236,8 @@ function App() {
     { key: 'sampleTag', label: 'Sample Tag', type: 'text', width: '12%', defaultValue: 'M0001' },
     { key: 'from', label: 'Depth From (m)', type: 'number', width: '10%', defaultValue: 0 },
     { key: 'to', label: 'Depth To (m)', type: 'number', width: '10%', defaultValue: 0 },
-    { key: 'oreType', label: 'Ore Type', type: 'text', width: '15%', defaultValue: '', placeholder: 'Şist, Kil...' },
-    { key: 'description', label: 'Description', type: 'text', width: '25%', defaultValue: '', placeholder: 'Altered Gnays, albitic...' },
+    { key: 'oreType', label: 'Ore Type', type: 'text', width: '15%', defaultValue: '', placeholder: 'Input text here...' },
+    { key: 'description', label: 'Description', type: 'text', width: '25%', defaultValue: '', placeholder: 'Input text here...' },
     {
       key: 'analysisCode',
       label: 'ALS Analysis Code',

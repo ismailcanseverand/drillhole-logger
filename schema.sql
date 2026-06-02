@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS collars (
   date_completed TEXT DEFAULT '',
   logger TEXT DEFAULT '',
   status TEXT DEFAULT 'Planned',
+  project TEXT DEFAULT '',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 

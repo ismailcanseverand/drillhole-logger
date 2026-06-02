@@ -499,55 +499,312 @@ export const GridTable: React.FC<GridTableProps> = ({
     }
 
     try {
-      const response = await fetch('/Numune_Teslim_Formu.xlsx');
-      if (!response.ok) {
-        throw new Error(`HTTP error fetching template! status: ${response.status}`);
-      }
-      const arrayBuffer = await response.arrayBuffer();
-
       const ExcelJSModule = await import('exceljs');
       const ExcelJS = (ExcelJSModule.default || ExcelJSModule) as any;
       if (!ExcelJS || typeof ExcelJS.Workbook !== 'function') {
         throw new Error('Workbook constructor not found in loaded exceljs module.');
       }
       const workbook = new ExcelJS.Workbook();
-      await workbook.xlsx.load(arrayBuffer);
-
-      const worksheet = workbook.worksheets[0];
-      if (!worksheet) {
-        throw new Error('Template sheet not found.');
-      }
+      let worksheet: any;
 
       const today = new Date();
       const dd = String(today.getDate()).padStart(2, '0');
       const mm = String(today.getMonth() + 1).padStart(2, '0');
       const yyyy = today.getFullYear();
-      
-      // Write the date to Row 4 Col AD (Index 30)
-      const dateCell = worksheet.getCell(4, 30);
-      dateCell.value = `. . .${dd}. . /. .${mm} . . /. . ${yyyy} . . . `;
+      const dateStr = `${dd}/${mm}/${yyyy}`;
 
-      // Clear template rows 10 to 47 (columns B to AD)
-      for (let r = 10; r <= 47; r++) {
-        for (let c = 2; c <= 30; c++) {
-          worksheet.getCell(r, c).value = null;
+      if (tabName === 'SamplePrepMetallic') {
+        // Design a completely new premium metallic form from scratch!
+        worksheet = workbook.addWorksheet('Sample Submission');
+
+        // Column widths
+        worksheet.columns = [
+          { width: 3 }, // spacer Col A
+          { key: 'rowNo', width: 8 },
+          { key: 'sampleTag', width: 18 },
+          { key: 'sampleType', width: 16 },
+          { key: 'from', width: 15 },
+          { key: 'to', width: 15 },
+          { key: 'interval', width: 12 },
+          { key: 'oreType', width: 22 },
+          { key: 'analysisCode', width: 32 },
+          { key: 'weight', width: 18 },
+          { key: 'description', width: 38 }
+        ];
+
+        // Enable grid lines
+        worksheet.views = [{ showGridLines: true }];
+
+        const headerBg = '1E293B'; // Deep Slate Navy
+        const fontName = 'Segoe UI';
+
+        // 1. Title Block
+        worksheet.mergeCells('B2:K2');
+        const titleCell = worksheet.getCell('B2');
+        titleCell.value = 'KALE MADENCİLİK SANAYİ VE TİCARET A.Ş.';
+        titleCell.font = { name: fontName, size: 15, bold: true, color: { argb: 'FFFFFF' } };
+        titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+        titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: headerBg } };
+        worksheet.getRow(2).height = 35;
+
+        worksheet.mergeCells('B3:K3');
+        const subTitleCell = worksheet.getCell('B3');
+        subTitleCell.value = 'METALLIC MINERAL SERVICES - LABORATORY SAMPLE SUBMISSION FORM';
+        subTitleCell.font = { name: fontName, size: 9, italic: true, bold: true, color: { argb: 'E2E8F0' } };
+        subTitleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+        subTitleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '334155' } }; 
+        worksheet.getRow(3).height = 20;
+
+        // 2. Metadata Block
+        const metadataBorder = {
+          top: { style: 'thin', color: { argb: '94A3B8' } },
+          left: { style: 'thin', color: { argb: '94A3B8' } },
+          bottom: { style: 'thin', color: { argb: '94A3B8' } },
+          right: { style: 'thin', color: { argb: '94A3B8' } }
+        };
+
+        const writeMetaCell = (row: number, colName1: string, label: string, colName2: string, value: any) => {
+          const lblCell = worksheet.getCell(`${colName1}${row}`);
+          lblCell.value = label;
+          lblCell.font = { name: fontName, size: 9, bold: true, color: { argb: '475569' } };
+          lblCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'F1F5F9' } }; 
+          lblCell.alignment = { horizontal: 'left', vertical: 'middle' };
+          lblCell.border = metadataBorder;
+
+          const valCell = worksheet.getCell(`${colName2}${row}`);
+          valCell.value = value;
+          valCell.font = { name: fontName, size: 9, bold: true, color: { argb: '0F172A' } };
+          valCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFF' } };
+          valCell.alignment = { horizontal: 'left', vertical: 'middle' };
+          valCell.border = metadataBorder;
+        };
+
+        worksheet.getRow(5).height = 22;
+        writeMetaCell(5, 'B', 'License / Ruhsat Adı:', 'C', ruhsatAdi || 'ÇAMLICA');
+        writeMetaCell(5, 'E', 'Date of Despatch:', 'F', dateStr);
+        writeMetaCell(5, 'H', 'Despatch Number:', 'I', 'MET-DESP-001');
+
+        // Fetch project name from collar info in localStorage
+        let projectVal = 'METALİK ARAMA';
+        let eastingVal = 0;
+        let northingVal = 0;
+        let elevationVal = 0;
+        try {
+          const colLocal = localStorage.getItem(`dh_${holeId}_collar`);
+          if (colLocal) {
+            const parsed = JSON.parse(colLocal);
+            projectVal = parsed.project || 'METALİK ARAMA';
+            eastingVal = parsed.easting || 0;
+            northingVal = parsed.northing || 0;
+            elevationVal = parsed.elevation || 0;
+          }
+        } catch (e) {}
+
+        worksheet.getRow(6).height = 22;
+        writeMetaCell(6, 'B', 'Project Name:', 'C', projectVal);
+        writeMetaCell(6, 'E', 'Drillhole ID / Kuyu:', 'F', holeId || 'Unknown');
+        writeMetaCell(6, 'H', 'Logged / Dispatched By:', 'I', 'Emir Özçakıcı');
+
+        worksheet.getRow(7).height = 22;
+        writeMetaCell(7, 'B', 'Easting (X):', 'C', eastingVal);
+        writeMetaCell(7, 'E', 'Northing (Y):', 'F', northingVal);
+        writeMetaCell(7, 'H', 'Elevation / RL (Z):', 'I', elevationVal);
+
+        worksheet.getRow(8).height = 22;
+        writeMetaCell(8, 'B', 'Destination Lab:', 'C', 'ALS Geochemistry');
+        writeMetaCell(8, 'E', 'Total Samples:', 'F', data.length);
+        writeMetaCell(8, 'H', 'Carrier / Kargo:', 'I', 'DHL / MNG');
+
+        // Merge helper values columns
+        const mergeRanges = [
+          'C5:D5', 'F5:G5', 'I5:K5',
+          'C6:D6', 'F6:G6', 'I6:K6',
+          'C7:D7', 'F7:G7', 'I7:K7',
+          'C8:D8', 'F8:G8', 'I8:K8'
+        ];
+
+        mergeRanges.forEach(range => {
+          worksheet.mergeCells(range);
+          const firstCell = worksheet.getCell(range.split(':')[0]);
+          const rangeObj = worksheet.getRange(range);
+          rangeObj.forEach((cell: any) => {
+            cell.fill = firstCell.fill;
+            cell.font = firstCell.font;
+            cell.alignment = firstCell.alignment;
+            cell.border = firstCell.border;
+          });
+        });
+
+        // 3. Table Headers (Row 10)
+        worksheet.getRow(10).height = 26;
+        const headers = [
+          { cell: 'B10', val: 'Row No' },
+          { cell: 'C10', val: 'Sample Tag / ID' },
+          { cell: 'D10', val: 'Sample Type' },
+          { cell: 'E10', val: 'From (m)' },
+          { cell: 'F10', val: 'To (m)' },
+          { cell: 'G10', val: 'Interval (m)' },
+          { cell: 'H10', val: 'Ore / Rock Type' },
+          { cell: 'I10', val: 'Requested ALS Code' },
+          { cell: 'J10', val: 'Estimated Weight (kg)' },
+          { cell: 'K10', val: 'Geology Description / Notes' }
+        ];
+
+        headers.forEach(h => {
+          const cell = worksheet.getCell(h.cell);
+          cell.value = h.val;
+          cell.font = { name: fontName, size: 9, bold: true, color: { argb: 'FFFFFF' } };
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: headerBg } };
+          cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+          cell.border = {
+            top: { style: 'medium', color: { argb: '0F172A' } },
+            left: { style: 'thin', color: { argb: '94A3B8' } },
+            bottom: { style: 'medium', color: { argb: '0F172A' } },
+            right: { style: 'thin', color: { argb: '94A3B8' } }
+          };
+        });
+
+        // 4. Fill Data Rows
+        data.forEach((row, index) => {
+          const rIdx = 11 + index;
+          worksheet.getRow(rIdx).height = 20;
+
+          worksheet.getCell(`B${rIdx}`).value = index + 1;
+          worksheet.getCell(`C${rIdx}`).value = row.sampleTag || `M${String(index + 1).padStart(4, '0')}`;
+          worksheet.getCell(`D${rIdx}`).value = 'Core Interval';
+          worksheet.getCell(`E${rIdx}`).value = row.from !== undefined ? row.from : '';
+          worksheet.getCell(`F${rIdx}`).value = row.to !== undefined ? row.to : '';
+          if (row.from !== undefined && row.to !== undefined) {
+            worksheet.getCell(`G${rIdx}`).value = parseFloat((row.to - row.from).toFixed(2));
+          } else {
+            worksheet.getCell(`G${rIdx}`).value = '';
+          }
+          worksheet.getCell(`H${rIdx}`).value = row.oreType || '';
+          worksheet.getCell(`I${rIdx}`).value = row.analysisCode || '';
+          worksheet.getCell(`J${rIdx}`).value = ''; // left blank for lab
+          worksheet.getCell(`K${rIdx}`).value = row.description || '';
+
+          const rowBg = index % 2 === 0 ? 'FFFFFF' : 'F8FAFC';
+          const thinBorder = {
+            top: { style: 'thin', color: { argb: 'E2E8F0' } },
+            left: { style: 'thin', color: { argb: 'CBD5E1' } },
+            bottom: { style: 'thin', color: { argb: 'E2E8F0' } },
+            right: { style: 'thin', color: { argb: 'CBD5E1' } }
+          };
+
+          ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K'].forEach(col => {
+            const cell = worksheet.getCell(`${col}${rIdx}`);
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: rowBg } };
+            cell.border = thinBorder;
+            cell.font = { name: fontName, size: 9, color: { argb: '1E293B' } };
+            
+            if (['B', 'C', 'D', 'E', 'F', 'G', 'I', 'J'].includes(col)) {
+              cell.alignment = { horizontal: 'center', vertical: 'middle' };
+            } else {
+              cell.alignment = { horizontal: 'left', vertical: 'middle' };
+            }
+          });
+        });
+
+        // 5. Signature Boxes Block
+        const signRowStart = 11 + data.length + 2;
+        worksheet.getRow(signRowStart).height = 18;
+        worksheet.getRow(signRowStart + 1).height = 18;
+        worksheet.getRow(signRowStart + 2).height = 42; 
+        worksheet.getRow(signRowStart + 3).height = 24;
+
+        const writeSignatureBox = (col1: string, col2: string, titleLabel: string, nameVal: string, titleVal: string) => {
+          worksheet.mergeCells(`${col1}${signRowStart}:${col2}${signRowStart}`);
+          const tCell = worksheet.getCell(`${col1}${signRowStart}`);
+          tCell.value = titleLabel;
+          tCell.font = { name: fontName, size: 9, bold: true, color: { argb: 'FFFFFF' } };
+          tCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '475569' } };
+          tCell.alignment = { horizontal: 'center', vertical: 'middle' };
+
+          worksheet.mergeCells(`${col1}${signRowStart + 1}:${col2}${signRowStart + 1}`);
+          const sCell = worksheet.getCell(`${col1}${signRowStart + 1}`);
+          sCell.value = ' Signature / İmza:';
+          sCell.font = { name: fontName, size: 8, italic: true, color: { argb: '94A3B8' } };
+          sCell.alignment = { horizontal: 'left', vertical: 'top' };
+
+          worksheet.mergeCells(`${col1}${signRowStart + 2}:${col2}${signRowStart + 2}`);
+          worksheet.getCell(`${col1}${signRowStart + 2}`).value = '';
+
+          worksheet.mergeCells(`${col1}${signRowStart + 3}:${col2}${signRowStart + 3}`);
+          const iCell = worksheet.getCell(`${col1}${signRowStart + 3}`);
+          iCell.value = `Name: ${nameVal} (${titleVal})\nDate: ${dateStr}`;
+          iCell.font = { name: fontName, size: 8, bold: true, color: { argb: '1E293B' } };
+          iCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+
+          const boxBorder = {
+            top: { style: 'thin', color: { argb: '475569' } },
+            left: { style: 'thin', color: { argb: '475569' } },
+            bottom: { style: 'thin', color: { argb: '475569' } },
+            right: { style: 'thin', color: { argb: '475569' } }
+          };
+
+          for (let r = signRowStart; r <= signRowStart + 3; r++) {
+            worksheet.getCell(`${col1}${r}`).border = boxBorder;
+            worksheet.getCell(`${col2}${r}`).border = boxBorder;
+          }
+        };
+
+        writeSignatureBox('B', 'D', 'PREPARED BY / HAZIRLAYAN', 'Emir Özçakıcı', 'Geologist');
+        writeSignatureBox('F', 'H', 'DISPATCHED BY / GÖNDEREN', 'İsmailcan SEVER', 'Geologist');
+        writeSignatureBox('I', 'K', 'RECEIVED BY / TESLİM ALAN', 'ALS Laboratory', 'Receiver');
+
+        const mergeSignRanges = [
+          `B${signRowStart}:D${signRowStart}`, `B${signRowStart+1}:D${signRowStart+1}`, `B${signRowStart+2}:D${signRowStart+2}`, `B${signRowStart+3}:D${signRowStart+3}`,
+          `F${signRowStart}:H${signRowStart}`, `F${signRowStart+1}:H${signRowStart+1}`, `F${signRowStart+2}:H${signRowStart+2}`, `F${signRowStart+3}:H${signRowStart+3}`,
+          `I${signRowStart}:K${signRowStart}`, `I${signRowStart+1}:K${signRowStart+1}`, `I${signRowStart+2}:K${signRowStart+2}`, `I${signRowStart+3}:K${signRowStart+3}`
+        ];
+
+        mergeSignRanges.forEach(range => {
+          const firstCell = worksheet.getCell(range.split(':')[0]);
+          const rangeObj = worksheet.getRange(range);
+          rangeObj.forEach((cell: any) => {
+            cell.fill = firstCell.fill;
+            cell.font = firstCell.font;
+            cell.alignment = firstCell.alignment;
+            cell.border = firstCell.border;
+          });
+        });
+
+      } else {
+        // Fallback: Read from industrial template
+        const response = await fetch('/Numune_Teslim_Formu.xlsx');
+        if (!response.ok) {
+          throw new Error(`HTTP error fetching template! status: ${response.status}`);
         }
-      }
+        const arrayBuffer = await response.arrayBuffer();
+        await workbook.xlsx.load(arrayBuffer);
 
-      // Fill data
-      data.forEach((row, index) => {
-        const rIdx = 10 + index;
-        if (rIdx > 47) return;
+        worksheet = workbook.worksheets[0];
+        if (!worksheet) {
+          throw new Error('Template sheet not found.');
+        }
 
-        worksheet.getCell(rIdx, 2).value = row.sampleTag || (tabName === 'SamplePrepMetallic' ? `M${String(index + 1).padStart(4, '0')}` : `S${String(index + 1).padStart(4, '0')}`);
-        worksheet.getCell(rIdx, 3).value = row.oreType || ''; // Col C
-        worksheet.getCell(rIdx, 4).value = `${ruhsatAdi || 'ÇAMLICA'} - ${holeId || ''} KUYUSU`.toUpperCase();
-        worksheet.getCell(rIdx, 5).value = row.from !== undefined ? row.from : '';
-        worksheet.getCell(rIdx, 6).value = row.to !== undefined ? row.to : '';
+        // Write the date to Row 4 Col AD (Index 30)
+        const dateCell = worksheet.getCell(4, 30);
+        dateCell.value = `. . .${dd}. . /. .${mm} . . /. . ${yyyy} . . . `;
 
-        if (tabName === 'SamplePrepMetallic') {
-          worksheet.getCell(rIdx, 27).value = row.analysisCode || ''; // Col AA (Other analyses)
-        } else {
+        // Clear template rows 10 to 47
+        for (let r = 10; r <= 47; r++) {
+          for (let c = 2; c <= 30; c++) {
+            worksheet.getCell(r, c).value = null;
+          }
+        }
+
+        // Fill data
+        data.forEach((row, index) => {
+          const rIdx = 10 + index;
+          if (rIdx > 47) return;
+
+          worksheet.getCell(rIdx, 2).value = row.sampleTag || `S${String(index + 1).padStart(4, '0')}`;
+          worksheet.getCell(rIdx, 3).value = row.oreType || ''; // Col C
+          worksheet.getCell(rIdx, 4).value = `${ruhsatAdi || 'ÇAMLICA'} - ${holeId || ''} KUYUSU`.toUpperCase();
+          worksheet.getCell(rIdx, 5).value = row.from !== undefined ? row.from : '';
+          worksheet.getCell(rIdx, 6).value = row.to !== undefined ? row.to : '';
           worksheet.getCell(rIdx, 7).value = row.physical || ''; // Col G
 
           if (row.chemical === 'XRF' || row.chemical === 'XRF + XRD') {
@@ -575,19 +832,20 @@ export const GridTable: React.FC<GridTableProps> = ({
           } else {
             worksheet.getCell(rIdx, 27).value = '';
           }
-        }
 
-        worksheet.getCell(rIdx, 30).value = row.description || ''; // Col AD
-        
-        worksheet.getCell(rIdx, 29).value = 'X'; // normal priority (Col AC)
-      });
+          worksheet.getCell(rIdx, 30).value = row.description || ''; // Col AD
+          worksheet.getCell(rIdx, 29).value = 'X'; // normal priority (Col AC)
+        });
+      }
 
       const buffer = await workbook.xlsx.writeBuffer();
       const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${holeId || 'Drillhole'}_Numune_Teslim_Formu.xlsx`;
+      a.download = tabName === 'SamplePrepMetallic' 
+        ? `${holeId || 'Drillhole'}_Metalik_Numune_Teslim_Formu.xlsx`
+        : `${holeId || 'Drillhole'}_Numune_Teslim_Formu.xlsx`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);

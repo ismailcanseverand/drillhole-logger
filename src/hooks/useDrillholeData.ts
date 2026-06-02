@@ -45,6 +45,7 @@ export interface CollarState {
   dateCompleted: string;
   logger: string;
   status: 'Planned' | 'In Progress' | 'Completed';
+  project: string;
 }
 
 export interface SurveyState {
@@ -125,14 +126,33 @@ const EMPTY_COLLAR: CollarState = {
   dateStarted: '',
   dateCompleted: '',
   logger: '',
-  status: 'Planned'
+  status: 'Planned',
+  project: ''
 };
 
 const KNOWN_LOGGERS = ["İsmailcan SEVER", "Altan COŞKUN", "Levent CAN", "Mehmet KOLDANCI", "Muhammed KAYALIDAĞ", "Mustafa KAŞ", "Emir Özçakıcı"];
 
-function sanitizeLogger(logger: string | undefined | null): string {
-  if (!logger) return '';
-  return KNOWN_LOGGERS.includes(logger) ? logger : '';
+function sanitizeCollar(col: any): CollarState {
+  let project = col.project || '';
+  let logger = col.logger || '';
+  if (logger && !KNOWN_LOGGERS.includes(logger)) {
+    project = logger;
+    logger = '';
+  }
+  return {
+    holeId: col.holeId || col.hole_id || '',
+    easting: col.easting || 0,
+    northing: col.northing || 0,
+    elevation: col.elevation || 0,
+    totalDepth: col.totalDepth || col.total_depth || col.depth || 0,
+    dip: col.dip || -90,
+    azimuth: col.azimuth || 0,
+    dateStarted: col.dateStarted || col.date_started || '',
+    dateCompleted: col.dateCompleted || col.date_completed || '',
+    logger: KNOWN_LOGGERS.includes(logger) ? logger : '',
+    status: col.status || 'Planned',
+    project: project
+  };
 }
 
 export function useDrillholeData() {
@@ -217,19 +237,7 @@ export function useDrillholeData() {
             const { data: gData } = await client.from('geotechs').select('*').eq('hole_id', selectedHoleId);
             const { data: aData } = await client.from('assays').select('*').eq('hole_id', selectedHoleId);
 
-            setCollar({
-              holeId: collarData.hole_id,
-              easting: collarData.easting,
-              northing: collarData.northing,
-              elevation: collarData.elevation,
-              totalDepth: collarData.total_depth,
-              dip: collarData.dip,
-              azimuth: collarData.azimuth,
-              dateStarted: collarData.date_started || '',
-              dateCompleted: collarData.date_completed || '',
-              logger: sanitizeLogger(collarData.logger),
-              status: collarData.status || 'Planned'
-            });
+            setCollar(sanitizeCollar(collarData));
 
             setSurveys((sData || []).map((s: any) => ({
               id: s.id,
@@ -313,7 +321,7 @@ export function useDrillholeData() {
           localStorage.removeItem(`dh_${selectedHoleId}_sampleprep`);
           localStorage.removeItem(`dh_${selectedHoleId}_sampleprep_metallic`);
 
-          setCollar({ ...dbHole.collar, logger: sanitizeLogger(dbHole.collar?.logger) });
+          setCollar(sanitizeCollar(dbHole.collar));
           setSurveys(dbHole.surveys);
           setLithology(dbHole.lithology);
           setGeotech(dbHole.geotech);
@@ -321,7 +329,7 @@ export function useDrillholeData() {
           setSamplePrep([]);
           setSamplePrepMetallic([]);
         } else {
-          setCollar({ ...parsedCollar, logger: sanitizeLogger(parsedCollar.logger) });
+          setCollar(sanitizeCollar(parsedCollar));
           setSurveys(localSurveys ? JSON.parse(localSurveys) : []);
           setLithology(localLitho ? JSON.parse(localLitho) : []);
           setGeotech(localGeotech ? JSON.parse(localGeotech) : []);
@@ -332,10 +340,7 @@ export function useDrillholeData() {
       } else if (db[selectedHoleId]) {
         // Fallback: Read from the read-only JSON database templates
         const holeData = db[selectedHoleId];
-        setCollar({
-          ...holeData.collar,
-          logger: sanitizeLogger(holeData.collar?.logger)
-        });
+        setCollar(sanitizeCollar(holeData.collar));
 
         setSurveys(holeData.surveys);
         setLithology((holeData.lithology || []).map((l: any) => {
@@ -363,7 +368,8 @@ export function useDrillholeData() {
           dateStarted: '',
           dateCompleted: '',
           logger: '',
-          status: 'Planned'
+          status: 'Planned',
+          project: ''
         });
         setSurveys([
           { id: 's1', depth: 0, dip: -90, azimuth: 0 },
@@ -479,7 +485,8 @@ export function useDrillholeData() {
       dateStarted: '',
       dateCompleted: '',
       logger: '',
-      status: 'Planned'
+      status: 'Planned',
+      project: ''
     };
 
     const defaultSurveys: SurveyState[] = [
@@ -506,7 +513,8 @@ export function useDrillholeData() {
           dip: -90.0,
           azimuth: 0.0,
           logger: '',
-          status: 'Planned'
+          status: 'Planned',
+          project: ''
         });
         if (error) throw error;
       } catch (err) {
@@ -618,7 +626,8 @@ export function useDrillholeData() {
             date_started: collar.dateStarted,
             date_completed: collar.dateCompleted,
             logger: collar.logger,
-            status: collar.status
+            status: collar.status,
+            project: collar.project
           });
           if (insertErr) throw insertErr;
           
@@ -691,7 +700,8 @@ export function useDrillholeData() {
         dateStarted: '',
         dateCompleted: '',
         logger: '',
-        status: 'Planned'
+        status: 'Planned',
+        project: ''
       });
       setSurveys([]);
       setLithology([]);
@@ -736,8 +746,9 @@ export function useDrillholeData() {
           dbCollar.azimuth === collar.azimuth &&
           (dbCollar.date_started || '') === collar.dateStarted &&
           (dbCollar.date_completed || '') === collar.dateCompleted &&
-          !["İsmailcan SEVER", "Altan COŞKUN", "Levent CAN", "Mehmet KOLDANCI", "Muhammed KAYALIDAĞ", "Mustafa KAŞ", "Emir Özçakıcı"].includes(collar.logger) && collar.logger && (
-          (dbCollar.status || '') === collar.status);
+          (dbCollar.logger || '') === collar.logger &&
+          (dbCollar.status || '') === collar.status &&
+          (dbCollar.project || '') === collar.project;
 
         // 2. Compare Surveys
         const cleanDbSurveys = (dbSurveys || []).map((s: any) => ({ depth: s.depth, dip: s.dip, azimuth: s.azimuth }));
@@ -793,7 +804,9 @@ export function useDrillholeData() {
       }
 
       // 1. Upsert Collar
-      const { error: collarErr } = await client.from('collars').upsert({
+      // We will prepare the upsert payload. Since 'project' column might be added in SQL editor by the user,
+      // we'll try upserting with project. If it fails, we fall back to upserting without project.
+      const collarPayload: any = {
         hole_id: collar.holeId,
         easting: collar.easting,
         northing: collar.northing,
@@ -804,8 +817,26 @@ export function useDrillholeData() {
         date_started: collar.dateStarted,
         date_completed: collar.dateCompleted,
         logger: collar.logger,
-        status: collar.status
-      });
+        status: collar.status,
+        project: collar.project
+      };
+
+      let collarErr = null;
+      try {
+        const { error } = await client.from('collars').upsert(collarPayload);
+        if (error) collarErr = error;
+      } catch (err: any) {
+        collarErr = err;
+      }
+
+      if (collarErr) {
+        // Fallback: retry without project field if column is missing
+        console.warn('Upsert with project failed. Retrying without project field...', collarErr);
+        const fallbackPayload = { ...collarPayload };
+        delete fallbackPayload.project;
+        const { error: fallbackErr } = await client.from('collars').upsert(fallbackPayload);
+        if (fallbackErr) throw fallbackErr;
+      }
 
       if (collarErr) throw collarErr;
 

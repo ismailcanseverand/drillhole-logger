@@ -80,12 +80,24 @@ export const CollarTab: React.FC<CollarTabProps> = ({ collar, setCollar, errors,
                 }}
                 className={getFieldError('holeId') ? 'input-error' : ''}
                 style={{ fontWeight: 'bold', color: 'var(--primary)' }}
-                placeholder="e.g. CYHN-33"
+                placeholder="Input text here..."
               />
               <span style={{ fontSize: '10px', color: 'var(--text-muted)', display: 'block', marginTop: '2px' }}>
                 Press Enter or click away to rename the drillhole.
               </span>
               {getFieldError('holeId') && <span className="field-error-msg">{getFieldError('holeId')}</span>}
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="project">Project Name</label>
+              <input
+                type="text"
+                id="project"
+                name="project"
+                value={collar.project || ''}
+                onChange={handleChange}
+                placeholder="Input text here..."
+              />
             </div>
 
             <div className="form-group">

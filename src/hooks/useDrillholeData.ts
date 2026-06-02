@@ -102,6 +102,17 @@ export interface SamplePreparationState {
   physical: string;
 }
 
+export interface SamplePreparationMetallicState {
+  id: string;
+  sampleTag: string;
+  from: number;
+  to: number;
+  oreType: string;
+  description: string;
+  analysisCode: string;
+}
+
+
 // Initial empty states before loading data
 const EMPTY_COLLAR: CollarState = {
   holeId: 'Select a Drillhole',
@@ -137,6 +148,7 @@ export function useDrillholeData() {
   const [geotech, setGeotech] = useState<GeotechState[]>([]);
   const [assays, setAssays] = useState<AssayState[]>([]);
   const [samplePrep, setSamplePrep] = useState<SamplePreparationState[]>([]);
+  const [samplePrepMetallic, setSamplePrepMetallic] = useState<SamplePreparationMetallicState[]>([]);
 
   const [errors, setErrors] = useState<ValidationError[]>([]);
   const [trace, setTrace] = useState<Coordinates3D[]>([]);
@@ -279,6 +291,7 @@ export function useDrillholeData() {
       const localGeotech = localStorage.getItem(`dh_${selectedHoleId}_geotech`);
       const localAssays = localStorage.getItem(`dh_${selectedHoleId}_assays`);
       const localSamplePrep = localStorage.getItem(`dh_${selectedHoleId}_sampleprep`);
+      const localSamplePrepMetallic = localStorage.getItem(`dh_${selectedHoleId}_sampleprep_metallic`);
 
       if (localCollar) {
         const parsedCollar = JSON.parse(localCollar);
@@ -298,6 +311,7 @@ export function useDrillholeData() {
           localStorage.removeItem(`dh_${selectedHoleId}_geotech`);
           localStorage.removeItem(`dh_${selectedHoleId}_assays`);
           localStorage.removeItem(`dh_${selectedHoleId}_sampleprep`);
+          localStorage.removeItem(`dh_${selectedHoleId}_sampleprep_metallic`);
 
           setCollar({ ...dbHole.collar, logger: sanitizeLogger(dbHole.collar?.logger) });
           setSurveys(dbHole.surveys);
@@ -305,6 +319,7 @@ export function useDrillholeData() {
           setGeotech(dbHole.geotech);
           setAssays(dbHole.assays);
           setSamplePrep([]);
+          setSamplePrepMetallic([]);
         } else {
           setCollar({ ...parsedCollar, logger: sanitizeLogger(parsedCollar.logger) });
           setSurveys(localSurveys ? JSON.parse(localSurveys) : []);
@@ -312,6 +327,7 @@ export function useDrillholeData() {
           setGeotech(localGeotech ? JSON.parse(localGeotech) : []);
           setAssays(localAssays ? JSON.parse(localAssays) : []);
           setSamplePrep(localSamplePrep ? JSON.parse(localSamplePrep) : []);
+          setSamplePrepMetallic(localSamplePrepMetallic ? JSON.parse(localSamplePrepMetallic) : []);
         }
       } else if (db[selectedHoleId]) {
         // Fallback: Read from the read-only JSON database templates
@@ -333,6 +349,7 @@ export function useDrillholeData() {
         setGeotech(holeData.geotech);
         setAssays(holeData.assays);
         setSamplePrep([]);
+        setSamplePrepMetallic([]);
       } else {
         // Initialize an empty template for newly created holes
         setCollar({
@@ -356,6 +373,7 @@ export function useDrillholeData() {
         setGeotech([]);
         setAssays([]);
         setSamplePrep([]);
+        setSamplePrepMetallic([]);
       }
     };
 
@@ -392,6 +410,11 @@ export function useDrillholeData() {
     if (!selectedHoleId || collar.holeId !== selectedHoleId) return;
     localStorage.setItem(`dh_${selectedHoleId}_sampleprep`, JSON.stringify(samplePrep));
   }, [samplePrep, selectedHoleId, collar.holeId]);
+
+  useEffect(() => {
+    if (!selectedHoleId || collar.holeId !== selectedHoleId) return;
+    localStorage.setItem(`dh_${selectedHoleId}_sampleprep_metallic`, JSON.stringify(samplePrepMetallic));
+  }, [samplePrepMetallic, selectedHoleId, collar.holeId]);
 
   // 4. Trace calculations and validation routines
   useEffect(() => {
@@ -471,6 +494,7 @@ export function useDrillholeData() {
     localStorage.setItem(`dh_${cleaned}_geotech`, JSON.stringify([]));
     localStorage.setItem(`dh_${cleaned}_assays`, JSON.stringify([]));
     localStorage.setItem(`dh_${cleaned}_sampleprep`, JSON.stringify([]));
+    localStorage.setItem(`dh_${cleaned}_sampleprep_metallic`, JSON.stringify([]));
 
     // If Supabase is connected, insert new collar record directly
     const client = getSupabaseClient();
@@ -549,12 +573,17 @@ export function useDrillholeData() {
     const samplePrepKeyNew = `dh_${cleanedNew}_sampleprep`;
     const localSamplePrepStr = localStorage.getItem(samplePrepKeyOld);
 
+    const samplePrepMetallicKeyOld = `dh_${cleanedOld}_sampleprep_metallic`;
+    const samplePrepMetallicKeyNew = `dh_${cleanedNew}_sampleprep_metallic`;
+    const localSamplePrepMetallicStr = localStorage.getItem(samplePrepMetallicKeyOld);
+
     localStorage.setItem(collarKeyNew, JSON.stringify(updatedCollar));
     if (localSurveysStr) localStorage.setItem(surveysKeyNew, localSurveysStr);
     if (localLithoStr) localStorage.setItem(lithoKeyNew, localLithoStr);
     if (localGeotechStr) localStorage.setItem(geotechKeyNew, localGeotechStr);
     if (localAssaysStr) localStorage.setItem(assaysKeyNew, localAssaysStr);
     if (localSamplePrepStr) localStorage.setItem(samplePrepKeyNew, localSamplePrepStr);
+    if (localSamplePrepMetallicStr) localStorage.setItem(samplePrepMetallicKeyNew, localSamplePrepMetallicStr);
     
     localStorage.removeItem(collarKeyOld);
     localStorage.removeItem(surveysKeyOld);
@@ -562,6 +591,7 @@ export function useDrillholeData() {
     localStorage.removeItem(geotechKeyOld);
     localStorage.removeItem(assaysKeyOld);
     localStorage.removeItem(samplePrepKeyOld);
+    localStorage.removeItem(samplePrepMetallicKeyOld);
     
     // 2. Update database (Supabase) if connected
     const client = getSupabaseClient();
@@ -635,6 +665,7 @@ export function useDrillholeData() {
         localStorage.removeItem(`dh_${selectedHoleId}_geotech`);
         localStorage.removeItem(`dh_${selectedHoleId}_assays`);
         localStorage.removeItem(`dh_${selectedHoleId}_sampleprep`);
+        localStorage.removeItem(`dh_${selectedHoleId}_sampleprep_metallic`);
         
         setCollar(holeData.collar);
         setSurveys(holeData.surveys);
@@ -642,6 +673,7 @@ export function useDrillholeData() {
         setGeotech(holeData.geotech);
         setAssays(holeData.assays);
         setSamplePrep([]);
+        setSamplePrepMetallic([]);
       }
     }
   };
@@ -666,6 +698,7 @@ export function useDrillholeData() {
       setGeotech([]);
       setAssays([]);
       setSamplePrep([]);
+      setSamplePrepMetallic([]);
     }
   };
   const saveActiveHoleToSupabase = async (): Promise<{ success: boolean; message: string }> => {
@@ -870,6 +903,8 @@ export function useDrillholeData() {
     setAssays,
     samplePrep,
     setSamplePrep,
+    samplePrepMetallic,
+    setSamplePrepMetallic,
     errors,
     trace,
     resetToDefault,

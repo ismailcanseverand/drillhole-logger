@@ -35,6 +35,8 @@ function App() {
     setAssays,
     samplePrep,
     setSamplePrep,
+    samplePrepMetallic,
+    setSamplePrepMetallic,
     errors,
     resetToDefault,
     clearAllData,
@@ -229,16 +231,46 @@ function App() {
     }
   ], []);
 
+  // Define Columns for Sample Preparation Metallic Tab
+  const samplePrepMetallicColumns = useMemo<GridColumn[]>(() => [
+    { key: 'sampleTag', label: 'Sample Tag', type: 'text', width: '12%', defaultValue: 'M0001' },
+    { key: 'from', label: 'Depth From (m)', type: 'number', width: '10%', defaultValue: 0 },
+    { key: 'to', label: 'Depth To (m)', type: 'number', width: '10%', defaultValue: 0 },
+    { key: 'oreType', label: 'Ore Type', type: 'text', width: '15%', defaultValue: '', placeholder: 'Şist, Kil...' },
+    { key: 'description', label: 'Description', type: 'text', width: '25%', defaultValue: '', placeholder: 'Altered Gnays, albitic...' },
+    {
+      key: 'analysisCode',
+      label: 'ALS Analysis Code',
+      type: 'select',
+      width: '28%',
+      defaultValue: 'Au-SCR24',
+      options: [
+        { value: 'Au-SCR21', label: 'Au-SCR21 (Metallic Screen FA, 30g)' },
+        { value: 'Au-SCR24', label: 'Au-SCR24 (Metallic Screen FA, 50g)' },
+        { value: 'Au-AA23', label: 'Au-AA23 (Gold FA & AAS, 30g)' },
+        { value: 'Au-AA24', label: 'Au-AA24 (Gold FA & AAS, 50g)' },
+        { value: 'Au-GRA21', label: 'Au-GRA21 (Gold FA & Grav, 30g)' },
+        { value: 'Au-GRA22', label: 'Au-GRA22 (Gold FA & Grav, 50g)' },
+        { value: 'ME-ICP61', label: 'ME-ICP61 (33 Elements 4-Acid)' },
+        { value: 'ME-MS61', label: 'ME-MS61 (48 Elements 4-Acid)' },
+        { value: 'ME-XRF26', label: 'ME-XRF26 (Whole Rock XRF)' },
+        { value: 'S-IR08', label: 'S-IR08 (Total Sulfur Leco)' }
+      ]
+    }
+  ], []);
+
   // Count errors by tab for rendering notification badges in headers
   const getTabErrorCount = (tabName: string) => {
     let mapping = tabName;
     if (tabName === 'TCR / RQD') mapping = 'Geotech';
+    if (tabName === 'Sample Prep Metallic') mapping = 'SamplePrepMetallic';
     return errors.filter(e => e.tab === mapping).length;
   };
 
   const getBadgeClass = (tabName: string) => {
     let mapping = tabName;
     if (tabName === 'TCR / RQD') mapping = 'Geotech';
+    if (tabName === 'Sample Prep Metallic') mapping = 'SamplePrepMetallic';
     const errList = errors.filter(e => e.tab === mapping);
     if (errList.some(e => e.type === 'error')) return 'badge badge-danger';
     if (errList.some(e => e.type === 'warning')) return 'badge badge-warning';
@@ -338,7 +370,7 @@ function App() {
         {/* Data Log Editor (Left, 60% Width) */}
         <section className="data-entry-panel">
           <nav className="tab-navigation">
-            {['Collar', 'Survey', 'Lithology', 'TCR / RQD', 'Assay', 'Sample Preparation', 'QA/QC Dashboard'].map(tab => {
+            {['Collar', 'Survey', 'Lithology', 'TCR / RQD', 'Assay', 'Sample Preparation', 'Sample Prep Metallic', 'QA/QC Dashboard'].map(tab => {
               const errCount = getTabErrorCount(tab);
               return (
                 <button
@@ -422,6 +454,20 @@ function App() {
                 onChange={setSamplePrep}
                 errors={errors}
                 tabName="SamplePrep"
+                autoFillNextFrom={true}
+                highlightedRowId={highlightedRowId}
+                holeId={selectedHoleId}
+              />
+            )}
+
+            {activeTab === 'Sample Prep Metallic' && (
+              <GridTable
+                title="Sample Preparation & Metallic Screen Log"
+                columns={samplePrepMetallicColumns}
+                data={samplePrepMetallic}
+                onChange={setSamplePrepMetallic}
+                errors={errors}
+                tabName="SamplePrepMetallic"
                 autoFillNextFrom={true}
                 highlightedRowId={highlightedRowId}
                 holeId={selectedHoleId}

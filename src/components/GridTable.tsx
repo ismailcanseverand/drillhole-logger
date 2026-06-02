@@ -21,7 +21,7 @@ interface GridTableProps {
   data: Array<any>;
   onChange: (newData: Array<any>) => void;
   errors: ValidationError[];
-  tabName: 'Survey' | 'Lithology' | 'Geotech' | 'Assay' | 'SamplePrep';
+  tabName: 'Survey' | 'Lithology' | 'Geotech' | 'Assay' | 'SamplePrep' | 'SamplePrepMetallic';
   autoFillNextFrom?: boolean; // automatically prefill 'from' of new row with 'to' of last row
   highlightedRowId?: string | null;
   holeId?: string;
@@ -365,8 +365,8 @@ export const GridTable: React.FC<GridTableProps> = ({
       }
     }
 
-    // For SamplePrep, let's auto-increment Sample Tag
-    if (tabName === 'SamplePrep' && lastRow && lastRow.sampleTag) {
+    // For SamplePrep & SamplePrepMetallic, let's auto-increment Sample Tag
+    if ((tabName === 'SamplePrep' || tabName === 'SamplePrepMetallic') && lastRow && lastRow.sampleTag) {
       const match = lastRow.sampleTag.match(/^([a-zA-Z_-]*?)(\d+)$/);
       if (match) {
         const prefix = match[1];
@@ -539,37 +539,42 @@ export const GridTable: React.FC<GridTableProps> = ({
         const rIdx = 10 + index;
         if (rIdx > 47) return;
 
-        worksheet.getCell(rIdx, 2).value = row.sampleTag || `S${String(index + 1).padStart(4, '0')}`;
+        worksheet.getCell(rIdx, 2).value = row.sampleTag || (tabName === 'SamplePrepMetallic' ? `M${String(index + 1).padStart(4, '0')}` : `S${String(index + 1).padStart(4, '0')}`);
         worksheet.getCell(rIdx, 3).value = row.oreType || ''; // Col C
         worksheet.getCell(rIdx, 4).value = `${ruhsatAdi || 'ÇAMLICA'} - ${holeId || ''} KUYUSU`.toUpperCase();
         worksheet.getCell(rIdx, 5).value = row.from !== undefined ? row.from : '';
         worksheet.getCell(rIdx, 6).value = row.to !== undefined ? row.to : '';
-        worksheet.getCell(rIdx, 7).value = row.physical || ''; // Col G
 
-        if (row.chemical === 'XRF' || row.chemical === 'XRF + XRD') {
-          worksheet.getCell(rIdx, 24).value = 'X'; // Col X
-        }
-
-        const otherChem = row.otherChemical || '';
-        if (otherChem.includes('SO4')) {
-          worksheet.getCell(rIdx, 25).value = 'X'; // Col Y
-        }
-
-        const otherAnalyses: string[] = [];
-        if (row.chemical === 'XRD' || row.chemical === 'XRF + XRD') {
-          otherAnalyses.push('XRD');
-        }
-        if (otherChem.includes('Mn')) {
-          otherAnalyses.push('Mn');
-        }
-        if (otherChem.includes('Cr')) {
-          otherAnalyses.push('Cr');
-        }
-
-        if (otherAnalyses.length > 0) {
-          worksheet.getCell(rIdx, 27).value = otherAnalyses.join(', '); // Col AA
+        if (tabName === 'SamplePrepMetallic') {
+          worksheet.getCell(rIdx, 27).value = row.analysisCode || ''; // Col AA (Other analyses)
         } else {
-          worksheet.getCell(rIdx, 27).value = '';
+          worksheet.getCell(rIdx, 7).value = row.physical || ''; // Col G
+
+          if (row.chemical === 'XRF' || row.chemical === 'XRF + XRD') {
+            worksheet.getCell(rIdx, 24).value = 'X'; // Col X
+          }
+
+          const otherChem = row.otherChemical || '';
+          if (otherChem.includes('SO4')) {
+            worksheet.getCell(rIdx, 25).value = 'X'; // Col Y
+          }
+
+          const otherAnalyses: string[] = [];
+          if (row.chemical === 'XRD' || row.chemical === 'XRF + XRD') {
+            otherAnalyses.push('XRD');
+          }
+          if (otherChem.includes('Mn')) {
+            otherAnalyses.push('Mn');
+          }
+          if (otherChem.includes('Cr')) {
+            otherAnalyses.push('Cr');
+          }
+
+          if (otherAnalyses.length > 0) {
+            worksheet.getCell(rIdx, 27).value = otherAnalyses.join(', '); // Col AA
+          } else {
+            worksheet.getCell(rIdx, 27).value = '';
+          }
         }
 
         worksheet.getCell(rIdx, 30).value = row.description || ''; // Col AD
@@ -606,7 +611,7 @@ export const GridTable: React.FC<GridTableProps> = ({
         </div>
 
         <div className="grid-actions" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          {tabName === 'SamplePrep' && (
+          {(tabName === 'SamplePrep' || tabName === 'SamplePrepMetallic') && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginRight: '10px' }}>
               <label style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>Ruhsat Adı:</label>
               <input
@@ -627,7 +632,7 @@ export const GridTable: React.FC<GridTableProps> = ({
             </div>
           )}
 
-          {tabName === 'SamplePrep' && (
+          {(tabName === 'SamplePrep' || tabName === 'SamplePrepMetallic') && (
             <button className="btn btn-success btn-sm" onClick={handleExportLabForm} style={{ background: '#10b981', borderColor: '#10b981', color: '#fff' }}>
               <Download size={14} /> Export Lab Form
             </button>

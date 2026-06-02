@@ -671,7 +671,7 @@ export const GridTable: React.FC<GridTableProps> = ({
         // 1. Title Block
         worksheet.mergeCells('B2:K2');
         const titleCell = worksheet.getCell('B2');
-        titleCell.value = 'KALE MADENCİLİK SANAYİ VE TİCARET A.Ş.';
+        titleCell.value = 'KALEMADEN ENDÜSTRİYEL HAMMADDELER SAN. VE TİC. A.Ş.';
         titleCell.font = { name: fontName, size: 15, bold: true, color: { argb: 'FFFFFF' } };
         titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
         titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: headerBg } };

@@ -9,6 +9,7 @@ interface ColumnLogProps {
   assays: AssayState[];
   onItemClick?: (tab: string, itemId: string) => void;
   holeId?: string;
+  collar?: any;
 }
 
 interface ColumnConfig {
@@ -59,6 +60,7 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
   assays,
   onItemClick,
   holeId,
+  collar,
 }) => {
   const isMetallic = holeId ? METALLIC_HOLES.includes(holeId.trim().toUpperCase()) : false;
   const analytesList = isMetallic ? METALLIC_ANALYTES : INDUSTRIAL_ANALYTES;
@@ -72,17 +74,93 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
   const headerSvgRef = useRef<SVGSVGElement>(null);
   const bodySvgRef = useRef<SVGSVGElement>(null);
 
-  const handleExportSVG = () => {
+  const generateExportedSvgXml = (): { svgXml: string; totalHeight: number } | null => {
     const headerSvg = headerSvgRef.current;
     const bodySvg = bodySvgRef.current;
     if (!headerSvg || !bodySvg) {
-      alert("Charts not rendered yet!");
-      return;
+      return null;
     }
 
+    const titleHeight = 110;
+    const spacing = 15;
     const headerHeightVal = headerHeight;
     const bodyHeightVal = Math.max(200, totalDepth * scaleY) + bodyPaddingTop;
-    const totalHeight = headerHeightVal + bodyHeightVal;
+
+    // Collar variables
+    const project = collar?.project || 'N/A';
+    const holeIdVal = holeId || collar?.holeId || 'N/A';
+    const easting = collar?.easting !== undefined ? `${collar.easting} mE` : 'N/A';
+    const northing = collar?.northing !== undefined ? `${collar.northing} mN` : 'N/A';
+    const elevation = collar?.elevation !== undefined ? `${collar.elevation} m` : 'N/A';
+    const dipAzimuth = collar?.dip !== undefined && collar?.azimuth !== undefined ? `${collar.dip}° / ${collar.azimuth}°` : 'N/A';
+    const logger = collar?.logger || 'N/A';
+    const dates = collar?.dateStarted && collar?.dateCompleted 
+      ? `${collar.dateStarted} to ${collar.dateCompleted}` 
+      : (collar?.dateStarted || collar?.dateCompleted || 'N/A');
+
+    // Build unique legend keys
+    const uniqueCodes = Array.from(new Set(lithology.map(l => l.rockCode.trim()).filter(Boolean)));
+    const cols = 3;
+    const colWidth = Math.floor((svgWidth - 20) / cols);
+    const legendRowHeight = 22;
+
+    const allLegendItems: string[] = [];
+    
+    // Lithology
+    uniqueCodes.forEach(code => {
+      const patternUrl = getRockPatternUrl(code);
+      const label = getRockLabel(code);
+      allLegendItems.push(`
+        <rect x="0" y="2" width="16" height="12" rx="2" fill="${patternUrl}" stroke="#1e293b" stroke-width="0.5" />
+        <text x="22" y="11" font-size="9" font-weight="600" fill="#f1f5f9" font-family="'Plus Jakarta Sans', system-ui, sans-serif">${label}</text>
+      `);
+    });
+
+    // Geotech TCR / RQD
+    if (colPositions['geotech']?.visible) {
+      allLegendItems.push(`
+        <rect x="0" y="2" width="16" height="12" rx="2" fill="#3b82f6" fill-opacity="0.1" stroke="none" />
+        <line x1="0" y1="8" x2="16" y2="8" stroke="#3b82f6" stroke-width="2" stroke-dasharray="2,1" />
+        <text x="22" y="11" font-size="9" font-weight="600" fill="#f1f5f9" font-family="'Plus Jakarta Sans', system-ui, sans-serif">TCR (Recovery %)</text>
+      `);
+      allLegendItems.push(`
+        <line x1="0" y1="8" x2="16" y2="8" stroke="#ff9800" stroke-width="2" />
+        <circle cx="8" cy="8" r="3.5" fill="#ff9800" stroke="#ffffff" stroke-width="0.75" />
+        <text x="22" y="11" font-size="9" font-weight="600" fill="#f1f5f9" font-family="'Plus Jakarta Sans', system-ui, sans-serif">RQD (Quality %)</text>
+      `);
+    }
+
+    // Assays
+    if (colPositions['assays']?.visible) {
+      selectedAnalytes.forEach(key => {
+        const analyteDetails = analytesList.find(an => an.key === key);
+        if (analyteDetails) {
+          if (visualStyle === 'bars') {
+            allLegendItems.push(`
+              <rect x="0" y="2" width="16" height="12" rx="2" fill="${analyteDetails.color}" fill-opacity="0.3" stroke="${analyteDetails.color}" stroke-width="1.5" />
+              <text x="22" y="11" font-size="9" font-weight="600" fill="#f1f5f9" font-family="'Plus Jakarta Sans', system-ui, sans-serif">${analyteDetails.label}</text>
+            `);
+          } else {
+            allLegendItems.push(`
+              <line x1="0" y1="8" x2="16" y2="8" stroke="${analyteDetails.color}" stroke-width="1.5" />
+              <circle cx="8" cy="8" r="3" fill="${analyteDetails.color}" stroke="#ffffff" stroke-width="0.5" />
+              <text x="22" y="11" font-size="9" font-weight="600" fill="#f1f5f9" font-family="'Plus Jakarta Sans', system-ui, sans-serif">${analyteDetails.label}</text>
+            `);
+          }
+        }
+      });
+    }
+
+    const legendHeightVal = Math.max(40, Math.ceil(allLegendItems.length / cols) * legendRowHeight + 35);
+    const totalHeight = titleHeight + spacing + headerHeightVal + bodyHeightVal + spacing + legendHeightVal;
+
+    const legendGridXml = allLegendItems.map((itemXml, idx) => {
+      const colIdx = idx % cols;
+      const rowIdx = Math.floor(idx / cols);
+      const x = 10 + colIdx * colWidth;
+      const y = 30 + rowIdx * legendRowHeight;
+      return `<g transform="translate(${x}, ${y})">${itemXml}</g>`;
+    }).join('\n');
 
     const headerClone = headerSvg.cloneNode(true) as SVGSVGElement;
     const bodyClone = bodySvg.cloneNode(true) as SVGSVGElement;
@@ -95,26 +173,89 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
     const defsXml = defsElement ? defsElement.outerHTML : '';
     if (defsElement) defsElement.remove();
 
-    const svgXml = `
+    // Responsive metadata X placement
+    const col1X = 15;
+    const col2X = Math.round(svgWidth * 0.36);
+    const col3X = Math.round(svgWidth * 0.68);
+
+    let svgXml = `
 <svg xmlns="http://www.w3.org/2000/svg" width="${svgWidth}" height="${totalHeight}">
   <style>
-    text { font-family: var(--font-primary, 'Plus Jakarta Sans', sans-serif); fill: #94a3b8; }
+    text { font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; fill: #94a3b8; }
     .readonly-value { fill: #94a3b8; }
     line { stroke: #1e293b; }
   </style>
   ${defsXml}
-  <rect width="${svgWidth}" height="${totalHeight}" fill="#0f172a" />
-  <g id="header-group">
+  <rect width="${svgWidth}" height="${totalHeight}" fill="#090d16" />
+  
+  <!-- Title Card Group -->
+  <g id="title-card" transform="translate(0, 10)">
+    <rect x="2" y="0" width="${svgWidth - 4}" height="90" rx="6" fill="#0f172a" stroke="#1e293b" stroke-width="1" />
+    
+    <!-- Column 1: Identity -->
+    <text x="${col1X}" y="22" font-size="8" font-weight="bold" fill="#64748b">PROJECT</text>
+    <text x="${col1X}" y="36" font-size="12" font-weight="800" fill="#ffffff">${project}</text>
+    <text x="${col1X}" y="56" font-size="8" font-weight="bold" fill="#64748b">HOLE ID</text>
+    <text x="${col1X}" y="72" font-size="13" font-weight="800" fill="#3b82f6">${holeIdVal}</text>
+    
+    <!-- Column 2: Location Coordinates -->
+    <text x="${col2X}" y="22" font-size="8" font-weight="bold" fill="#64748b">EASTING (X)</text>
+    <text x="${col2X}" y="34" font-size="10" font-weight="bold" fill="#f1f5f9">${easting}</text>
+    <text x="${col2X}" y="48" font-size="8" font-weight="bold" fill="#64748b">NORTHING (Y)</text>
+    <text x="${col2X}" y="60" font-size="10" font-weight="bold" fill="#f1f5f9">${northing}</text>
+    <text x="${col2X}" y="74" font-size="8" font-weight="bold" fill="#64748b">ELEVATION (Z)</text>
+    <text x="${col2X + 75}" y="74" font-size="10" font-weight="bold" fill="#f1f5f9">${elevation}</text>
+    
+    <!-- Column 3: Drilling Details -->
+    <text x="${col3X}" y="22" font-size="8" font-weight="bold" fill="#64748b">DIP / AZIMUTH</text>
+    <text x="${col3X}" y="34" font-size="10" font-weight="bold" fill="#f1f5f9">${dipAzimuth}</text>
+    <text x="${col3X}" y="48" font-size="8" font-weight="bold" fill="#64748b">LOGGER</text>
+    <text x="${col3X}" y="60" font-size="10" font-weight="bold" fill="#f1f5f9">${logger}</text>
+    <text x="${col3X}" y="74" font-size="8" font-weight="bold" fill="#64748b">DATES</text>
+    <text x="${col3X + 38}" y="74" font-size="8.5" font-weight="bold" fill="#94a3b8">${dates}</text>
+  </g>
+
+  <!-- Header Column Group -->
+  <g id="header-group" transform="translate(0, ${titleHeight + spacing})">
     ${headerClone.innerHTML}
   </g>
-  <g id="body-group" transform="translate(0, ${headerHeightVal})">
+
+  <!-- Body Column Group -->
+  <g id="body-group" transform="translate(0, ${titleHeight + spacing + headerHeightVal})">
     <rect width="${svgWidth}" height="${bodyHeightVal}" fill="#0b0f19" />
     ${bodyClone.innerHTML}
+  </g>
+
+  <!-- Legend Group -->
+  <g id="legend-group" transform="translate(0, ${titleHeight + spacing + headerHeightVal + bodyHeightVal + spacing})">
+    <rect x="2" y="0" width="${svgWidth - 4}" height="${legendHeightVal - 10}" rx="6" fill="#0f172a" stroke="#1e293b" stroke-width="1" />
+    <text x="12" y="18" font-size="8" font-weight="bold" fill="#64748b" letter-spacing="1">MAP LEGEND & KEYS</text>
+    ${legendGridXml}
   </g>
 </svg>
     `.trim();
 
-    const blob = new Blob([svgXml], { type: 'image/svg+xml;charset=utf-8' });
+    // Resolve CSS variables in the output SVG
+    svgXml = svgXml
+      .replace(/var\(--border-light\)/g, '#1e293b')
+      .replace(/var\(--border-medium\)/g, '#334155')
+      .replace(/var\(--text-main\)/g, '#f1f5f9')
+      .replace(/var\(--bg-card\)/g, '#0f172a')
+      .replace(/var\(--bg-app\)/g, '#090d16')
+      .replace(/var\(--primary\)/g, '#3b82f6')
+      .replace(/var\(--primary-light\)/g, 'rgba(59, 130, 246, 0.2)');
+
+    return { svgXml, totalHeight };
+  };
+
+  const handleExportSVG = () => {
+    const result = generateExportedSvgXml();
+    if (!result) {
+      alert("Charts not rendered yet!");
+      return;
+    }
+
+    const blob = new Blob([result.svgXml], { type: 'image/svg+xml;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -126,56 +267,23 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
   };
 
   const handleExportPNG = () => {
-    const headerSvg = headerSvgRef.current;
-    const bodySvg = bodySvgRef.current;
-    if (!headerSvg || !bodySvg) return;
-
-    const headerHeightVal = headerHeight;
-    const bodyHeightVal = Math.max(200, totalDepth * scaleY) + bodyPaddingTop;
-    const totalHeight = headerHeightVal + bodyHeightVal;
-
-    const headerClone = headerSvg.cloneNode(true) as SVGSVGElement;
-    const bodyClone = bodySvg.cloneNode(true) as SVGSVGElement;
-
-    // Set backgrounds explicitly
-    headerClone.style.background = '#0f172a';
-    bodyClone.style.background = '#0b0f19';
-
-    const defsElement = bodyClone.querySelector('defs');
-    const defsXml = defsElement ? defsElement.outerHTML : '';
-    if (defsElement) defsElement.remove();
-
-    const svgXml = `
-<svg xmlns="http://www.w3.org/2000/svg" width="${svgWidth}" height="${totalHeight}">
-  <style>
-    text { font-family: var(--font-primary, 'Plus Jakarta Sans', sans-serif); fill: #94a3b8; }
-    .readonly-value { fill: #94a3b8; }
-    line { stroke: #1e293b; }
-  </style>
-  ${defsXml}
-  <rect width="${svgWidth}" height="${totalHeight}" fill="#0f172a" />
-  <g id="header-group">
-    ${headerClone.innerHTML}
-  </g>
-  <g id="body-group" transform="translate(0, ${headerHeightVal})">
-    <rect width="${svgWidth}" height="${bodyHeightVal}" fill="#0b0f19" />
-    ${bodyClone.innerHTML}
-  </g>
-</svg>
-    `.trim();
+    const result = generateExportedSvgXml();
+    if (!result) return;
 
     const img = new Image();
-    const svgBlob = new Blob([svgXml], { type: 'image/svg+xml;charset=utf-8' });
+    const svgBlob = new Blob([result.svgXml], { type: 'image/svg+xml;charset=utf-8' });
     const url = URL.createObjectURL(svgBlob);
 
     img.onload = () => {
+      const scale = 2; // High-DPI 2x scale
       const canvas = document.createElement('canvas');
-      canvas.width = svgWidth;
-      canvas.height = totalHeight;
+      canvas.width = svgWidth * scale;
+      canvas.height = result.totalHeight * scale;
       const ctx = canvas.getContext('2d');
       if (ctx) {
-        ctx.fillStyle = '#0b0f19';
-        ctx.fillRect(0, 0, svgWidth, totalHeight);
+        ctx.scale(scale, scale);
+        ctx.fillStyle = '#090d16'; // background color matching the wrapper rect
+        ctx.fillRect(0, 0, svgWidth, result.totalHeight);
         ctx.drawImage(img, 0, 0);
 
         canvas.toBlob((blob) => {

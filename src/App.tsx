@@ -759,6 +759,7 @@ function App() {
               <ColumnLog
                 key={selectedHoleId}
                 holeId={selectedHoleId}
+                collar={collar}
                 totalDepth={collar.totalDepth}
                 lithology={lithology}
                 geotech={geotech}

@@ -528,29 +528,40 @@ export const GridTable: React.FC<GridTableProps> = ({
         if (rIdx > 47) return;
 
         worksheet.getCell(rIdx, 2).value = row.sampleTag || `S${String(index + 1).padStart(4, '0')}`;
-        worksheet.getCell(rIdx, 3).value = row.description || '';
+        worksheet.getCell(rIdx, 3).value = row.oreType || ''; // Col C
         worksheet.getCell(rIdx, 4).value = ruhsatAdi || 'ÇAMLICA';
         worksheet.getCell(rIdx, 5).value = easting;
         worksheet.getCell(rIdx, 6).value = northing;
         worksheet.getCell(rIdx, 7).value = elevation;
-
-        if (Array.isArray(row.physical) && row.physical.length > 0) {
-          worksheet.getCell(rIdx, 8).value = row.physical.join(', ');
-        } else {
-          worksheet.getCell(rIdx, 8).value = '';
-        }
+        worksheet.getCell(rIdx, 8).value = row.physical || ''; // Col H
 
         if (row.chemical === 'XRF' || row.chemical === 'XRF + XRD') {
           worksheet.getCell(rIdx, 25).value = 'X';
         }
 
-        if (row.so4) {
+        const otherChem = row.otherChemical || '';
+        if (otherChem.includes('SO4')) {
           worksheet.getCell(rIdx, 26).value = 'X';
         }
 
+        const otherAnalyses: string[] = [];
         if (row.chemical === 'XRD' || row.chemical === 'XRF + XRD') {
-          worksheet.getCell(rIdx, 28).value = 'XRD';
+          otherAnalyses.push('XRD');
         }
+        if (otherChem.includes('Mn')) {
+          otherAnalyses.push('Mn');
+        }
+        if (otherChem.includes('Cr')) {
+          otherAnalyses.push('Cr');
+        }
+
+        if (otherAnalyses.length > 0) {
+          worksheet.getCell(rIdx, 28).value = otherAnalyses.join(', ');
+        } else {
+          worksheet.getCell(rIdx, 28).value = '';
+        }
+
+        worksheet.getCell(rIdx, 31).value = row.description || ''; // Col AE
         
         worksheet.getCell(rIdx, 30).value = 'X'; // normal priority
       });
@@ -730,53 +741,6 @@ export const GridTable: React.FC<GridTableProps> = ({
                                 <span>Capture</span>
                               </button>
                             )}
-                          </div>
-                        ) : tabName === 'SamplePrep' && col.key === 'physical' ? (
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px', padding: '2px', justifyContent: 'center' }}>
-                            {['Granite', 'SG', 'Duvar Karosu', 'Yer Karosu'].map(opt => {
-                              const isSelected = Array.isArray(row.physical) && row.physical.includes(opt);
-                              return (
-                                <button
-                                  key={opt}
-                                  type="button"
-                                  onClick={() => {
-                                    const current = Array.isArray(row.physical) ? row.physical : [];
-                                    const next = current.includes(opt)
-                                      ? current.filter((x: string) => x !== opt)
-                                      : [...current, opt];
-                                    handleCellChange(rowIndex, 'physical', next);
-                                  }}
-                                  style={{
-                                    fontSize: '9px',
-                                    padding: '2px 4px',
-                                    borderRadius: '4px',
-                                    border: '1px solid',
-                                    borderColor: isSelected ? 'var(--primary)' : 'var(--border-medium)',
-                                    background: isSelected ? 'rgba(99, 102, 241, 0.2)' : 'transparent',
-                                    color: isSelected ? 'var(--primary)' : 'var(--text-secondary)',
-                                    fontWeight: isSelected ? 'bold' : 'normal',
-                                    cursor: 'pointer',
-                                    whiteSpace: 'nowrap'
-                                  }}
-                                >
-                                  {opt}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        ) : tabName === 'SamplePrep' && col.key === 'so4' ? (
-                          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', padding: '4px' }}>
-                            <input
-                              type="checkbox"
-                              checked={!!row.so4}
-                              onChange={e => handleCellChange(rowIndex, 'so4', e.target.checked)}
-                              style={{
-                                width: '15px',
-                                height: '15px',
-                                cursor: 'pointer',
-                                accentColor: 'var(--primary)'
-                              }}
-                            />
                           </div>
                         ) : tabName === 'Lithology' && col.key === 'color' ? (
                           <div className="readonly-value">

@@ -95,10 +95,11 @@ export interface SamplePreparationState {
   sampleTag: string;
   from: number;
   to: number;
+  oreType: string;
   description: string;
   chemical: 'XRF' | 'XRD' | 'XRF + XRD' | '';
-  physical: ('Granite' | 'SG' | 'Duvar Karosu' | 'Yer Karosu')[];
-  so4: boolean;
+  otherChemical: 'SO4' | 'Mn' | 'Cr' | 'SO4 + Mn' | 'SO4 + Cr' | 'Mn + Cr' | 'SO4 + Mn + Cr' | '';
+  physical: string;
 }
 
 // Initial empty states before loading data

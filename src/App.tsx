@@ -178,15 +178,16 @@ function App() {
 
   // Define Columns for Sample Preparation Tab
   const samplePrepColumns = useMemo<GridColumn[]>(() => [
-    { key: 'sampleTag', label: 'Sample Tag', type: 'text', width: '12%', defaultValue: 'S0001' },
-    { key: 'from', label: 'Depth From (m)', type: 'number', width: '8%', defaultValue: 0 },
-    { key: 'to', label: 'Depth To (m)', type: 'number', width: '8%', defaultValue: 0 },
-    { key: 'description', label: 'Description', type: 'text', width: '28%', defaultValue: '', placeholder: 'Altered Gnays, albitic...' },
+    { key: 'sampleTag', label: 'Sample Tag', type: 'text', width: '10%', defaultValue: 'S0001' },
+    { key: 'from', label: 'Depth From (m)', type: 'number', width: '7%', defaultValue: 0 },
+    { key: 'to', label: 'Depth To (m)', type: 'number', width: '7%', defaultValue: 0 },
+    { key: 'oreType', label: 'Ore Type', type: 'text', width: '12%', defaultValue: '', placeholder: 'Şist, Kil...' },
+    { key: 'description', label: 'Description', type: 'text', width: '18%', defaultValue: '', placeholder: 'Altered Gnays, albitic...' },
     {
       key: 'chemical',
       label: 'Chemical Analysis',
       type: 'select',
-      width: '15%',
+      width: '13%',
       defaultValue: '',
       options: [
         { value: '', label: 'None' },
@@ -195,8 +196,37 @@ function App() {
         { value: 'XRF + XRD', label: 'XRF + XRD' }
       ]
     },
-    { key: 'physical', label: 'Physical Analysis', type: 'text', width: '18%', readOnly: true, defaultValue: [] },
-    { key: 'so4', label: 'SO4', type: 'text', width: '7%', readOnly: true, defaultValue: false }
+    {
+      key: 'physical',
+      label: 'Physical Analysis',
+      type: 'select',
+      width: '18%',
+      defaultValue: '',
+      options: [
+        { value: '', label: 'None' },
+        { value: 'Granite', label: 'Granite' },
+        { value: 'SG', label: 'SG' },
+        { value: 'Duvar Karosu', label: 'Duvar Karosu' },
+        { value: 'Yer Karosu', label: 'Yer Karosu' }
+      ]
+    },
+    {
+      key: 'otherChemical',
+      label: 'Other Chemical Analyses',
+      type: 'select',
+      width: '15%',
+      defaultValue: '',
+      options: [
+        { value: '', label: 'None' },
+        { value: 'SO4', label: 'SO4' },
+        { value: 'Mn', label: 'Mn' },
+        { value: 'Cr', label: 'Cr' },
+        { value: 'SO4 + Mn', label: 'SO4 + Mn' },
+        { value: 'SO4 + Cr', label: 'SO4 + Cr' },
+        { value: 'Mn + Cr', label: 'Mn + Cr' },
+        { value: 'SO4 + Mn + Cr', label: 'SO4 + Mn + Cr' }
+      ]
+    }
   ], []);
 
   // Count errors by tab for rendering notification badges in headers

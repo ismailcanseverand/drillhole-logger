@@ -755,14 +755,6 @@ export const GridTable: React.FC<GridTableProps> = ({
 
         mergeRanges.forEach(range => {
           worksheet.mergeCells(range);
-          const firstCell = worksheet.getCell(range.split(':')[0]);
-          const rangeObj = worksheet.getRange(range);
-          rangeObj.forEach((cell: any) => {
-            cell.fill = firstCell.fill;
-            cell.font = firstCell.font;
-            cell.alignment = firstCell.alignment;
-            cell.border = firstCell.border;
-          });
         });
 
         // 3. Table Headers (Row 10)
@@ -890,14 +882,7 @@ export const GridTable: React.FC<GridTableProps> = ({
         ];
 
         mergeSignRanges.forEach(range => {
-          const firstCell = worksheet.getCell(range.split(':')[0]);
-          const rangeObj = worksheet.getRange(range);
-          rangeObj.forEach((cell: any) => {
-            cell.fill = firstCell.fill;
-            cell.font = firstCell.font;
-            cell.alignment = firstCell.alignment;
-            cell.border = firstCell.border;
-          });
+          worksheet.mergeCells(range);
         });
 
       } else {

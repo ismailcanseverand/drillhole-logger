@@ -290,7 +290,10 @@ export function useDrillholeData() {
               rqdPercent: g.rqd_percent
             })).sort((a: GeotechState, b: GeotechState) => a.from - b.from));
 
-            setAssays((aData || []).map((a: any) => ({
+            const dbHole = db[selectedHoleId];
+            const isHoleMetallic = METALLIC_HOLES.includes(selectedHoleId.trim().toUpperCase());
+            
+            let loadedAssays = (aData || []).map((a: any) => ({
               id: a.id,
               sampleId: a.sample_id,
               from: a.from_depth,
@@ -309,7 +312,36 @@ export function useDrillholeData() {
               pb_ppm: a.pb_ppm,
               zn_ppm: a.zn_ppm,
               as_ppm: a.as_ppm
-            })).sort((a: AssayState, b: AssayState) => a.from - b.from));
+            }));
+
+            if (isHoleMetallic && dbHole && dbHole.assays && dbHole.assays.length > 0) {
+              // If all metallic geochem columns are empty/zero in the database, merge fresh ones from JSON DB
+              const hasNoMetallicData = loadedAssays.every((a: any) => !a.au_ppb && !a.au_ppm && !a.cu_ppm);
+              if (hasNoMetallicData) {
+                console.warn(`Merging fallback geochem elements from local JSON for Supabase table: ${selectedHoleId}`);
+                loadedAssays = loadedAssays.map((la: any) => {
+                  const dbA = dbHole.assays.find((da: any) => 
+                    da.sampleId === la.sampleId || 
+                    (Math.abs(da.from - la.from) < 0.01 && Math.abs(da.to - la.to) < 0.01)
+                  );
+                  if (dbA) {
+                    return {
+                      ...la,
+                      au_ppb: dbA.au_ppb,
+                      au_ppm: dbA.au_ppm,
+                      ag_ppm: dbA.ag_ppm,
+                      cu_ppm: dbA.cu_ppm,
+                      pb_ppm: dbA.pb_ppm,
+                      zn_ppm: dbA.zn_ppm,
+                      as_ppm: dbA.as_ppm
+                    };
+                  }
+                  return la;
+                });
+              }
+            }
+
+            setAssays(loadedAssays.sort((a: AssayState, b: AssayState) => a.from - b.from));
 
             return; // Successfully loaded from Supabase database
           }

@@ -178,7 +178,14 @@ export const DatabaseSettings: React.FC<DatabaseSettingsProps> = ({
               sio2: a.sio2 || 0,
               tio2: a.tio2 || 0,
               na2o_k2o: a.na2o_k2o || 0,
-              loi: a.loi || 0
+              loi: a.loi || 0,
+              au_ppb: a.au_ppb || 0,
+              au_ppm: a.au_ppm || 0,
+              ag_ppm: a.ag_ppm || 0,
+              cu_ppm: a.cu_ppm || 0,
+              pb_ppm: a.pb_ppm || 0,
+              zn_ppm: a.zn_ppm || 0,
+              as_ppm: a.as_ppm || 0
             });
           });
         }

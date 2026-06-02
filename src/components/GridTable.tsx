@@ -357,6 +357,17 @@ export const GridTable: React.FC<GridTableProps> = ({
       }
     }
 
+    // For SamplePrep, let's auto-increment Sample Tag
+    if (tabName === 'SamplePrep' && lastRow && lastRow.sampleTag) {
+      const match = lastRow.sampleTag.match(/^([a-zA-Z_-]*?)(\d+)$/);
+      if (match) {
+        const prefix = match[1];
+        const num = parseInt(match[2], 10) + 1;
+        const paddedNum = String(num).padStart(match[2].length, '0');
+        newRow.sampleTag = `${prefix}${paddedNum}`;
+      }
+    }
+
     // Auto TCR/RQD setup
     if (tabName === 'Geotech') {
       newRow.tcrPercent = 0;

@@ -8,6 +8,7 @@ interface ColumnLogProps {
   geotech: GeotechState[];
   assays: AssayState[];
   onItemClick?: (tab: string, itemId: string) => void;
+  holeId?: string;
 }
 
 interface ColumnConfig {
@@ -17,7 +18,7 @@ interface ColumnConfig {
   visible: boolean;
 }
 
-const ANALYTES = [
+const INDUSTRIAL_ANALYTES = [
   { key: 'al2o3', label: 'Al2O3 (%)', color: '#3b82f6' },   // Royal Blue
   { key: 'fe2o3', label: 'Fe2O3 (%)', color: '#f43f5e' },   // Rose Red
   { key: 'sio2', label: 'SiO2 (%)', color: '#10b981' },    // Emerald Green
@@ -26,15 +27,43 @@ const ANALYTES = [
   { key: 'loi', label: 'LOI / AZ (%)', color: '#a855f7' }  // Purple
 ];
 
+const METALLIC_ANALYTES = [
+  { key: 'au_ppm', label: 'Au (ppm)', color: '#ffd700' },    // Gold Yellow
+  { key: 'au_ppb', label: 'Au (ppb)', color: '#f59e0b' },    // Amber
+  { key: 'ag_ppm', label: 'Ag (ppm)', color: '#94a3b8' },    // Slate (Silver)
+  { key: 'cu_ppm', label: 'Cu (ppm)', color: '#ec4899' },    // Copper Pink
+  { key: 'pb_ppm', label: 'Pb (ppm)', color: '#a855f7' },    // Lead Purple
+  { key: 'zn_ppm', label: 'Zn (ppm)', color: '#3b82f6' },    // Zinc Blue
+  { key: 'as_ppm', label: 'As (ppm)', color: '#ef4444' }     // Arsenic Red
+];
+
+const METALLIC_HOLES = [
+  'BCK-01', 'BCK-01A', 'BCK-02', 'BCK-03', 'BCK-04', 'BCK-05',
+  'BDK-01', 'BDK-02', 'BDK-03', 'BDK-04', 'BDK-05', 'BDK-06', 'BDK-07', 'BDK-08', 'BDK-09', 'BDK-10',
+  'DDK-01', 'DDK-02', 'DDK-03', 'DDK-04', 'DDK-05', 'DDK-06', 'DDK-07', 'DDK-08', 'DDK-09', 'DDK-10',
+  'DDK-11', 'DDK-12', 'DDK-13', 'DDK-14', 'DDK-15', 'DDK-16', 'DDK-17', 'DDK-18', 'DDK-19', 'DDK-20',
+  'DDK-21', 'DDK-22', 'DDK-23', 'DDK-24', 'DDK-25', 'DDK-26', 'DKK-27', 'DDK-28', 'DDK-29', 'DDK-30',
+  'T-01', 'T-02', 'T-03',
+  'ETK-01', 'ETK-02', 'ETK-03', 'ETK-04', 'ETK-5', 'ETK-6', 'ETK-7', 'ETK-8', 'ETK-9', 'ETK-10',
+  'ETK-11', 'ETK-12', 'ETK-13', 'ETK-14',
+  'NMK-01', 'NMK-02', 'NMK-03',
+  'S-01', 'S-02', 'S-03', 'S-04',
+  'KRK-S1', 'KRK-S2'
+];
+
 export const ColumnLog: React.FC<ColumnLogProps> = ({
   totalDepth,
   lithology,
   geotech,
   assays,
   onItemClick,
+  holeId,
 }) => {
+  const isMetallic = holeId ? METALLIC_HOLES.includes(holeId.trim().toUpperCase()) : false;
+  const analytesList = isMetallic ? METALLIC_ANALYTES : INDUSTRIAL_ANALYTES;
+
   const [hoverInfo, setHoverInfo] = useState<string | null>(null);
-  const [selectedAnalytes, setSelectedAnalytes] = useState<string[]>(['al2o3']);
+  const [selectedAnalytes, setSelectedAnalytes] = useState<string[]>(isMetallic ? ['au_ppm'] : ['al2o3']);
   const [visualStyle, setVisualStyle] = useState<'bars' | 'line'>('bars');
   const [showConfig, setShowConfig] = useState<boolean>(false);
 
@@ -213,7 +242,7 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <span style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>Observe Geochem Analytes (Multiple Selectable)</span>
                 <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                  {ANALYTES.map(a => {
+                  {analytesList.map(a => {
                     const isChecked = selectedAnalytes.includes(a.key);
                     return (
                       <label key={a.key} style={{
@@ -364,7 +393,7 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                   {/* Centered header label */}
                   {col.id === 'assays' ? (
                     selectedAnalytes.map((key, i) => {
-                      const analyteDetails = ANALYTES.find(an => an.key === key)!;
+                      const analyteDetails = analytesList.find(an => an.key === key)!;
                       const subColWidth = pos.width / selectedAnalytes.length;
                       const textX = pos.startX + (i * subColWidth) + (subColWidth / 2);
                       return (
@@ -721,7 +750,7 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                 {visualStyle === 'bars' ? (
                   // HISTOGRAM BARS REPRESENTATION (Grouped / Side-by-Side sub-columns)
                   selectedAnalytes.map((key, i) => {
-                    const analyteDetails = ANALYTES.find(an => an.key === key)!;
+                    const analyteDetails = analytesList.find(an => an.key === key)!;
                     const pos = colPositions['assays'];
                     const subColWidth = pos.width / selectedAnalytes.length;
                     const subColX = pos.startX + i * subColWidth;
@@ -754,7 +783,7 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                                 style={{ cursor: 'pointer', transition: 'fill-opacity 0.2s' }}
                                 onClick={() => handleBlockClick('Assay', a.id)}
                                 onMouseEnter={() => {
-                                  setHoverInfo(`Assay Sample [${a.sampleId}] ${a.from}m-${a.to}m | ${analyteDetails.label.split(' ')[0]}: ${val.toFixed(2)}%`);
+                                  setHoverInfo(`Assay Sample [${a.sampleId}] ${a.from}m-${a.to}m | ${analyteDetails.label}: ${val.toFixed(2)}`);
                                 }}
                                 onMouseLeave={() => setHoverInfo(null)}
                               />
@@ -766,7 +795,7 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                 ) : (
                   // TREND LINE REPRESENTATION (Overlapping lines)
                   selectedAnalytes.map((key) => {
-                    const analyteDetails = ANALYTES.find(an => an.key === key)!;
+                    const analyteDetails = analytesList.find(an => an.key === key)!;
                     const pos = colPositions['assays'];
                     const maxValForAnalyte = Math.max(0.1, ...assays.map(item => Number(item[key as keyof AssayState]) || 0));
 
@@ -804,7 +833,7 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                             style={{ cursor: 'pointer' }}
                             onClick={() => handleBlockClick('Assay', p.id)}
                             onMouseEnter={() =>
-                              setHoverInfo(`Assay Sample [${p.sampleId}] at ${p.depth} | ${analyteDetails.label.split(' ')[0]}: ${p.value.toFixed(2)}%`)
+                              setHoverInfo(`Assay Sample [${p.sampleId}] at ${p.depth} | ${analyteDetails.label}: ${p.value.toFixed(2)}`)
                             }
                             onMouseLeave={() => setHoverInfo(null)}
                           />
@@ -885,7 +914,7 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
               )}
               {colPositions['assays']?.visible && (
                 selectedAnalytes.map(key => {
-                  const analyteDetails = ANALYTES.find(an => an.key === key)!;
+                  const analyteDetails = analytesList.find(an => an.key === key)!;
                   return (
                     <div key={`legend-an-${key}`} className="legend-item">
                       <span className="legend-color" style={{ width: '10px', height: '10px', borderRadius: '2px', background: analyteDetails.color, display: 'inline-block' }}></span>

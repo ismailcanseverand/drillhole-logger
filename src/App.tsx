@@ -681,6 +681,8 @@ function App() {
           <div className="visuals-tabs-content">
             {rightPanelTab === 'columnlog' ? (
               <ColumnLog
+                key={selectedHoleId}
+                holeId={selectedHoleId}
                 totalDepth={collar.totalDepth}
                 lithology={lithology}
                 geotech={geotech}

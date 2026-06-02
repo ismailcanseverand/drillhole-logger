@@ -89,6 +89,13 @@ export interface AssayState {
   tio2: number;  // TiO2 (%)
   na2o_k2o: number; // Na2O + K2O (%)
   loi: number;   // Loss on ignition (%)
+  au_ppb?: number;
+  au_ppm?: number;
+  ag_ppm?: number;
+  cu_ppm?: number;
+  pb_ppm?: number;
+  zn_ppm?: number;
+  as_ppm?: number;
 }
 
 export interface SamplePreparationState {

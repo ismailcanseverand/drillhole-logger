@@ -875,15 +875,6 @@ export const GridTable: React.FC<GridTableProps> = ({
         writeSignatureBox('F', 'H', 'DISPATCHED BY / GÖNDEREN', 'İsmailcan SEVER', 'Geologist');
         writeSignatureBox('I', 'K', 'RECEIVED BY / TESLİM ALAN', 'ALS Laboratory', 'Receiver');
 
-        const mergeSignRanges = [
-          `B${signRowStart}:D${signRowStart}`, `B${signRowStart+1}:D${signRowStart+1}`, `B${signRowStart+2}:D${signRowStart+2}`, `B${signRowStart+3}:D${signRowStart+3}`,
-          `F${signRowStart}:H${signRowStart}`, `F${signRowStart+1}:H${signRowStart+1}`, `F${signRowStart+2}:H${signRowStart+2}`, `F${signRowStart+3}:H${signRowStart+3}`,
-          `I${signRowStart}:K${signRowStart}`, `I${signRowStart+1}:K${signRowStart+1}`, `I${signRowStart+2}:K${signRowStart+2}`, `I${signRowStart+3}:K${signRowStart+3}`
-        ];
-
-        mergeSignRanges.forEach(range => {
-          worksheet.mergeCells(range);
-        });
 
       } else {
         // Fallback: Read from industrial template

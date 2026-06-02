@@ -184,9 +184,9 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
       {/* Header Area */}
       <div className="strip-log-header" style={{ borderBottom: '1px solid var(--border-light)', padding: '12px 16px', background: '#fff' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-          <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 'bold', fontFamily: 'var(--font-display)' }}>Column Log View</h3>
-          <button 
-            className="btn btn-secondary btn-sm" 
+          <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 'bold', color: 'black', fontFamily: 'var(--font-display)' }}>Column Log View</h3>
+          <button
+            className="btn btn-secondary btn-sm"
             onClick={() => setShowConfig(!showConfig)}
             style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 8px', fontSize: '11px' }}
           >
@@ -245,8 +245,8 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
                 <span style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>Assay Representation</span>
-                <select 
-                  value={visualStyle} 
+                <select
+                  value={visualStyle}
                   onChange={e => setVisualStyle(e.target.value as 'bars' | 'line')}
                   style={{ padding: '4px 8px', borderRadius: '4px', border: '1px solid var(--border-medium)', fontSize: '11px', width: '100%' }}
                 >
@@ -273,25 +273,25 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                     <span style={{ fontWeight: 500 }}>{col.label}</span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       {/* Move left */}
-                      <button 
-                        disabled={idx === 0} 
-                        onClick={() => moveColumn(idx, 'left')} 
+                      <button
+                        disabled={idx === 0}
+                        onClick={() => moveColumn(idx, 'left')}
                         style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0 }}
                       >
                         <ChevronLeft size={14} style={{ color: idx === 0 ? '#cbd5e1' : '#64748b' }} />
                       </button>
                       {/* Move right */}
-                      <button 
-                        disabled={idx === columns.length - 1} 
+                      <button
+                        disabled={idx === columns.length - 1}
                         onClick={() => moveColumn(idx, 'right')}
                         style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0 }}
                       >
                         <ChevronRight size={14} style={{ color: idx === columns.length - 1 ? '#cbd5e1' : '#64748b' }} />
                       </button>
-                      
+
                       {/* Visibility check */}
-                      <button 
-                        onClick={() => toggleVisibility(col.id)} 
+                      <button
+                        onClick={() => toggleVisibility(col.id)}
                         style={{ border: 'none', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 0 }}
                       >
                         {col.visible ? (
@@ -319,13 +319,13 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
       </div>
 
       {/* SVG Column Log Visual Container */}
-      <div 
-        className="strip-log-scroll" 
-        style={{ 
-          flex: 1, 
-          overflow: 'auto', 
-          padding: '0 24px 20px 24px', 
-          display: 'block', 
+      <div
+        className="strip-log-scroll"
+        style={{
+          flex: 1,
+          overflow: 'auto',
+          padding: '0 24px 20px 24px',
+          display: 'block',
           position: 'relative'
         }}
       >
@@ -334,16 +334,16 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
           <svg
             width={svgWidth}
             height={headerHeight}
-            style={{ 
-              background: '#f1f5f9', 
-              display: 'block', 
+            style={{
+              background: '#f1f5f9',
+              display: 'block',
               border: '1px solid #cbd5e1',
               borderRadius: '4px'
             }}
           >
             {/* Background Rect */}
             <rect width={svgWidth} height={headerHeight} fill="#f1f5f9" />
-            
+
             {/* Divider lines and text labels */}
             {columns.map((col) => {
               if (!col.visible) return null;
@@ -419,9 +419,9 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
           <svg
             width={svgWidth}
             height={Math.max(200, totalDepth * scaleY) + bodyPaddingTop}
-            style={{ 
-              background: 'var(--bg-card)', 
-              display: 'block', 
+            style={{
+              background: 'var(--bg-card)',
+              display: 'block',
               border: '1px solid var(--border-light)',
               borderRadius: '4px',
               boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
@@ -500,7 +500,7 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                 <line x1="0" y1="10" x2="0" y2="20" stroke="#f43f5e" strokeWidth="0.75" />
               </pattern>
             </defs>
-            
+
             {/* Background grid */}
             <rect width={svgWidth} height={Math.max(200, totalDepth * scaleY) + bodyPaddingTop} fill="url(#grid-pattern)" />
 
@@ -634,14 +634,14 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
               const sortedGeotech = [...geotech]
                 .filter(g => g.to > g.from)
                 .sort((a, b) => a.from - b.from);
-                
+
               const points = sortedGeotech.map(g => {
                 const mid = (g.from + g.to) / 2;
                 const y = mid * scaleY + bodyPaddingTop;
                 const x = pos.startX + 5 + (g.rqdPercent / 100) * (pos.width - 10);
                 return { x, y, rqd: g.rqdPercent, tcr: g.tcrPercent, from: g.from, to: g.to, id: g.id };
               });
-              
+
               return (
                 <g>
                   {/* Background grid lines for 0, 25, 50, 75, 100% */}
@@ -660,7 +660,7 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                       />
                     );
                   })}
-                  
+
                   {/* Subtle background TCR bars */}
                   {sortedGeotech.map(g => {
                     const y = g.from * scaleY + bodyPaddingTop;
@@ -680,7 +680,7 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                       />
                     );
                   })}
-                  
+
                   {/* Continuous RQD Trend Line */}
                   {points.length > 1 && (
                     <path
@@ -690,7 +690,7 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                       strokeWidth="2"
                     />
                   )}
-                  
+
                   {/* RQD circular markers */}
                   {points.map(p => (
                     <circle
@@ -734,7 +734,7 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                           .map(a => {
                             const y = a.from * scaleY + bodyPaddingTop;
                             const h = (a.to - a.from) * scaleY;
-                            
+
                             const val = Number(a[key as keyof AssayState]) || 0;
                             const valRatio = Math.min(1, val / maxValForAnalyte);
                             const barWidth = Math.max(2, valRatio * (subColWidth - 6));
@@ -756,7 +756,7 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                                 onMouseEnter={() => {
                                   setHoverInfo(`Assay Sample [${a.sampleId}] ${a.from}m-${a.to}m | ${analyteDetails.label.split(' ')[0]}: ${val.toFixed(2)}%`);
                                 }}
-                                    onMouseLeave={() => setHoverInfo(null)}
+                                onMouseLeave={() => setHoverInfo(null)}
                               />
                             );
                           })}
@@ -769,7 +769,7 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                     const analyteDetails = ANALYTES.find(an => an.key === key)!;
                     const pos = colPositions['assays'];
                     const maxValForAnalyte = Math.max(0.1, ...assays.map(item => Number(item[key as keyof AssayState]) || 0));
-                    
+
                     const points = assays
                       .filter(a => a.sampleType === 'Core' && a.to > a.from)
                       .sort((a, b) => a.from - b.from)
@@ -861,7 +861,7 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
       <div className="strip-log-legend" style={{ borderTop: '1px solid var(--border-light)', padding: '12px 16px', background: '#fff' }}>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 14px', alignItems: 'center' }}>
           <div style={{ fontSize: '10px', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase', width: '100%', marginBottom: '2px' }}>Legend Keys</div>
-          
+
           {colPositions['lithology']?.visible && (
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', maxWidth: '400px' }}>
               <div className="legend-item"><span className="legend-color" style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#94a3b8', display: 'inline-block' }}></span><span>GNAYS</span></div>

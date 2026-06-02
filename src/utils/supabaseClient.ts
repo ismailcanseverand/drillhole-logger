@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 
+// Supabase client instance caching and configuration helper
 export interface SupabaseConfig {
   url: string;
   anonKey: string;

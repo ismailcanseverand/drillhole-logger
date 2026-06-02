@@ -244,6 +244,7 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
       case 'DOLGU':
       case 'OB':
       case 'TO':
+      case 'TOPRAK':
         return '#fde047'; // Sand yellow / soil brown
       case 'ALBIT':
         return '#e2e8f0'; // Clean feldspar off-white
@@ -271,12 +272,20 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
       case 'MTSH':
       case 'MTSL':
       case 'MTSS':
+      case 'SEDIMENT':
         return '#a7f3d0'; // Schist / Meta-mudstone light green
       case 'GRANIT':
       case 'GNT':
       case 'GRA':
       case 'VFD':
-        return '#f472b6'; // Granite / Dacite pink
+      case 'DASIT':
+      case 'RIYOLIT':
+      case 'IGNIMBIRIT':
+      case 'SIYENIT':
+      case 'GRANODIYORIT':
+      case 'SUBVOLKANIK':
+      case 'INTRUZIF':
+        return '#f472b6'; // Granite / Dacite / Felsic Igneous pink
       case 'PERLIT':
         return '#d8b4fe'; // Perlite light purple
       case 'KALSIT':
@@ -288,14 +297,28 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
       case 'BXS':
       case 'XBH':
       case 'FLT':
+      case 'YANAL':
         return '#a1a1aa'; // Breccia / Fault grey
       case 'OFY':
       case 'SERP':
         return '#065f46'; // Ophiolite / Serpentinite dark green
       case 'VSM':
-        return '#cbd5e1'; // Volcanosedimentary
+      case 'VOLKANOSEDIMANTER':
+        return '#cbd5e1'; // Volcanosedimentary greyish
       case 'UNC':
         return '#64748b'; // Unconformity grey
+      case 'DAYK':
+        return '#f43f5e'; // Dyke red-rose
+      case 'KUM':
+        return '#fef9c3'; // Sand light yellow
+      case 'OKSIT':
+      case 'SULFIT':
+        return '#d97706'; // Oxide/Sulfide orange-brown
+      case 'ALUNIT':
+        return '#f1f5f9'; // Alunite white-grey
+      case 'BU':
+      case 'KAROT':
+      case 'NONE':
       default:
         return '#cbd5e1'; // Slate grey default
     }
@@ -308,34 +331,40 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
     if (clean === 'GNAYS' || clean === 'GNYS') return 'url(#pat-gnays)';
     if (clean === 'ALBIT') return 'url(#pat-albit)';
     if (clean === 'KAOLEN' || clean === 'KAO') return 'url(#pat-kaolen)';
-    if (['GRANIT', 'GNT', 'SUBVOLKANIK', 'SIYENIT', 'GRANODIYORIT', 'RIYOLIT', 'DASIT', 'INTRUZIF', 'GRA', 'VFD'].includes(clean)) return 'url(#pat-granit)';
-    if (clean === 'BRES' || clean === 'BXS' || clean === 'XBH' || clean === 'FLT') return 'url(#pat-bres)';
+    if (['GRANIT', 'GNT', 'SUBVOLKANIK', 'SIYENIT', 'GRANODIYORIT', 'RIYOLIT', 'DASIT', 'INTRUZIF', 'GRA', 'VFD', 'IGNIMBIRIT'].includes(clean)) return 'url(#pat-granit)';
+    if (clean === 'BRES' || clean === 'BXS' || clean === 'XBH' || clean === 'FLT' || clean === 'YANAL') return 'url(#pat-bres)';
     if (clean === 'KUVARSIT' || clean === 'QVN') return 'url(#pat-kuvarsit)';
     if (['ANDEZIT', 'AND', 'TUF', 'VIA', 'VIA.A', 'VIA.P', 'VIA.T', 'VIA:T'].includes(clean)) return 'url(#pat-andezit)';
     if (clean === 'BASALT' || clean === 'OFY' || clean === 'SERP') return 'url(#pat-basalt)';
     if (clean === 'DOLGU' || clean === 'OB' || clean === 'TOPRAK' || clean === 'TO') return 'url(#pat-dolgu)';
-    if (['SIST', 'MTSH', 'MTSL', 'MTSS', 'VSM'].includes(clean)) return 'url(#pat-sist)';
+    if (['SIST', 'MTSH', 'MTSL', 'MTSS', 'VSM', 'VOLKANOSEDIMANTER', 'SEDIMENT'].includes(clean)) return 'url(#pat-sist)';
     if (clean === 'KIL') return 'url(#pat-kil)';
     if (clean === 'KALSIT' || clean === 'MRB') return 'url(#pat-kalsit)';
     if (clean === 'UNC') return 'url(#pat-unc)';
+    if (clean === 'DAYK') return 'url(#pat-dayk)';
+    if (clean === 'KUM') return 'url(#pat-kum)';
     return getRockColor(code);
   };
 
   const getRockLabel = (code: string) => {
     const clean = (code || '').toUpperCase();
     if (clean === 'OB' || clean === 'DOLGU' || clean === 'TOPRAK' || clean === 'TO') return 'Overburden';
-    if (clean === 'GRANIT' || clean === 'GNT' || clean === 'GRA') return 'Granite';
-    if (clean === 'BRES' || clean === 'BXS' || clean === 'XBH' || clean === 'FLT') return 'Breccia';
+    if (['GRANIT', 'GNT', 'GRA', 'GRANODIYORIT', 'SIYENIT', 'INTRUZIF', 'SUBVOLKANIK'].includes(clean)) return 'Granite/Intru';
+    if (clean === 'BRES' || clean === 'BXS' || clean === 'XBH' || clean === 'FLT' || clean === 'YANAL') return 'Breccia/Fault';
     if (['ANDEZIT', 'AND', 'TUF', 'VIA', 'VIA.A', 'VIA.P', 'VIA.T', 'VIA:T'].includes(clean)) return 'Andesite';
     if (clean === 'BASALT' || clean === 'OFY' || clean === 'SERP') return 'Basalt/Oph';
     if (clean === 'KUVARSIT' || clean === 'QVN') return 'Quartzite';
-    if (['SIST', 'MTSH', 'MTSL', 'MTSS'].includes(clean)) return 'Schist/Meta';
+    if (['SIST', 'MTSH', 'MTSL', 'MTSS', 'SEDIMENT'].includes(clean)) return 'Schist/Meta';
     if (clean === 'KIL') return 'Clay';
     if (clean === 'KALSIT' || clean === 'MRB') return 'Limestone/Marble';
     if (clean === 'GNAYS' || clean === 'GNYS') return 'Gneiss';
-    if (clean === 'VFD') return 'Dacite';
-    if (clean === 'VSM') return 'Volc-Sed';
+    if (clean === 'VFD' || clean === 'DASIT') return 'Dacite';
+    if (clean === 'VSM' || clean === 'VOLKANOSEDIMANTER') return 'Volc-Sed';
     if (clean === 'UNC') return 'Unconformity';
+    if (clean === 'DAYK') return 'Dyke';
+    if (clean === 'KUM') return 'Sand';
+    if (clean === 'OKSIT') return 'Oxide';
+    if (clean === 'SULFIT') return 'Sulfide';
     return code;
   };
 
@@ -770,6 +799,18 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                 <line x1="10" y1="0" x2="10" y2="10" stroke="#f43f5e" strokeWidth="0.75" />
                 <line x1="20" y1="10" x2="20" y2="20" stroke="#f43f5e" strokeWidth="0.75" />
                 <line x1="0" y1="10" x2="0" y2="20" stroke="#f43f5e" strokeWidth="0.75" />
+              </pattern>
+              {/* Dyke / DAYK (diagonal red blocks) */}
+              <pattern id="pat-dayk" width="20" height="20" patternUnits="userSpaceOnUse">
+                <rect width="20" height="20" fill="#f43f5e" />
+                <line x1="0" y1="0" x2="20" y2="20" stroke="#be123c" strokeWidth="2" />
+                <line x1="20" y1="0" x2="0" y2="20" stroke="#be123c" strokeWidth="2" />
+              </pattern>
+              {/* Sand / KUM (yellow with fine dots) */}
+              <pattern id="pat-kum" width="10" height="10" patternUnits="userSpaceOnUse">
+                <rect width="10" height="10" fill="#fef9c3" />
+                <circle cx="2" cy="2" r="0.8" fill="#ca8a04" />
+                <circle cx="7" cy="7" r="0.8" fill="#ca8a04" />
               </pattern>
             </defs>
 

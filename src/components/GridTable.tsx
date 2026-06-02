@@ -515,18 +515,13 @@ export const GridTable: React.FC<GridTableProps> = ({
       const mm = String(today.getMonth() + 1).padStart(2, '0');
       const yyyy = today.getFullYear();
       
-      // Write the date to Row 4 Col AE (Index 31)
-      const dateCell = worksheet.getCell(4, 31);
+      // Write the date to Row 4 Col AD (Index 30)
+      const dateCell = worksheet.getCell(4, 30);
       dateCell.value = `. . .${dd}. . /. .${mm} . . /. . ${yyyy} . . . `;
 
-      // Overwrite coordinate headers to "Başlangıç" and "Bitiş"
-      worksheet.getCell(9, 5).value = 'BAŞLANGIÇ';
-      worksheet.getCell(9, 6).value = 'BİTİŞ';
-      worksheet.getCell(9, 7).value = '';
-
-      // Clear template rows 10 to 47 (columns B to AE)
+      // Clear template rows 10 to 47 (columns B to AD)
       for (let r = 10; r <= 47; r++) {
-        for (let c = 2; c <= 31; c++) {
+        for (let c = 2; c <= 30; c++) {
           worksheet.getCell(r, c).value = null;
         }
       }
@@ -541,16 +536,15 @@ export const GridTable: React.FC<GridTableProps> = ({
         worksheet.getCell(rIdx, 4).value = ruhsatAdi || 'ÇAMLICA';
         worksheet.getCell(rIdx, 5).value = row.from !== undefined ? row.from : '';
         worksheet.getCell(rIdx, 6).value = row.to !== undefined ? row.to : '';
-        worksheet.getCell(rIdx, 7).value = '';
-        worksheet.getCell(rIdx, 8).value = row.physical || ''; // Col H
+        worksheet.getCell(rIdx, 7).value = row.physical || ''; // Col G
 
         if (row.chemical === 'XRF' || row.chemical === 'XRF + XRD') {
-          worksheet.getCell(rIdx, 25).value = 'X';
+          worksheet.getCell(rIdx, 24).value = 'X'; // Col X
         }
 
         const otherChem = row.otherChemical || '';
         if (otherChem.includes('SO4')) {
-          worksheet.getCell(rIdx, 26).value = 'X';
+          worksheet.getCell(rIdx, 25).value = 'X'; // Col Y
         }
 
         const otherAnalyses: string[] = [];
@@ -565,14 +559,14 @@ export const GridTable: React.FC<GridTableProps> = ({
         }
 
         if (otherAnalyses.length > 0) {
-          worksheet.getCell(rIdx, 28).value = otherAnalyses.join(', ');
+          worksheet.getCell(rIdx, 27).value = otherAnalyses.join(', '); // Col AA
         } else {
-          worksheet.getCell(rIdx, 28).value = '';
+          worksheet.getCell(rIdx, 27).value = '';
         }
 
-        worksheet.getCell(rIdx, 31).value = row.description || ''; // Col AE
+        worksheet.getCell(rIdx, 30).value = row.description || ''; // Col AD
         
-        worksheet.getCell(rIdx, 30).value = 'X'; // normal priority
+        worksheet.getCell(rIdx, 29).value = 'X'; // normal priority (Col AC)
       });
 
       const buffer = await workbook.xlsx.writeBuffer();

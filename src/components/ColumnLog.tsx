@@ -243,14 +243,21 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
     switch (code.toUpperCase()) {
       case 'DOLGU':
       case 'OB':
-        return '#fde047'; // Sand yellow
+      case 'TO':
+        return '#fde047'; // Sand yellow / soil brown
       case 'ALBIT':
         return '#e2e8f0'; // Clean feldspar off-white
       case 'GNAYS':
+      case 'GNYS':
         return '#94a3b8'; // Slate grey
       case 'ANDEZIT':
       case 'AND':
       case 'TUF':
+      case 'VIA':
+      case 'VIA.A':
+      case 'VIA.P':
+      case 'VIA.T':
+      case 'VIA:T':
         return '#f87171'; // Andesite light red
       case 'KAOLEN':
       case 'KAO':
@@ -261,17 +268,34 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
       case 'QVN':
         return '#22d3ee'; // Quartzite cyan
       case 'SIST':
-        return '#a7f3d0'; // Schist light green
+      case 'MTSH':
+      case 'MTSL':
+      case 'MTSS':
+        return '#a7f3d0'; // Schist / Meta-mudstone light green
       case 'GRANIT':
-        return '#f472b6'; // Granite pink
+      case 'GNT':
+      case 'GRA':
+      case 'VFD':
+        return '#f472b6'; // Granite / Dacite pink
       case 'PERLIT':
         return '#d8b4fe'; // Perlite light purple
       case 'KALSIT':
-        return '#fda4af'; // Calcite light rose
+      case 'MRB':
+        return '#fda4af'; // Calcite / Marble light rose
       case 'KOMUR':
         return '#1e293b'; // Coal dark slate
       case 'BRES':
-        return '#a1a1aa'; // Breccia grey
+      case 'BXS':
+      case 'XBH':
+      case 'FLT':
+        return '#a1a1aa'; // Breccia / Fault grey
+      case 'OFY':
+      case 'SERP':
+        return '#065f46'; // Ophiolite / Serpentinite dark green
+      case 'VSM':
+        return '#cbd5e1'; // Volcanosedimentary
+      case 'UNC':
+        return '#64748b'; // Unconformity grey
       default:
         return '#cbd5e1'; // Slate grey default
     }
@@ -281,33 +305,37 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
 
   const getRockPatternUrl = (code: string) => {
     const clean = code.toUpperCase();
-    if (clean === 'GNAYS') return 'url(#pat-gnays)';
+    if (clean === 'GNAYS' || clean === 'GNYS') return 'url(#pat-gnays)';
     if (clean === 'ALBIT') return 'url(#pat-albit)';
     if (clean === 'KAOLEN' || clean === 'KAO') return 'url(#pat-kaolen)';
-    if (['GRANIT', 'GNT', 'SUBVOLKANIK', 'SIYENIT', 'GRANODIYORIT', 'RIYOLIT', 'DASIT', 'INTRUZIF'].includes(clean)) return 'url(#pat-granit)';
-    if (clean === 'BRES' || clean === 'BXS') return 'url(#pat-bres)';
+    if (['GRANIT', 'GNT', 'SUBVOLKANIK', 'SIYENIT', 'GRANODIYORIT', 'RIYOLIT', 'DASIT', 'INTRUZIF', 'GRA', 'VFD'].includes(clean)) return 'url(#pat-granit)';
+    if (clean === 'BRES' || clean === 'BXS' || clean === 'XBH' || clean === 'FLT') return 'url(#pat-bres)';
     if (clean === 'KUVARSIT' || clean === 'QVN') return 'url(#pat-kuvarsit)';
-    if (['ANDEZIT', 'AND', 'TUF'].includes(clean)) return 'url(#pat-andezit)';
-    if (clean === 'BASALT') return 'url(#pat-basalt)';
-    if (clean === 'DOLGU' || clean === 'OB' || clean === 'TOPRAK') return 'url(#pat-dolgu)';
-    if (clean === 'SIST') return 'url(#pat-sist)';
+    if (['ANDEZIT', 'AND', 'TUF', 'VIA', 'VIA.A', 'VIA.P', 'VIA.T', 'VIA:T'].includes(clean)) return 'url(#pat-andezit)';
+    if (clean === 'BASALT' || clean === 'OFY' || clean === 'SERP') return 'url(#pat-basalt)';
+    if (clean === 'DOLGU' || clean === 'OB' || clean === 'TOPRAK' || clean === 'TO') return 'url(#pat-dolgu)';
+    if (['SIST', 'MTSH', 'MTSL', 'MTSS', 'VSM'].includes(clean)) return 'url(#pat-sist)';
     if (clean === 'KIL') return 'url(#pat-kil)';
-    if (clean === 'KALSIT') return 'url(#pat-kalsit)';
+    if (clean === 'KALSIT' || clean === 'MRB') return 'url(#pat-kalsit)';
+    if (clean === 'UNC') return 'url(#pat-unc)';
     return getRockColor(code);
   };
 
   const getRockLabel = (code: string) => {
     const clean = (code || '').toUpperCase();
-    if (clean === 'OB' || clean === 'DOLGU' || clean === 'TOPRAK') return 'Overburden';
-    if (clean === 'GRANIT' || clean === 'GNT') return 'Granite';
-    if (clean === 'BRES' || clean === 'BXS') return 'Breccia';
-    if (clean === 'ANDEZIT' || clean === 'AND' || clean === 'TUF') return 'Andesite';
-    if (clean === 'BASALT') return 'Basalt';
+    if (clean === 'OB' || clean === 'DOLGU' || clean === 'TOPRAK' || clean === 'TO') return 'Overburden';
+    if (clean === 'GRANIT' || clean === 'GNT' || clean === 'GRA') return 'Granite';
+    if (clean === 'BRES' || clean === 'BXS' || clean === 'XBH' || clean === 'FLT') return 'Breccia';
+    if (['ANDEZIT', 'AND', 'TUF', 'VIA', 'VIA.A', 'VIA.P', 'VIA.T', 'VIA:T'].includes(clean)) return 'Andesite';
+    if (clean === 'BASALT' || clean === 'OFY' || clean === 'SERP') return 'Basalt/Oph';
     if (clean === 'KUVARSIT' || clean === 'QVN') return 'Quartzite';
-    if (clean === 'SIST') return 'Schist';
+    if (['SIST', 'MTSH', 'MTSL', 'MTSS'].includes(clean)) return 'Schist/Meta';
     if (clean === 'KIL') return 'Clay';
-    if (clean === 'KALSIT') return 'Limestone';
-    if (clean === 'GNAYS') return 'Gneiss';
+    if (clean === 'KALSIT' || clean === 'MRB') return 'Limestone/Marble';
+    if (clean === 'GNAYS' || clean === 'GNYS') return 'Gneiss';
+    if (clean === 'VFD') return 'Dacite';
+    if (clean === 'VSM') return 'Volc-Sed';
+    if (clean === 'UNC') return 'Unconformity';
     return code;
   };
 
@@ -675,6 +703,11 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
               <pattern id="pat-gnays" width="20" height="20" patternUnits="userSpaceOnUse">
                 <rect width="20" height="20" fill="#475569" />
                 <path d="M0,5 Q5,10 10,5 T20,5 M0,15 Q5,20 10,15 T20,15" fill="none" stroke="#64748b" strokeWidth="1.5" />
+              </pattern>
+              {/* Unconformity / UNC (dashed lines on grey) */}
+              <pattern id="pat-unc" width="20" height="20" patternUnits="userSpaceOnUse">
+                <rect width="20" height="20" fill="#64748b" />
+                <path d="M 0,10 L 20,10" stroke="#94a3b8" strokeWidth="2" strokeDasharray="4,4" />
               </pattern>
               {/* Granite / GRANIT (dots/crosses on pink) */}
               <pattern id="pat-granit" width="20" height="20" patternUnits="userSpaceOnUse">

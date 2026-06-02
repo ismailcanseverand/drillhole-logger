@@ -106,14 +106,21 @@ const getRockColorName = (code: string): string => {
   switch ((code || '').toUpperCase()) {
     case 'DOLGU':
     case 'OB':
+    case 'TO':
       return 'Brown';
     case 'ALBIT':
       return 'White';
     case 'GNAYS':
+    case 'GNYS':
       return 'Grey';
     case 'ANDEZIT':
     case 'AND':
     case 'TUF':
+    case 'VIA':
+    case 'VIA.A':
+    case 'VIA.P':
+    case 'VIA.T':
+    case 'VIA:T':
       return 'Red';
     case 'KAOLEN':
     case 'KAO':
@@ -124,19 +131,30 @@ const getRockColorName = (code: string): string => {
     case 'QVN':
       return 'Cyan';
     case 'SIST':
+    case 'MTSH':
+    case 'MTSL':
+    case 'MTSS':
       return 'Green';
     case 'GRANIT':
     case 'GNT':
+    case 'GRA':
+    case 'VFD':
       return 'Pink';
     case 'PERLIT':
       return 'Purple';
     case 'KALSIT':
+    case 'MRB':
       return 'Rose';
     case 'KOMUR':
       return 'Dark Slate';
     case 'BRES':
     case 'BXS':
+    case 'XBH':
+    case 'FLT':
       return 'Grey';
+    case 'OFY':
+    case 'SERP':
+      return 'Green';
     default:
       return 'Grey';
   }
@@ -147,7 +165,7 @@ const renderGraphicSwatch = (code: string) => {
   const patternId = 'pat-loc-' + Math.random().toString(36).substr(2, 9);
   let patternContent = null;
   
-  if (clean === 'GNAYS') {
+  if (clean === 'GNAYS' || clean === 'GNYS') {
     patternContent = (
       <pattern id={patternId} width="20" height="20" patternUnits="userSpaceOnUse">
         <rect width="20" height="20" fill="#475569" />
@@ -169,7 +187,7 @@ const renderGraphicSwatch = (code: string) => {
         <circle cx="15" cy="15" r="1.5" fill="#facc15" fillOpacity="0.4" />
       </pattern>
     );
-  } else if (['GRANIT', 'GNT', 'SUBVOLKANIK', 'SIYENIT', 'GRANODIYORIT', 'RIYOLIT', 'DASIT', 'INTRUZIF'].includes(clean)) {
+  } else if (['GRANIT', 'GNT', 'SUBVOLKANIK', 'SIYENIT', 'GRANODIYORIT', 'RIYOLIT', 'DASIT', 'INTRUZIF', 'GRA', 'VFD'].includes(clean)) {
     patternContent = (
       <pattern id={patternId} width="20" height="20" patternUnits="userSpaceOnUse">
         <rect width="20" height="20" fill="#ec4899" fillOpacity="0.8" />
@@ -181,7 +199,7 @@ const renderGraphicSwatch = (code: string) => {
         <line x1="6" y1="12" x2="2" y2="16" stroke="#9d174d" strokeWidth="1" />
       </pattern>
     );
-  } else if (clean === 'BRES' || clean === 'BXS') {
+  } else if (clean === 'BRES' || clean === 'BXS' || clean === 'XBH' || clean === 'FLT') {
     patternContent = (
       <pattern id={patternId} width="25" height="25" patternUnits="userSpaceOnUse">
         <rect width="25" height="25" fill="#52525b" />
@@ -198,7 +216,7 @@ const renderGraphicSwatch = (code: string) => {
         <circle cx="8" cy="8" r="1.2" fill="#22d3ee" />
       </pattern>
     );
-  } else if (['ANDEZIT', 'AND', 'TUF'].includes(clean)) {
+  } else if (['ANDEZIT', 'AND', 'TUF', 'VIA', 'VIA.A', 'VIA.P', 'VIA.T', 'VIA:T'].includes(clean)) {
     patternContent = (
       <pattern id={patternId} width="20" height="20" patternUnits="userSpaceOnUse">
         <rect width="20" height="20" fill="#991b1b" />
@@ -206,7 +224,7 @@ const renderGraphicSwatch = (code: string) => {
         <path d="M 12,16 L 15,13 L 18,16" fill="none" stroke="#f87171" strokeWidth="1.5" />
       </pattern>
     );
-  } else if (clean === 'BASALT') {
+  } else if (clean === 'BASALT' || clean === 'OFY' || clean === 'SERP') {
     patternContent = (
       <pattern id={patternId} width="20" height="20" patternUnits="userSpaceOnUse">
         <rect width="20" height="20" fill="#065f46" />
@@ -214,7 +232,7 @@ const renderGraphicSwatch = (code: string) => {
         <path d="M 15,15 L 18,18 L 21,15" fill="none" stroke="#10b981" strokeWidth="1.5" />
       </pattern>
     );
-  } else if (['DOLGU', 'OB', 'TOPRAK'].includes(clean)) {
+  } else if (['DOLGU', 'OB', 'TOPRAK', 'TO'].includes(clean)) {
     patternContent = (
       <pattern id={patternId} width="20" height="20" patternUnits="userSpaceOnUse">
         <rect width="20" height="20" fill="#78350f" />
@@ -224,7 +242,7 @@ const renderGraphicSwatch = (code: string) => {
         <line x1="12" y1="8" x2="18" y2="8" stroke="#d97706" strokeWidth="1" />
       </pattern>
     );
-  } else if (clean === 'SIST') {
+  } else if (['SIST', 'MTSH', 'MTSL', 'MTSS', 'VSM'].includes(clean)) {
     patternContent = (
       <pattern id={patternId} width="30" height="10" patternUnits="userSpaceOnUse">
         <rect width="30" height="10" fill="#047857" />
@@ -238,7 +256,7 @@ const renderGraphicSwatch = (code: string) => {
         <line x1="0" y1="5" x2="10" y2="5" stroke="#ffedd5" strokeWidth="1" />
       </pattern>
     );
-  } else if (clean === 'KALSIT') {
+  } else if (clean === 'KALSIT' || clean === 'MRB') {
     patternContent = (
       <pattern id={patternId} width="20" height="20" patternUnits="userSpaceOnUse">
         <rect width="20" height="20" fill="#9f1239" />
@@ -249,8 +267,15 @@ const renderGraphicSwatch = (code: string) => {
         <line x1="0" y1="10" x2="0" y2="20" stroke="#f43f5e" strokeWidth="0.75" />
       </pattern>
     );
+  } else if (clean === 'UNC') {
+    patternContent = (
+      <pattern id={patternId} width="20" height="20" patternUnits="userSpaceOnUse">
+        <rect width="20" height="20" fill="#64748b" />
+        <path d="M 0,10 L 20,10" stroke="#94a3b8" strokeWidth="2" strokeDasharray="4,4" />
+      </pattern>
+    );
   } else {
-    return <div className="graphic-swatch" style={{ background: '#4b5563' }} />;
+    return <div className="graphic-swatch" style={{ background: '#cbd5e1' }} />;
   }
   
   return (

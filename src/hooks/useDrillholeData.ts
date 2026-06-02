@@ -113,9 +113,16 @@ const EMPTY_COLLAR: CollarState = {
   azimuth: 0,
   dateStarted: '',
   dateCompleted: '',
-  logger: 'KaleMaden',
+  logger: '',
   status: 'Planned'
 };
+
+const KNOWN_LOGGERS = ["İsmailcan SEVER", "Altan COŞKUN", "Levent CAN", "Mehmet KOLDANCI", "Muhammed KAYALIDAĞ", "Mustafa KAŞ", "Emir Özçakıcı"];
+
+function sanitizeLogger(logger: string | undefined | null): string {
+  if (!logger) return '';
+  return KNOWN_LOGGERS.includes(logger) ? logger : '';
+}
 
 export function useDrillholeData() {
   const [db, setDb] = useState<Record<string, any>>({});
@@ -208,7 +215,7 @@ export function useDrillholeData() {
               azimuth: collarData.azimuth,
               dateStarted: collarData.date_started || '',
               dateCompleted: collarData.date_completed || '',
-              logger: collarData.logger || '',
+              logger: sanitizeLogger(collarData.logger),
               status: collarData.status || 'Planned'
             });
 
@@ -292,14 +299,14 @@ export function useDrillholeData() {
           localStorage.removeItem(`dh_${selectedHoleId}_assays`);
           localStorage.removeItem(`dh_${selectedHoleId}_sampleprep`);
 
-          setCollar(dbHole.collar);
+          setCollar({ ...dbHole.collar, logger: sanitizeLogger(dbHole.collar?.logger) });
           setSurveys(dbHole.surveys);
           setLithology(dbHole.lithology);
           setGeotech(dbHole.geotech);
           setAssays(dbHole.assays);
           setSamplePrep([]);
         } else {
-          setCollar(parsedCollar);
+          setCollar({ ...parsedCollar, logger: sanitizeLogger(parsedCollar.logger) });
           setSurveys(localSurveys ? JSON.parse(localSurveys) : []);
           setLithology(localLitho ? JSON.parse(localLitho) : []);
           setGeotech(localGeotech ? JSON.parse(localGeotech) : []);
@@ -309,7 +316,11 @@ export function useDrillholeData() {
       } else if (db[selectedHoleId]) {
         // Fallback: Read from the read-only JSON database templates
         const holeData = db[selectedHoleId];
-        setCollar(holeData.collar);
+        setCollar({
+          ...holeData.collar,
+          logger: sanitizeLogger(holeData.collar?.logger)
+        });
+
         setSurveys(holeData.surveys);
         setLithology((holeData.lithology || []).map((l: any) => {
           const { description, photo } = parsePhotoFromDescription(l.description || '');
@@ -334,7 +345,7 @@ export function useDrillholeData() {
           azimuth: 0,
           dateStarted: '',
           dateCompleted: '',
-          logger: 'KaleMaden',
+          logger: '',
           status: 'Planned'
         });
         setSurveys([
@@ -444,7 +455,7 @@ export function useDrillholeData() {
       azimuth: 0.0,
       dateStarted: '',
       dateCompleted: '',
-      logger: 'KaleMaden',
+      logger: '',
       status: 'Planned'
     };
 
@@ -470,7 +481,7 @@ export function useDrillholeData() {
           total_depth: 100.0,
           dip: -90.0,
           azimuth: 0.0,
-          logger: 'KaleMaden',
+          logger: '',
           status: 'Planned'
         });
         if (error) throw error;
@@ -647,7 +658,7 @@ export function useDrillholeData() {
         azimuth: 0,
         dateStarted: '',
         dateCompleted: '',
-        logger: 'KaleMaden',
+        logger: '',
         status: 'Planned'
       });
       setSurveys([]);
@@ -692,8 +703,8 @@ export function useDrillholeData() {
           dbCollar.azimuth === collar.azimuth &&
           (dbCollar.date_started || '') === collar.dateStarted &&
           (dbCollar.date_completed || '') === collar.dateCompleted &&
-          (dbCollar.logger || '') === collar.logger &&
-          (dbCollar.status || '') === collar.status;
+          !["İsmailcan SEVER", "Altan COŞKUN", "Levent CAN", "Mehmet KOLDANCI", "Muhammed KAYALIDAĞ", "Mustafa KAŞ", "Emir Özçakıcı"].includes(collar.logger) && collar.logger && (
+          (dbCollar.status || '') === collar.status);
 
         // 2. Compare Surveys
         const cleanDbSurveys = (dbSurveys || []).map((s: any) => ({ depth: s.depth, dip: s.dip, azimuth: s.azimuth }));

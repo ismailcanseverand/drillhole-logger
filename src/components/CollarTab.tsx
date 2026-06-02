@@ -103,7 +103,7 @@ export const CollarTab: React.FC<CollarTabProps> = ({ collar, setCollar, errors,
                 Logger / Geologist
               </label>
               <select id="logger" name="logger" value={collar.logger || ''} onChange={handleChange}>
-                {!["İsmailcan SEVER", "Altan COŞKUN", "Levent CAN", "Mehmet KOLDANCI", "Muhammed KAYALIDAĞ", "Mustafa KAŞ"].includes(collar.logger) && collar.logger && (
+                {!["İsmailcan SEVER", "Altan COŞKUN", "Levent CAN", "Mehmet KOLDANCI", "Muhammed KAYALIDAĞ", "Mustafa KAŞ", "Emir Özçakıcı"].includes(collar.logger) && collar.logger && (
                   <option value={collar.logger}>{collar.logger}</option>
                 )}
                 <option value="">Select Logger</option>
@@ -113,6 +113,7 @@ export const CollarTab: React.FC<CollarTabProps> = ({ collar, setCollar, errors,
                 <option value="Mehmet KOLDANCI">Mehmet KOLDANCI</option>
                 <option value="Muhammed KAYALIDAĞ">Muhammed KAYALIDAĞ</option>
                 <option value="Mustafa KAŞ">Mustafa KAŞ</option>
+                <option value="Emir Özçakıcı">Emir Özçakıcı</option>
               </select>
             </div>
           </div>

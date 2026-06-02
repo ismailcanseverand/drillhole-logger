@@ -533,7 +533,7 @@ export const GridTable: React.FC<GridTableProps> = ({
 
         worksheet.getCell(rIdx, 2).value = row.sampleTag || `S${String(index + 1).padStart(4, '0')}`;
         worksheet.getCell(rIdx, 3).value = row.oreType || ''; // Col C
-        worksheet.getCell(rIdx, 4).value = ruhsatAdi || 'ÇAMLICA';
+        worksheet.getCell(rIdx, 4).value = `${ruhsatAdi || 'ÇAMLICA'} - ${holeId || ''} KUYUSU`.toUpperCase();
         worksheet.getCell(rIdx, 5).value = row.from !== undefined ? row.from : '';
         worksheet.getCell(rIdx, 6).value = row.to !== undefined ? row.to : '';
         worksheet.getCell(rIdx, 7).value = row.physical || ''; // Col G

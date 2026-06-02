@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useDrillholeData } from './hooks/useDrillholeData';
 import { CollarTab } from './components/CollarTab';
 import { GridTable } from './components/GridTable';
@@ -15,11 +15,15 @@ import {
   Settings,
   CloudUpload,
   CloudOff,
-  Plus
+  Plus,
+  ChevronDown,
+  Search
 } from 'lucide-react';
 import { DatabaseSettings } from './components/DatabaseSettings';
 import { isSupabaseConfigured } from './utils/supabaseClient';
 import './App.css';
+
+const METALLIC_PROJECTS = ['BODURLAR', 'BİÇER', 'BICER', 'NAMAZGAH', 'DEDELER', 'ETİLİ', 'ETILI', 'KIRIKLAR', 'DUMAN'];
 
 function App() {
   const {
@@ -53,6 +57,105 @@ function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [isSavingToDb, setIsSavingToDb] = useState<boolean>(false);
   const [highlightedRowId, setHighlightedRowId] = useState<string | null>(null);
+
+  // Custom searchable selector states
+  const [isSelectorOpen, setIsSelectorOpen] = useState<boolean>(false);
+  const [selectorSearch, setSelectorSearch] = useState<string>('');
+  const [selectorCategory, setSelectorCategory] = useState<'industrial' | 'metallic'>('industrial');
+  const selectorRef = useRef<HTMLDivElement>(null);
+
+  // Helper to determine the project name for a drillhole ID
+  const getHoleProjectName = (hId: string): string => {
+    let proj = db[hId]?.collar?.project || '';
+    if (!proj) {
+      try {
+        const localStr = localStorage.getItem(`dh_${hId}_collar`);
+        if (localStr) {
+          const parsed = JSON.parse(localStr);
+          proj = parsed.project || '';
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+    return proj ? proj.trim() : '';
+  };
+
+  // Helper to check if drillhole is metallic
+  const isHoleMetallic = (hId: string): boolean => {
+    const proj = getHoleProjectName(hId);
+    const upper = proj.toUpperCase();
+    return METALLIC_PROJECTS.some(p => upper.includes(p) || p.includes(upper));
+  };
+
+  // Pre-categorize and group holes by project
+  const categorizedHoles = useMemo(() => {
+    const metallic: Record<string, string[]> = {};
+    const industrial: Record<string, string[]> = {};
+
+    for (const hId of holeList) {
+      const proj = getHoleProjectName(hId);
+      const projKey = proj ? proj.trim().toUpperCase() : 'GENERAL';
+      const isMetallic = METALLIC_PROJECTS.some(p => projKey.includes(p) || p.includes(projKey));
+
+      const targetMap = isMetallic ? metallic : industrial;
+      if (!targetMap[projKey]) {
+        targetMap[projKey] = [];
+      }
+      targetMap[projKey].push(hId);
+    }
+
+    // Sort drillhole IDs alphabetically inside each project group
+    for (const proj in metallic) {
+      metallic[proj].sort();
+    }
+    for (const proj in industrial) {
+      industrial[proj].sort();
+    }
+
+    return { metallic, industrial };
+  }, [holeList, db]);
+
+  // Compute filtered project groups based on category and search query
+  const filteredHoles = useMemo(() => {
+    const targetCategory = selectorCategory === 'metallic' ? categorizedHoles.metallic : categorizedHoles.industrial;
+    const filtered: Record<string, string[]> = {};
+    const searchLower = selectorSearch.toLowerCase().trim();
+
+    for (const [project, holes] of Object.entries(targetCategory)) {
+      // Match project name or drillhole ID
+      const matchingHoles = holes.filter(hId => 
+        hId.toLowerCase().includes(searchLower) || project.toLowerCase().includes(searchLower)
+      );
+
+      if (matchingHoles.length > 0) {
+        filtered[project] = matchingHoles;
+      }
+    }
+
+    return filtered;
+  }, [categorizedHoles, selectorCategory, selectorSearch]);
+
+  // Click-Outside closer for Popover dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (selectorRef.current && !selectorRef.current.contains(event.target as Node)) {
+        setIsSelectorOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Sync category tab with active selected drillhole when it changes
+  useEffect(() => {
+    if (selectedHoleId) {
+      const isMetallic = isHoleMetallic(selectedHoleId);
+      setSelectorCategory(isMetallic ? 'metallic' : 'industrial');
+    }
+  }, [selectedHoleId]);
 
   const handleItemClick = (tab: string, itemId: string) => {
     setActiveTab(tab);
@@ -297,24 +400,89 @@ function App() {
         </div>
 
         <div className="project-meta-controls">
-          <div className="meta-item">
+          <div className="meta-item" style={{ position: 'relative' }}>
             <span className="meta-label">Select Drillhole</span>
-            <select
-              value={selectedHoleId}
-              onChange={e => setSelectedHoleId(e.target.value)}
-              style={{
-                width: '180px',
-                padding: '4px 8px',
-                fontSize: '13px',
-                fontWeight: 'bold',
-                borderColor: 'var(--border-medium)',
-                borderRadius: 'var(--radius-sm)'
-              }}
-            >
-              {holeList.map(h => (
-                <option key={h} value={h}>{h}</option>
-              ))}
-            </select>
+            <div className="drillhole-selector-container" ref={selectorRef}>
+              <button 
+                className="drillhole-selector-trigger" 
+                onClick={() => setIsSelectorOpen(!isSelectorOpen)}
+                type="button"
+              >
+                <span className="selected-hole-name">{selectedHoleId || 'Select Drillhole'}</span>
+                <ChevronDown size={14} className={`trigger-arrow ${isSelectorOpen ? 'open' : ''}`} />
+              </button>
+              
+              {isSelectorOpen && (
+                <div className="drillhole-selector-popover">
+                  {/* Category switcher */}
+                  <div className="selector-tabs">
+                    <button 
+                      type="button"
+                      className={`selector-tab ${selectorCategory === 'industrial' ? 'active' : ''}`}
+                      onClick={() => {
+                        setSelectorCategory('industrial');
+                        setSelectorSearch('');
+                      }}
+                    >
+                      Industrial (Endüstriyel)
+                    </button>
+                    <button 
+                      type="button"
+                      className={`selector-tab ${selectorCategory === 'metallic' ? 'active' : ''}`}
+                      onClick={() => {
+                        setSelectorCategory('metallic');
+                        setSelectorSearch('');
+                      }}
+                    >
+                      Metallic (Metalik)
+                    </button>
+                  </div>
+                  
+                  {/* Search box */}
+                  <div className="selector-search-box">
+                    <Search size={14} className="search-icon" />
+                    <input 
+                      type="text" 
+                      placeholder="Input text here..." 
+                      value={selectorSearch}
+                      onChange={e => setSelectorSearch(e.target.value)}
+                      autoFocus
+                    />
+                  </div>
+                  
+                  {/* Project-grouped results list */}
+                  <div className="selector-results-list">
+                    {Object.keys(filteredHoles).length === 0 ? (
+                      <div className="selector-no-results">No drillholes found</div>
+                    ) : (
+                      Object.entries(filteredHoles).map(([project, holes]) => (
+                        <div key={project} className="selector-group">
+                          <div className="selector-group-header">
+                            PROJECT: {project}
+                          </div>
+                          <div className="selector-group-items">
+                            {holes.map(hId => (
+                              <button
+                                key={hId}
+                                type="button"
+                                className={`selector-item-btn ${selectedHoleId === hId ? 'active' : ''}`}
+                                onClick={() => {
+                                  setSelectedHoleId(hId);
+                                  setIsSelectorOpen(false);
+                                  setSelectorSearch('');
+                                }}
+                              >
+                                {hId}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
           <div className="meta-item">
             <span className="meta-label">Easting / Northing</span>

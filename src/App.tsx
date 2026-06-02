@@ -292,6 +292,33 @@ function App() {
     { key: 'loi', label: 'LOI/AZ (%)', type: 'number', width: '10%', defaultValue: 0 }
   ], []);
 
+  // Define Columns for Metallic Assay Tab
+  const metallicAssayColumns = useMemo<GridColumn[]>(() => [
+    { key: 'sampleId', label: 'Sample ID', type: 'text', width: '12%', defaultValue: 'M0001' },
+    { key: 'from', label: 'From (m)', type: 'number', width: '8%', defaultValue: 0 },
+    { key: 'to', label: 'To (m)', type: 'number', width: '8%', defaultValue: 0 },
+    {
+      key: 'sampleType',
+      label: 'Type',
+      type: 'select',
+      width: '10%',
+      defaultValue: 'Core',
+      options: [
+        { value: 'Core', label: 'Core Interval' },
+        { value: 'Standard', label: 'CRM Standard' },
+        { value: 'Blank', label: 'Blank Control' },
+        { value: 'Duplicate', label: 'Field Duplicate' }
+      ]
+    },
+    { key: 'au_ppm', label: 'Au (ppm)', type: 'number', width: '9%', defaultValue: 0 },
+    { key: 'au_ppb', label: 'Au (ppb)', type: 'number', width: '9%', defaultValue: 0 },
+    { key: 'ag_ppm', label: 'Ag (ppm)', type: 'number', width: '9%', defaultValue: 0 },
+    { key: 'cu_ppm', label: 'Cu (ppm)', type: 'number', width: '9%', defaultValue: 0 },
+    { key: 'pb_ppm', label: 'Pb (ppm)', type: 'number', width: '9%', defaultValue: 0 },
+    { key: 'zn_ppm', label: 'Zn (ppm)', type: 'number', width: '9%', defaultValue: 0 },
+    { key: 'as_ppm', label: 'As (ppm)', type: 'number', width: '9%', defaultValue: 0 }
+  ], []);
+
   // Define Columns for Sample Preparation Tab
   const samplePrepColumns = useMemo<GridColumn[]>(() => [
     { key: 'sampleTag', label: 'Sample Tag', type: 'text', width: '10%', defaultValue: 'S0001' },
@@ -615,7 +642,7 @@ function App() {
             {activeTab === 'Assay' && (
               <GridTable
                 title="Assay Sample Interval Entry"
-                columns={assayColumns}
+                columns={isHoleMetallic(selectedHoleId) ? metallicAssayColumns : assayColumns}
                 data={assays}
                 onChange={setAssays}
                 errors={errors}

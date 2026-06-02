@@ -481,10 +481,17 @@ export const GridTable: React.FC<GridTableProps> = ({
 
     try {
       const response = await fetch('/Numune_Teslim_Formu.xlsx');
+      if (!response.ok) {
+        throw new Error(`HTTP error fetching template! status: ${response.status}`);
+      }
       const arrayBuffer = await response.arrayBuffer();
 
-      const ExcelJS = await import('exceljs');
-      const workbook = new ExcelJS.default.Workbook();
+      const ExcelJSModule = await import('exceljs');
+      const ExcelJS = (ExcelJSModule.default || ExcelJSModule) as any;
+      if (!ExcelJS || typeof ExcelJS.Workbook !== 'function') {
+        throw new Error('Workbook constructor not found in loaded exceljs module.');
+      }
+      const workbook = new ExcelJS.Workbook();
       await workbook.xlsx.load(arrayBuffer);
 
       const worksheet = workbook.getWorksheet(1);
@@ -579,9 +586,9 @@ export const GridTable: React.FC<GridTableProps> = ({
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error generating lab Excel sheet:', err);
-      alert('Failed to export Excel delivery form. Please check template file.');
+      alert(`Failed to export Excel delivery form. Error: ${err.message || err}`);
     }
   };
 

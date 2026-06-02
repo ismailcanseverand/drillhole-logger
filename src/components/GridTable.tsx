@@ -508,22 +508,10 @@ export const GridTable: React.FC<GridTableProps> = ({
       const dateCell = worksheet.getCell(4, 31);
       dateCell.value = `. . .${dd}. . /. .${mm} . . /. . ${yyyy} . . . `;
 
-      let easting = 0;
-      let northing = 0;
-      let elevation = 0;
-      if (holeId) {
-        try {
-          const collarStr = localStorage.getItem(`dh_${holeId}_collar`);
-          if (collarStr) {
-            const collarData = JSON.parse(collarStr);
-            easting = collarData.easting || 0;
-            northing = collarData.northing || 0;
-            elevation = collarData.elevation || 0;
-          }
-        } catch (e) {
-          console.error('Error fetching collar coordinates for export:', e);
-        }
-      }
+      // Overwrite coordinate headers to "Başlangıç" and "Bitiş"
+      worksheet.getCell(9, 5).value = 'BAŞLANGIÇ';
+      worksheet.getCell(9, 6).value = 'BİTİŞ';
+      worksheet.getCell(9, 7).value = '';
 
       // Clear template rows 10 to 47 (columns B to AE)
       for (let r = 10; r <= 47; r++) {
@@ -540,9 +528,9 @@ export const GridTable: React.FC<GridTableProps> = ({
         worksheet.getCell(rIdx, 2).value = row.sampleTag || `S${String(index + 1).padStart(4, '0')}`;
         worksheet.getCell(rIdx, 3).value = row.oreType || ''; // Col C
         worksheet.getCell(rIdx, 4).value = ruhsatAdi || 'ÇAMLICA';
-        worksheet.getCell(rIdx, 5).value = easting;
-        worksheet.getCell(rIdx, 6).value = northing;
-        worksheet.getCell(rIdx, 7).value = elevation;
+        worksheet.getCell(rIdx, 5).value = row.from !== undefined ? row.from : '';
+        worksheet.getCell(rIdx, 6).value = row.to !== undefined ? row.to : '';
+        worksheet.getCell(rIdx, 7).value = '';
         worksheet.getCell(rIdx, 8).value = row.physical || ''; // Col H
 
         if (row.chemical === 'XRF' || row.chemical === 'XRF + XRD') {

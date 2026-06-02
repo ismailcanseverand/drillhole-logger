@@ -563,11 +563,32 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                           onClick={() => handleBlockClick('Lithology', l.id)}
                           onMouseEnter={() =>
                             setHoverInfo(
-                              `Geology: [${l.rockCode}] ${l.from}m-${l.to}m: ${l.description || 'No description'}`
+                              `Geology: [${l.rockCode}] ${l.from}m-${l.to}m${l.photo ? ' [📷 Photo Attached]' : ''}: ${l.description || 'No description'}`
                             )
                           }
                           onMouseLeave={() => setHoverInfo(null)}
                         />
+                        {l.photo && h > 12 && (
+                          <g style={{ pointerEvents: 'none' }}>
+                            <circle
+                              cx={pos.startX + pos.width - 15}
+                              cy={y + 12}
+                              r="8"
+                              fill="rgba(15, 23, 42, 0.85)"
+                              stroke="rgba(255, 255, 255, 0.4)"
+                              strokeWidth="0.5"
+                            />
+                            <text
+                              x={pos.startX + pos.width - 15}
+                              y={y + 15}
+                              textAnchor="middle"
+                              fill="#ffffff"
+                              fontSize="8"
+                            >
+                              📷
+                            </text>
+                          </g>
+                        )}
                         {h > 15 && (
                           <g style={{ pointerEvents: 'none' }}>
                             <rect

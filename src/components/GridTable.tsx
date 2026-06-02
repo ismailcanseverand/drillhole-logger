@@ -1,7 +1,8 @@
-import React, { useRef, useEffect } from 'react';
-import { Plus, Trash2, Download, Upload, AlertCircle } from 'lucide-react';
+import React, { useRef, useEffect, useState } from 'react';
+import { Plus, Trash2, Download, Upload, AlertCircle, Camera } from 'lucide-react';
 import { exportToCSV, parseCSV } from '../utils/csv';
 import type { ValidationError } from '../utils/validation';
+import { getSupabaseClient } from '../utils/supabaseClient';
 
 export interface GridColumn {
   key: string;
@@ -23,7 +24,83 @@ interface GridTableProps {
   tabName: 'Survey' | 'Lithology' | 'Geotech' | 'Assay';
   autoFillNextFrom?: boolean; // automatically prefill 'from' of new row with 'to' of last row
   highlightedRowId?: string | null;
+  holeId?: string;
 }
+
+const compressPhoto = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const maxDim = 800;
+        let width = img.width;
+        let height = img.height;
+        
+        if (width > height) {
+          if (width > maxDim) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          }
+        } else {
+          if (height > maxDim) {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(img.src);
+          return;
+        }
+        ctx.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+        resolve(dataUrl);
+      };
+      img.onerror = (err) => reject(err);
+    };
+    reader.onerror = (err) => reject(err);
+  });
+};
+
+const uploadPhotoToSupabase = async (base64Data: string, rowId: string, holeId?: string): Promise<string | null> => {
+  const client = getSupabaseClient();
+  if (!client) return null;
+  try {
+    const response = await fetch(base64Data);
+    const blob = await response.blob();
+    
+    const filePrefix = holeId ? `${holeId}_` : '';
+    const filePath = `photos/${filePrefix}${rowId}.jpg`;
+    
+    const { error } = await client.storage
+      .from('lithology-photos')
+      .upload(filePath, blob, {
+        contentType: 'image/jpeg',
+        upsert: true
+      });
+      
+    if (error) {
+      console.warn('Failed to upload photo to Supabase storage, using base64 fallback:', error);
+      return null;
+    }
+    
+    const { data: publicUrlData } = client.storage
+      .from('lithology-photos')
+      .getPublicUrl(filePath);
+      
+    return publicUrlData.publicUrl;
+  } catch (err) {
+    console.error('Error uploading photo:', err);
+    return null;
+  }
+};
 
 const getRockColorName = (code: string): string => {
   switch ((code || '').toUpperCase()) {
@@ -170,9 +247,41 @@ export const GridTable: React.FC<GridTableProps> = ({
   tabName,
   autoFillNextFrom = false,
   highlightedRowId = null,
+  holeId,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const highlightedRowRef = useRef<HTMLTableRowElement | null>(null);
+
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+  const capturingRowIndexRef = useRef<number | null>(null);
+
+  const handlePhotoCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    const rowIndex = capturingRowIndexRef.current;
+    if (!file || rowIndex === null) return;
+
+    try {
+      const compressedBase64 = await compressPhoto(file);
+      const rowId = data[rowIndex]?.id;
+      
+      if (!rowId) return;
+
+      let finalPhotoUrl = compressedBase64;
+      const uploadedUrl = await uploadPhotoToSupabase(compressedBase64, rowId, holeId);
+      if (uploadedUrl) {
+        finalPhotoUrl = uploadedUrl;
+      }
+      
+      handleCellChange(rowIndex, 'photo', finalPhotoUrl);
+    } catch (err) {
+      console.error('Failed to process captured image:', err);
+      alert('Error processing image. Please try again.');
+    } finally {
+      capturingRowIndexRef.current = null;
+      e.target.value = '';
+    }
+  };
 
   useEffect(() => {
     if (highlightedRowId && highlightedRowRef.current) {
@@ -424,7 +533,72 @@ export const GridTable: React.FC<GridTableProps> = ({
 
                     return (
                       <td key={col.key} className={cellClass} title={validationErr?.message}>
-                        {tabName === 'Lithology' && col.key === 'color' ? (
+                        {tabName === 'Lithology' && col.key === 'photo' ? (
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '4px' }}>
+                            {row.photo ? (
+                              <div style={{ position: 'relative', display: 'inline-block' }}>
+                                <img
+                                  src={row.photo}
+                                  alt="Lithology"
+                                  onClick={() => setLightboxUrl(row.photo)}
+                                  style={{
+                                    width: '32px',
+                                    height: '32px',
+                                    objectFit: 'cover',
+                                    borderRadius: '4px',
+                                    cursor: 'pointer',
+                                    border: '1px solid var(--border-medium)',
+                                    boxShadow: 'var(--shadow-sm)'
+                                  }}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => handleCellChange(rowIndex, 'photo', '')}
+                                  style={{
+                                    position: 'absolute',
+                                    top: '-4px',
+                                    right: '-4px',
+                                    background: 'var(--danger)',
+                                    color: '#fff',
+                                    border: 'none',
+                                    borderRadius: '50%',
+                                    width: '12px',
+                                    height: '12px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontSize: '8px',
+                                    cursor: 'pointer',
+                                    lineHeight: 1
+                                  }}
+                                  title="Remove Photo"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                className="btn btn-secondary btn-sm"
+                                onClick={() => {
+                                  capturingRowIndexRef.current = rowIndex;
+                                  cameraInputRef.current?.click();
+                                }}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  padding: '2px 6px',
+                                  fontSize: '10px',
+                                  borderRadius: 'var(--radius-sm)'
+                                }}
+                              >
+                                <Camera size={12} />
+                                <span>Capture</span>
+                              </button>
+                            )}
+                          </div>
+                        ) : tabName === 'Lithology' && col.key === 'color' ? (
                           <div className="readonly-value">
                             {getRockColorName(row.rockCode)}
                           </div>
@@ -494,6 +668,65 @@ export const GridTable: React.FC<GridTableProps> = ({
           </tbody>
         </table>
       </div>
+      
+      {/* Hidden file input for capturing photos natively */}
+      <input
+        type="file"
+        ref={cameraInputRef}
+        accept="image/*"
+        capture="environment"
+        style={{ display: 'none' }}
+        onChange={handlePhotoCapture}
+      />
+
+      {/* Full screen Lightbox Viewer */}
+      {lightboxUrl && (
+        <div
+          onClick={() => setLightboxUrl(null)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            backgroundColor: 'rgba(15, 23, 42, 0.9)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            cursor: 'zoom-out'
+          }}
+        >
+          <div style={{ position: 'relative', maxWidth: '90%', maxHeight: '90%' }} onClick={e => e.stopPropagation()}>
+            <img
+              src={lightboxUrl}
+              alt="Lithology Full Size"
+              style={{
+                maxWidth: '100%',
+                maxHeight: '80vh',
+                borderRadius: '8px',
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+              }}
+            />
+            <button
+              onClick={() => setLightboxUrl(null)}
+              style={{
+                position: 'absolute',
+                top: '-40px',
+                right: '0',
+                background: 'transparent',
+                color: '#fff',
+                border: 'none',
+                fontSize: '24px',
+                cursor: 'pointer'
+              }}
+            >
+              Close ×
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

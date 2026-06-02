@@ -11,6 +11,28 @@ import {
 import type { ValidationError } from '../utils/validation';
 import { getSupabaseClient } from '../utils/supabaseClient';
 
+// Helper functions to parse and serialize photo tag from description field
+export function parsePhotoFromDescription(desc: string): { description: string; photo?: string } {
+  if (!desc) return { description: '' };
+  const photoRegex = /\[PHOTO:(.*?)\]/;
+  const match = desc.match(photoRegex);
+  if (match) {
+    return {
+      description: desc.replace(photoRegex, '').trim(),
+      photo: match[1]
+    };
+  }
+  return { description: desc };
+}
+
+export function serializePhotoIntoDescription(desc: string, photo?: string): string {
+  const cleanDesc = desc ? desc.replace(/\[PHOTO:(.*?)\]/, '').trim() : '';
+  if (photo) {
+    return `${cleanDesc} [PHOTO:${photo}]`.trim();
+  }
+  return cleanDesc;
+}
+
 export interface CollarState {
   holeId: string;
   easting: number;
@@ -40,6 +62,7 @@ export interface LithologyState {
   alteration: string;
   mineralization: string;
   description: string;
+  photo?: string; // base64 string or public URL
 }
 
 export interface GeotechState {
@@ -183,15 +206,19 @@ export function useDrillholeData() {
               azimuth: s.azimuth
             })));
 
-            setLithology((lData || []).map((l: any) => ({
-              id: l.id,
-              from: l.from_depth,
-              to: l.to_depth,
-              rockCode: l.rock_code,
-              alteration: l.alteration || '',
-              mineralization: l.mineralization || '',
-              description: l.description || ''
-            })).sort((a: LithologyState, b: LithologyState) => a.from - b.from));
+            setLithology((lData || []).map((l: any) => {
+              const { description, photo } = parsePhotoFromDescription(l.description || '');
+              return {
+                id: l.id,
+                from: l.from_depth,
+                to: l.to_depth,
+                rockCode: l.rock_code,
+                alteration: l.alteration || '',
+                mineralization: l.mineralization || '',
+                description,
+                photo
+              };
+            }).sort((a: LithologyState, b: LithologyState) => a.from - b.from));
 
             setGeotech((gData || []).map((g: any) => ({
               id: g.id,
@@ -267,7 +294,14 @@ export function useDrillholeData() {
         const holeData = db[selectedHoleId];
         setCollar(holeData.collar);
         setSurveys(holeData.surveys);
-        setLithology(holeData.lithology);
+        setLithology((holeData.lithology || []).map((l: any) => {
+          const { description, photo } = parsePhotoFromDescription(l.description || '');
+          return {
+            ...l,
+            description,
+            photo
+          };
+        }));
         setGeotech(holeData.geotech);
         setAssays(holeData.assays);
       } else {
@@ -634,8 +668,27 @@ export function useDrillholeData() {
                               JSON.stringify(cleanLocalSurveys.sort((a: any, b: any) => a.depth - b.depth));
 
         // 3. Compare Lithology
-        const cleanDbLitho = (dbLithology || []).map((l: any) => ({ from: l.from_depth, to: l.to_depth, rockCode: l.rock_code, alteration: l.alteration || '', mineralization: l.mineralization || '', description: l.description || '' }));
-        const cleanLocalLitho = lithology.map((l: LithologyState) => ({ from: l.from, to: l.to, rockCode: l.rockCode, alteration: l.alteration || '', mineralization: l.mineralization || '', description: l.description || '' }));
+        const cleanDbLitho = (dbLithology || []).map((l: any) => {
+          const { description, photo } = parsePhotoFromDescription(l.description || '');
+          return {
+            from: l.from_depth,
+            to: l.to_depth,
+            rockCode: l.rock_code,
+            alteration: l.alteration || '',
+            mineralization: l.mineralization || '',
+            description,
+            photo: photo || ''
+          };
+        });
+        const cleanLocalLitho = lithology.map((l: LithologyState) => ({
+          from: l.from,
+          to: l.to,
+          rockCode: l.rockCode,
+          alteration: l.alteration || '',
+          mineralization: l.mineralization || '',
+          description: l.description || '',
+          photo: l.photo || ''
+        }));
         const lithoMatches = JSON.stringify(cleanDbLitho.sort((a: any, b: any) => a.from - b.from)) === 
                             JSON.stringify(cleanLocalLitho.sort((a: any, b: any) => a.from - b.from));
 
@@ -705,7 +758,7 @@ export function useDrillholeData() {
             rock_code: l.rockCode,
             alteration: l.alteration,
             mineralization: l.mineralization,
-            description: l.description
+            description: serializePhotoIntoDescription(l.description, l.photo)
           }))
         );
         if (lErr) throw lErr;

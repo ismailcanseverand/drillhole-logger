@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getSupabaseClient, isSupabaseConfigured } from '../utils/supabaseClient';
 import { X, CheckCircle, AlertCircle, RefreshCw, Database, CloudUpload } from 'lucide-react';
+import { serializePhotoIntoDescription } from '../hooks/useDrillholeData';
 
 interface DatabaseSettingsProps {
   onClose: () => void;
@@ -140,7 +141,7 @@ export const DatabaseSettings: React.FC<DatabaseSettingsProps> = ({
               rock_code: l.rockCode,
               alteration: l.alteration || '',
               mineralization: l.mineralization || '',
-              description: l.description || ''
+              description: serializePhotoIntoDescription(l.description || '', l.photo)
             });
           });
         }

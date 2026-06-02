@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { useDrillholeData } from './hooks/useDrillholeData';
+import { useDrillholeData, METALLIC_HOLES } from './hooks/useDrillholeData';
 import { CollarTab } from './components/CollarTab';
 import { GridTable } from './components/GridTable';
 import type { GridColumn } from './components/GridTable';
@@ -23,19 +23,6 @@ import { DatabaseSettings } from './components/DatabaseSettings';
 import { isSupabaseConfigured } from './utils/supabaseClient';
 import './App.css';
 
-const METALLIC_HOLES = [
-  'BCK-01', 'BCK-01A', 'BCK-02', 'BCK-03', 'BCK-04', 'BCK-05',
-  'BDK-01', 'BDK-02', 'BDK-03', 'BDK-04', 'BDK-05', 'BDK-06', 'BDK-07', 'BDK-08', 'BDK-09', 'BDK-10',
-  'DDK-01', 'DDK-02', 'DDK-03', 'DDK-04', 'DDK-05', 'DDK-06', 'DDK-07', 'DDK-08', 'DDK-09', 'DDK-10',
-  'DDK-11', 'DDK-12', 'DDK-13', 'DDK-14', 'DDK-15', 'DDK-16', 'DDK-17', 'DDK-18', 'DDK-19', 'DDK-20',
-  'DDK-21', 'DDK-22', 'DDK-23', 'DDK-24', 'DDK-25', 'DDK-26', 'DKK-27', 'DDK-28', 'DDK-29', 'DDK-30',
-  'T-01', 'T-02', 'T-03',
-  'ETK-01', 'ETK-02', 'ETK-03', 'ETK-04', 'ETK-5', 'ETK-6', 'ETK-7', 'ETK-8', 'ETK-9', 'ETK-10',
-  'ETK-11', 'ETK-12', 'ETK-13', 'ETK-14',
-  'NMK-01', 'NMK-02', 'NMK-03',
-  'S-01', 'S-02', 'S-03', 'S-04',
-  'KRK-S1', 'KRK-S2'
-];
 
 function App() {
   const {

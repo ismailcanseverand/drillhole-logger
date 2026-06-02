@@ -119,7 +119,19 @@ export interface SamplePreparationMetallicState {
   description: string;
   analysisCode: string;
 }
-
+export const METALLIC_HOLES = [
+  'BCK-01', 'BCK-01A', 'BCK-02', 'BCK-03', 'BCK-04', 'BCK-05',
+  'BDK-01', 'BDK-02', 'BDK-03', 'BDK-04', 'BDK-05', 'BDK-06', 'BDK-07', 'BDK-08', 'BDK-09', 'BDK-10',
+  'DDK-01', 'DDK-02', 'DDK-03', 'DDK-04', 'DDK-05', 'DDK-06', 'DDK-07', 'DDK-08', 'DDK-09', 'DDK-10',
+  'DDK-11', 'DDK-12', 'DDK-13', 'DDK-14', 'DDK-15', 'DDK-16', 'DDK-17', 'DDK-18', 'DDK-19', 'DDK-20',
+  'DDK-21', 'DDK-22', 'DDK-23', 'DDK-24', 'DDK-25', 'DDK-26', 'DKK-27', 'DDK-28', 'DDK-29', 'DDK-30',
+  'T-01', 'T-02', 'T-03',
+  'ETK-01', 'ETK-02', 'ETK-03', 'ETK-04', 'ETK-5', 'ETK-6', 'ETK-7', 'ETK-8', 'ETK-9', 'ETK-10',
+  'ETK-11', 'ETK-12', 'ETK-13', 'ETK-14',
+  'NMK-01', 'NMK-02', 'NMK-03',
+  'S-01', 'S-02', 'S-03', 'S-04',
+  'KRK-S1', 'KRK-S2'
+];
 
 // Initial empty states before loading data
 const EMPTY_COLLAR: CollarState = {
@@ -289,7 +301,14 @@ export function useDrillholeData() {
               sio2: a.sio2,
               tio2: a.tio2,
               na2o_k2o: a.na2o_k2o,
-              loi: a.loi
+              loi: a.loi,
+              au_ppb: a.au_ppb,
+              au_ppm: a.au_ppm,
+              ag_ppm: a.ag_ppm,
+              cu_ppm: a.cu_ppm,
+              pb_ppm: a.pb_ppm,
+              zn_ppm: a.zn_ppm,
+              as_ppm: a.as_ppm
             })).sort((a: AssayState, b: AssayState) => a.from - b.from));
 
             return; // Successfully loaded from Supabase database
@@ -336,11 +355,48 @@ export function useDrillholeData() {
           setSamplePrep([]);
           setSamplePrepMetallic([]);
         } else {
+          // Self-healing merge algorithm for LocalStorage assay geochem values
+          let mergedAssays = parsedAssays;
+          const isHoleMetallic = METALLIC_HOLES.includes(selectedHoleId.trim().toUpperCase());
+          
+          if (dbHole && dbHole.assays && dbHole.assays.length > 0) {
+            if (parsedAssays.length === 0) {
+              console.warn(`Local assays array is empty for hole ${selectedHoleId}. Restoring from JSON DB.`);
+              mergedAssays = dbHole.assays;
+              localStorage.setItem(`dh_${selectedHoleId}_assays`, JSON.stringify(mergedAssays));
+            } else if (isHoleMetallic) {
+              const hasMetallicFields = parsedAssays.some((a: any) => 'au_ppb' in a || 'au_ppm' in a);
+              if (!hasMetallicFields) {
+                console.warn(`Merging fresh metallic geochem assay data for: ${selectedHoleId}`);
+                mergedAssays = parsedAssays.map((localA: any) => {
+                  const dbA = dbHole.assays.find((da: any) => 
+                    da.sampleId === localA.sampleId || 
+                    (Math.abs(da.from - localA.from) < 0.01 && Math.abs(da.to - localA.to) < 0.01)
+                  );
+                  if (dbA) {
+                    return {
+                      ...localA,
+                      au_ppb: dbA.au_ppb,
+                      au_ppm: dbA.au_ppm,
+                      ag_ppm: dbA.ag_ppm,
+                      cu_ppm: dbA.cu_ppm,
+                      pb_ppm: dbA.pb_ppm,
+                      zn_ppm: dbA.zn_ppm,
+                      as_ppm: dbA.as_ppm
+                    };
+                  }
+                  return localA;
+                });
+                localStorage.setItem(`dh_${selectedHoleId}_assays`, JSON.stringify(mergedAssays));
+              }
+            }
+          }
+
           setCollar(sanitizeCollar(parsedCollar));
           setSurveys(localSurveys ? JSON.parse(localSurveys) : []);
           setLithology(localLitho ? JSON.parse(localLitho) : []);
           setGeotech(localGeotech ? JSON.parse(localGeotech) : []);
-          setAssays(localAssays ? JSON.parse(localAssays) : []);
+          setAssays(mergedAssays);
           setSamplePrep(localSamplePrep ? JSON.parse(localSamplePrep) : []);
           setSamplePrepMetallic(localSamplePrepMetallic ? JSON.parse(localSamplePrepMetallic) : []);
         }
@@ -915,7 +971,14 @@ export function useDrillholeData() {
             sio2: a.sio2,
             tio2: a.tio2,
             na2o_k2o: a.na2o_k2o,
-            loi: a.loi
+            loi: a.loi,
+            au_ppb: a.au_ppb,
+            au_ppm: a.au_ppm,
+            ag_ppm: a.ag_ppm,
+            cu_ppm: a.cu_ppm,
+            pb_ppm: a.pb_ppm,
+            zn_ppm: a.zn_ppm,
+            as_ppm: a.as_ppm
           }))
         );
         if (aErr) throw aErr;

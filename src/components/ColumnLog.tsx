@@ -580,7 +580,11 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
             rules: [
               {
                 type: 'dataBar',
-                color: { argb: `FF${colorHex}` }
+                color: { argb: `FF${colorHex}` },
+                cfvo: [
+                  { type: 'min' },
+                  { type: 'max' }
+                ]
               }
             ]
           });

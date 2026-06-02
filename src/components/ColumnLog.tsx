@@ -16,6 +16,7 @@ interface ColumnConfig {
   label: string;
   width: number;
   visible: boolean;
+  color?: string;
 }
 
 const INDUSTRIAL_ANALYTES = [
@@ -79,10 +80,10 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
 
   // Column Configuration state: order, visibility, and width
   const [columns, setColumns] = useState<ColumnConfig[]>([
-    { id: 'scale', label: 'Scale Ruler', width: 70, visible: true },
-    { id: 'lithology', label: 'Lithology', width: 130, visible: true },
-    { id: 'geotech', label: 'TCR / RQD', width: 140, visible: true },
-    { id: 'assays', label: 'Geochem', width: 180, visible: true },
+    { id: 'scale', label: 'Scale Ruler', width: 70, visible: true, color: 'black' },
+    { id: 'lithology', label: 'Lithology', width: 130, visible: true, color: 'black' },
+    { id: 'geotech', label: 'TCR / RQD', width: 140, visible: true, color: 'black' },
+    { id: 'assays', label: 'Geochem', width: 180, visible: true, color: 'black' },
   ]);
 
   // Height scaling: 8 pixels per meter is scrollable and readable
@@ -429,7 +430,7 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                       x={pos.startX + pos.width / 2}
                       y={21}
                       textAnchor="middle"
-                      fill="#1e293b"
+                      fill={col.color || '#1e293b'}
                       fontSize="10"
                       fontWeight="800"
                       fontFamily="var(--font-display)"

@@ -126,7 +126,8 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
     if (['GRANIT', 'GNT', 'SUBVOLKANIK', 'SIYENIT', 'GRANODIYORIT', 'RIYOLIT', 'DASIT', 'INTRUZIF'].includes(clean)) return 'url(#pat-granit)';
     if (clean === 'BRES' || clean === 'BXS') return 'url(#pat-bres)';
     if (clean === 'KUVARSIT' || clean === 'QVN') return 'url(#pat-kuvarsit)';
-    if (['ANDEZIT', 'AND', 'TUF', 'BASALT'].includes(clean)) return 'url(#pat-basalt)';
+    if (['ANDEZIT', 'AND', 'TUF'].includes(clean)) return 'url(#pat-andezit)';
+    if (clean === 'BASALT') return 'url(#pat-basalt)';
     if (clean === 'DOLGU' || clean === 'OB' || clean === 'TOPRAK') return 'url(#pat-dolgu)';
     if (clean === 'SIST') return 'url(#pat-sist)';
     if (clean === 'KIL') return 'url(#pat-kil)';
@@ -139,7 +140,8 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
     if (clean === 'OB' || clean === 'DOLGU' || clean === 'TOPRAK') return 'Overburden';
     if (clean === 'GRANIT' || clean === 'GNT') return 'Granite';
     if (clean === 'BRES' || clean === 'BXS') return 'Breccia';
-    if (clean === 'ANDEZIT' || clean === 'AND' || clean === 'TUF' || clean === 'BASALT') return 'Basalt';
+    if (clean === 'ANDEZIT' || clean === 'AND' || clean === 'TUF') return 'Andesite';
+    if (clean === 'BASALT') return 'Basalt';
     if (clean === 'KUVARSIT' || clean === 'QVN') return 'Quartzite';
     if (clean === 'SIST') return 'Schist';
     if (clean === 'KIL') return 'Clay';
@@ -458,7 +460,13 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                 <circle cx="3" cy="3" r="1.2" fill="#22d3ee" />
                 <circle cx="8" cy="8" r="1.2" fill="#22d3ee" />
               </pattern>
-              {/* Basalt / BASALT or ANDEZIT (green with chevrons) */}
+              {/* Andesite / ANDEZIT, AND, TUF (red-brown with V-shapes) */}
+              <pattern id="pat-andezit" width="20" height="20" patternUnits="userSpaceOnUse">
+                <rect width="20" height="20" fill="#991b1b" />
+                <path d="M 4,6 L 7,3 L 10,6" fill="none" stroke="#f87171" strokeWidth="1.5" />
+                <path d="M 12,16 L 15,13 L 18,16" fill="none" stroke="#f87171" strokeWidth="1.5" />
+              </pattern>
+              {/* Basalt / BASALT (dark green with chevrons) */}
               <pattern id="pat-basalt" width="20" height="20" patternUnits="userSpaceOnUse">
                 <rect width="20" height="20" fill="#065f46" />
                 <path d="M 5,5 L 8,8 L 11,5" fill="none" stroke="#10b981" strokeWidth="1.5" />

@@ -183,7 +183,15 @@ const renderGraphicSwatch = (code: string) => {
         <circle cx="8" cy="8" r="1.2" fill="#22d3ee" />
       </pattern>
     );
-  } else if (['ANDEZIT', 'AND', 'TUF', 'BASALT'].includes(clean)) {
+  } else if (['ANDEZIT', 'AND', 'TUF'].includes(clean)) {
+    patternContent = (
+      <pattern id={patternId} width="20" height="20" patternUnits="userSpaceOnUse">
+        <rect width="20" height="20" fill="#991b1b" />
+        <path d="M 4,6 L 7,3 L 10,6" fill="none" stroke="#f87171" strokeWidth="1.5" />
+        <path d="M 12,16 L 15,13 L 18,16" fill="none" stroke="#f87171" strokeWidth="1.5" />
+      </pattern>
+    );
+  } else if (clean === 'BASALT') {
     patternContent = (
       <pattern id={patternId} width="20" height="20" patternUnits="userSpaceOnUse">
         <rect width="20" height="20" fill="#065f46" />

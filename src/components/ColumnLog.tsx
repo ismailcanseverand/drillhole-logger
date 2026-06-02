@@ -91,15 +91,62 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet('Sondaj Logu');
 
+      const hasAssays = assays && assays.some(a => a.sampleType === 'Core' && a.to > a.from);
+
+      // Active Analytes Logic
+      let activeKeys: string[] = [];
+      if (selectedAnalytes && selectedAnalytes.length > 0) {
+        activeKeys = [...selectedAnalytes];
+      }
+      const defaultList = isMetallic
+        ? ['au_ppm', 'ag_ppm', 'cu_ppm']
+        : ['al2o3', 'fe_ti', 'na2o_k2o'];
+
+      while (activeKeys.length < 3) {
+        const nextDefault = defaultList.find(k => !activeKeys.includes(k));
+        if (nextDefault) {
+          activeKeys.push(nextDefault);
+        } else {
+          break;
+        }
+      }
+      activeKeys = activeKeys.slice(0, 3);
+
+      const getAnalyteLabel = (key: string): string => {
+        if (key === 'fe_ti') return 'Fe+Ti (%)';
+        if (key === 'na2o_k2o') return 'Na+K (%)';
+        const match = [...INDUSTRIAL_ANALYTES, ...METALLIC_ANALYTES].find(a => a.key === key);
+        return match ? match.label : key;
+      };
+
+      const getAnalyteColor = (key: string): string => {
+        if (key === 'fe_ti') return '#f43f5e';
+        if (key === 'na2o_k2o') return '#ec4899';
+        const match = [...INDUSTRIAL_ANALYTES, ...METALLIC_ANALYTES].find(a => a.key === key);
+        return match ? match.color : '#3b82f6';
+      };
+
+      const getAnalyteVal = (assay: AssayState, key: string): number => {
+        if (key === 'fe_ti') {
+          const fe = Number(assay.fe2o3) || 0;
+          const ti = Number(assay.tio2) || 0;
+          return fe + ti;
+        }
+        if (key === 'na2o_k2o') {
+          return Number(assay.na2o_k2o) || 0;
+        }
+        return Number(assay[key as keyof AssayState]) || 0;
+      };
+
       // Set columns
       worksheet.columns = [
         { width: 3 }, // spacer Col A
         { key: 'depth', width: 12 }, // Col B
         { key: 'interval', width: 18 }, // Col C
         { key: 'sampleNo', width: 15 }, // Col D
-        { key: 'strength', width: 12 }, // Col E
-        { key: 'weathering', width: 18 }, // Col F
-        { key: 'fracture', width: 14 }, // Col G
+        { key: 'colE', width: 15 }, // Col E (Strength or Analyte 1)
+        { key: 'colF', width: 15 }, // Col F (Weathering or Analyte 2)
+        { key: 'colG', width: 15 }, // Col G (Fracture or Analyte 3)
         { key: 'tcr', width: 12 }, // Col H
         { key: 'scr', width: 12 }, // Col I
         { key: 'rqd', width: 12 }, // Col J
@@ -277,7 +324,12 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
         { cell: 'B13', val: 'Derinlik (m)', merge: 'B13:B14' },
         { cell: 'C13', val: 'Örnek Derinliği (m)', merge: 'C13:C14' },
         { cell: 'D13', val: 'Örnek (Karot) No', merge: 'D13:D14' },
-        { cell: 'E13', val: 'KAYA ÖZELLİKLERİ', merge: 'E13:J13' },
+        ...(hasAssays ? [
+          { cell: 'E13', val: 'ANALİZ SONUÇLARI', merge: 'E13:G13' },
+          { cell: 'H13', val: 'KAYA ÖZELLİKLERİ', merge: 'H13:J13' }
+        ] : [
+          { cell: 'E13', val: 'KAYA ÖZELLİKLERİ', merge: 'E13:J13' }
+        ]),
         { cell: 'K13', val: 'LİTOLOJİ', merge: 'K13:K14' },
         { cell: 'L13', val: 'AÇIKLAMALAR', merge: 'L13:L14' }
       ];
@@ -293,9 +345,15 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
       });
 
       const subHeaders = [
-        { cell: 'E14', val: 'Dayanım' },
-        { cell: 'F14', val: 'Ayrışma Derecesi' },
-        { cell: 'G14', val: 'Kırık/30cm' },
+        ...(hasAssays ? [
+          { cell: 'E14', val: getAnalyteLabel(activeKeys[0]) },
+          { cell: 'F14', val: getAnalyteLabel(activeKeys[1]) },
+          { cell: 'G14', val: getAnalyteLabel(activeKeys[2]) }
+        ] : [
+          { cell: 'E14', val: 'Dayanım' },
+          { cell: 'F14', val: 'Ayrışma Derecesi' },
+          { cell: 'G14', val: 'Kırık/30cm' }
+        ]),
         { cell: 'H14', val: 'TCR (%)' },
         { cell: 'I14', val: 'SCR (%)' },
         { cell: 'J14', val: 'RQD (%)' }
@@ -304,7 +362,14 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
       subHeaders.forEach(sh => {
         const cell = worksheet.getCell(sh.cell);
         cell.value = sh.val;
-        cell.font = { name: 'Segoe UI', size: 8, bold: true };
+
+        let textColor = '000000'; // black by default
+        if (hasAssays && ['E14', 'F14', 'G14'].includes(sh.cell)) {
+          const idx = sh.cell === 'E14' ? 0 : sh.cell === 'F14' ? 1 : 2;
+          textColor = getAnalyteColor(activeKeys[idx]).replace('#', '');
+        }
+
+        cell.font = { name: 'Segoe UI', size: 8, bold: true, color: { argb: textColor } };
         cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
         cell.fill = grayFill;
         cell.border = thinBorder;
@@ -399,6 +464,24 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
         if (a) {
           worksheet.getCell(`D${rowNum}`).value = a.sampleId;
           worksheet.getCell(`D${rowNum}`).font = { name: 'Segoe UI', size: 8.5, bold: true };
+
+          if (hasAssays) {
+            const valE = getAnalyteVal(a, activeKeys[0]);
+            const valF = getAnalyteVal(a, activeKeys[1]);
+            const valG = getAnalyteVal(a, activeKeys[2]);
+
+            const cellE = worksheet.getCell(`E${rowNum}`);
+            const cellF = worksheet.getCell(`F${rowNum}`);
+            const cellG = worksheet.getCell(`G${rowNum}`);
+
+            cellE.value = valE;
+            cellF.value = valF;
+            cellG.value = valG;
+
+            cellE.numFmt = '0.00';
+            cellF.numFmt = '0.00';
+            cellG.numFmt = '0.00';
+          }
         }
 
         // 3. Lithology matching
@@ -447,7 +530,7 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
           const startR = bodyStartRow + startRIdx;
           const endR = bodyStartRow + endRIdx;
           
-          const geotechCols = ['C', 'E', 'F', 'G', 'H', 'I', 'J'];
+          const geotechCols = hasAssays ? ['C', 'H', 'I', 'J'] : ['C', 'E', 'F', 'G', 'H', 'I', 'J'];
           geotechCols.forEach(col => {
             safeMerge(col, startR, endR);
           });
@@ -464,6 +547,11 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
           const endR = bodyStartRow + endRIdx;
           
           safeMerge('D', startR, endR);
+          if (hasAssays) {
+            safeMerge('E', startR, endR);
+            safeMerge('F', startR, endR);
+            safeMerge('G', startR, endR);
+          }
         }
       });
 
@@ -480,6 +568,24 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
           safeMerge('L', startR, endR);
         }
       });
+
+      // 4. Conditional formatting for Assay dataBars if active
+      if (hasAssays && totalRowsCount > 0) {
+        const colLetters = ['E', 'F', 'G'];
+        colLetters.forEach((col, idx) => {
+          const key = activeKeys[idx];
+          const colorHex = getAnalyteColor(key).replace('#', '');
+          worksheet.addConditionalFormatting({
+            ref: `${col}${bodyStartRow}:${col}${bodyStartRow + totalRowsCount - 1}`,
+            rules: [
+              {
+                type: 'dataBar',
+                color: { argb: `FF${colorHex}` }
+              }
+            ]
+          });
+        });
+      }
 
       // Footer Legend
       const footerStartRow = bodyStartRow + totalRowsCount + 2;

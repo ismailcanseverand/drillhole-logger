@@ -312,89 +312,177 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
 
       // Body initialization
       const bodyStartRow = 15;
-      const totalDepthVal = Math.ceil(totalDepth);
 
-      for (let m = 0; m < totalDepthVal; m++) {
-        const rowNum = bodyStartRow + m;
+      // Precision Boundary Detection
+      const cleanDepth = (val: number) => Math.round(val * 100) / 100;
+
+      const formatDepth = (d: number) => {
+        if (Number.isInteger(d)) return d.toString();
+        return d.toFixed(2).replace(/\.?0+$/, ''); // remove trailing zeros
+      };
+
+      const depths = new Set<number>();
+      depths.add(0);
+      for (let m = 1; m <= Math.ceil(totalDepth); m++) {
+        depths.add(m);
+      }
+      geotech.forEach(g => {
+        depths.add(cleanDepth(g.from));
+        depths.add(cleanDepth(g.to));
+      });
+      lithology.forEach(l => {
+        depths.add(cleanDepth(l.from));
+        depths.add(cleanDepth(l.to));
+      });
+      assays.forEach(a => {
+        depths.add(cleanDepth(a.from));
+        depths.add(cleanDepth(a.to));
+      });
+
+      // Filter and sort the boundaries
+      const sortedDepths = Array.from(depths)
+        .filter(d => d <= totalDepth)
+        .sort((a, b) => a - b);
+
+      if (sortedDepths.length === 0 || sortedDepths[0] > 0) {
+        sortedDepths.unshift(0);
+      }
+      const lastDepth = cleanDepth(totalDepth);
+      if (sortedDepths[sortedDepths.length - 1] < lastDepth) {
+        sortedDepths.push(lastDepth);
+      }
+
+      const rowIntervals: { from: number; to: number }[] = [];
+      for (let i = 0; i < sortedDepths.length - 1; i++) {
+        const fromDepth = sortedDepths[i];
+        const toDepth = sortedDepths[i+1];
+        if (toDepth <= fromDepth) continue;
+        rowIntervals.push({ from: fromDepth, to: toDepth });
+      }
+
+      const totalRowsCount = rowIntervals.length;
+
+      // Populate body rows
+      for (let idx = 0; idx < totalRowsCount; idx++) {
+        const { from: fromDepth, to: toDepth } = rowIntervals[idx];
+        const rowNum = bodyStartRow + idx;
         const row = worksheet.getRow(rowNum);
         row.height = 20;
 
-        const meterCell = worksheet.getCell(`B${rowNum}`);
-        meterCell.value = m + 1;
-        meterCell.font = { name: 'Segoe UI', size: 8.5, bold: true };
-        meterCell.alignment = { horizontal: 'center', vertical: 'middle' };
-        meterCell.border = thinBorder;
+        // Depth Column B
+        const depthCell = worksheet.getCell(`B${rowNum}`);
+        depthCell.value = `${formatDepth(fromDepth)} - ${formatDepth(toDepth)}`;
+        depthCell.font = { name: 'Segoe UI', size: 8.5, bold: true };
+        depthCell.alignment = { horizontal: 'center', vertical: 'middle' };
+        depthCell.border = thinBorder;
 
+        // Default style & thin border for columns C to L
         const cols = ['C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
         cols.forEach(col => {
           const cell = worksheet.getCell(`${col}${rowNum}`);
           cell.border = thinBorder;
           cell.font = { name: 'Segoe UI', size: 8.5 };
           cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
-        });
-      }
-
-      // Geotech merges
-      geotech.forEach(g => {
-        if (g.to <= g.from) return;
-        const startR = bodyStartRow + Math.floor(g.from);
-        const endR = bodyStartRow + Math.ceil(g.to) - 1;
-        const clampedEndR = Math.min(bodyStartRow + totalDepthVal - 1, endR);
-        if (clampedEndR < startR) return;
-
-        const geotechCols = ['C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
-        const matchingAssay = assays.find(a => Math.abs(a.from - g.from) < 0.1 && Math.abs(a.to - g.to) < 0.1);
-        const sampleNo = matchingAssay ? matchingAssay.sampleId : '-';
-
-        geotechCols.forEach(col => {
-          if (clampedEndR > startR) {
-            worksheet.mergeCells(`${col}${startR}:${col}${clampedEndR}`);
-          }
+          cell.value = '-';
         });
 
-        worksheet.getCell(`C${startR}`).value = `${g.from}-${g.to}`;
-        worksheet.getCell(`D${startR}`).value = sampleNo;
-        worksheet.getCell(`D${startR}`).font = { name: 'Segoe UI', size: 8.5, bold: true };
-        worksheet.getCell(`E${startR}`).value = '-';
-        worksheet.getCell(`F${startR}`).value = '-';
-        worksheet.getCell(`G${startR}`).value = '-';
-        worksheet.getCell(`H${startR}`).value = g.tcrPercent;
-        worksheet.getCell(`I${startR}`).value = '-';
-        worksheet.getCell(`J${startR}`).value = g.rqdPercent;
-      });
-
-      // Lithology merges
-      lithology.forEach(l => {
-        if (l.to <= l.from) return;
-        const startR = bodyStartRow + Math.floor(l.from);
-        const endR = bodyStartRow + Math.ceil(l.to) - 1;
-        const clampedEndR = Math.min(bodyStartRow + totalDepthVal - 1, endR);
-        if (clampedEndR < startR) return;
-
-        if (clampedEndR > startR) {
-          worksheet.mergeCells(`K${startR}:K${clampedEndR}`);
-          worksheet.mergeCells(`L${startR}:L${clampedEndR}`);
+        // 1. Geotech matching
+        const g = geotech.find(run => run.from <= fromDepth + 0.001 && run.to >= toDepth - 0.001);
+        if (g) {
+          worksheet.getCell(`C${rowNum}`).value = `${formatDepth(g.from)} - ${formatDepth(g.to)}`;
+          worksheet.getCell(`H${rowNum}`).value = g.tcrPercent;
+          worksheet.getCell(`J${rowNum}`).value = g.rqdPercent;
         }
 
-        const rockLabel = getRockLabel(l.rockCode);
-        const hexColor = getRockColor(l.rockCode).replace('#', '');
+        // 2. Assay matching
+        const a = assays.find(assay => assay.from <= fromDepth + 0.001 && assay.to >= toDepth - 0.001);
+        if (a) {
+          worksheet.getCell(`D${rowNum}`).value = a.sampleId;
+          worksheet.getCell(`D${rowNum}`).font = { name: 'Segoe UI', size: 8.5, bold: true };
+        }
 
-        const litCell = worksheet.getCell(`K${startR}`);
-        litCell.value = rockLabel;
-        litCell.font = { name: 'Segoe UI', size: 8.5, bold: true };
-        litCell.fill = {
-          type: 'pattern',
-          pattern: 'solid',
-          fgColor: { argb: hexColor }
-        };
+        // 3. Lithology matching
+        const l = lithology.find(lith => lith.from <= fromDepth + 0.001 && lith.to >= toDepth - 0.001);
+        if (l) {
+          const rockLabel = getRockLabel(l.rockCode);
+          const hexColor = getRockColor(l.rockCode).replace('#', '');
 
-        const descCell = worksheet.getCell(`L${startR}`);
-        descCell.value = l.description || '';
-        descCell.alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
+          const litCell = worksheet.getCell(`K${rowNum}`);
+          litCell.value = rockLabel;
+          litCell.font = { name: 'Segoe UI', size: 8.5, bold: true };
+          litCell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: hexColor }
+          };
+
+          const descCell = worksheet.getCell(`L${rowNum}`);
+          descCell.value = l.description || '';
+          descCell.alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
+        }
+      }
+
+      // Safe merge tracker to prevent ExcelJS crashes
+      const mergedRanges: Record<string, Set<number>> = {
+        C: new Set(), D: new Set(), E: new Set(), F: new Set(), G: new Set(),
+        H: new Set(), I: new Set(), J: new Set(), K: new Set(), L: new Set()
+      };
+
+      const safeMerge = (col: string, startRow: number, endRow: number) => {
+        for (let r = startRow; r <= endRow; r++) {
+          if (mergedRanges[col].has(r)) return; // skip if any cell in range already merged
+        }
+        for (let r = startRow; r <= endRow; r++) {
+          mergedRanges[col].add(r);
+        }
+        worksheet.mergeCells(`${col}${startRow}:${col}${endRow}`);
+      };
+
+      // 1. Geotech merges
+      geotech.forEach(g => {
+        if (g.to <= g.from) return;
+        const startRIdx = rowIntervals.findIndex(r => Math.abs(r.from - g.from) < 0.01);
+        const endRIdx = rowIntervals.findIndex(r => Math.abs(r.to - g.to) < 0.01);
+        if (startRIdx !== -1 && endRIdx !== -1 && endRIdx > startRIdx) {
+          const startR = bodyStartRow + startRIdx;
+          const endR = bodyStartRow + endRIdx;
+          
+          const geotechCols = ['C', 'E', 'F', 'G', 'H', 'I', 'J'];
+          geotechCols.forEach(col => {
+            safeMerge(col, startR, endR);
+          });
+        }
+      });
+
+      // 2. Assay merges
+      assays.forEach(a => {
+        if (a.to <= a.from) return;
+        const startRIdx = rowIntervals.findIndex(r => Math.abs(r.from - a.from) < 0.01);
+        const endRIdx = rowIntervals.findIndex(r => Math.abs(r.to - a.to) < 0.01);
+        if (startRIdx !== -1 && endRIdx !== -1 && endRIdx > startRIdx) {
+          const startR = bodyStartRow + startRIdx;
+          const endR = bodyStartRow + endRIdx;
+          
+          safeMerge('D', startR, endR);
+        }
+      });
+
+      // 3. Lithology merges
+      lithology.forEach(l => {
+        if (l.to <= l.from) return;
+        const startRIdx = rowIntervals.findIndex(r => Math.abs(r.from - l.from) < 0.01);
+        const endRIdx = rowIntervals.findIndex(r => Math.abs(r.to - l.to) < 0.01);
+        if (startRIdx !== -1 && endRIdx !== -1 && endRIdx > startRIdx) {
+          const startR = bodyStartRow + startRIdx;
+          const endR = bodyStartRow + endRIdx;
+          
+          safeMerge('K', startR, endR);
+          safeMerge('L', startR, endR);
+        }
       });
 
       // Footer Legend
-      const footerStartRow = bodyStartRow + totalDepthVal + 2;
+      const footerStartRow = bodyStartRow + totalRowsCount + 2;
       const fHeaderRow = worksheet.getRow(footerStartRow);
       fHeaderRow.height = 20;
 

@@ -14,10 +14,10 @@ let lastKey: string = '';
  * Returns null if no valid credentials are provided.
  */
 export function getSupabaseClient(): any {
-  const savedUrl = localStorage.getItem('sb_url') || '';
-  const savedKey = localStorage.getItem('sb_key') || '';
+  const savedUrl = localStorage.getItem('sb_url') || (import.meta.env.VITE_SUPABASE_URL as string) || '';
+  const savedKey = localStorage.getItem('sb_key') || (import.meta.env.VITE_SUPABASE_ANON_KEY as string) || '';
 
-  if (!savedUrl.trim() || !savedKey.trim()) {
+  if (!savedUrl.trim() || !savedKey.trim() || !savedUrl.startsWith('http')) {
     cachedClient = null;
     return null;
   }
@@ -47,7 +47,7 @@ export function getSupabaseClient(): any {
  * Helper to check if credentials are saved in local storage.
  */
 export function isSupabaseConfigured(): boolean {
-  const url = localStorage.getItem('sb_url') || '';
-  const key = localStorage.getItem('sb_key') || '';
-  return url.trim() !== '' && key.trim() !== '';
+  const url = localStorage.getItem('sb_url') || (import.meta.env.VITE_SUPABASE_URL as string) || '';
+  const key = localStorage.getItem('sb_key') || (import.meta.env.VITE_SUPABASE_ANON_KEY as string) || '';
+  return url.trim() !== '' && key.trim() !== '' && url.startsWith('http');
 }

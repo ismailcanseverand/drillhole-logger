@@ -92,11 +92,11 @@ function App() {
 
   // Define Columns for Lithology Tab
   const lithologyColumns = useMemo<GridColumn[]>(() => [
-    { key: 'from', label: 'From (m)', type: 'number', width: '12%', defaultValue: 0 },
-    { key: 'to', label: 'To (m)', type: 'number', width: '12%', defaultValue: 0 },
+    { key: 'from', label: 'Depth From (m)', type: 'number', width: '10%', defaultValue: 0 },
+    { key: 'to', label: 'Depth To (m)', type: 'number', width: '10%', defaultValue: 0 },
     {
       key: 'rockCode',
-      label: 'Rock Code',
+      label: 'Geology Code',
       type: 'select',
       width: '18%',
       defaultValue: 'GNAYS',
@@ -131,9 +131,9 @@ function App() {
         { value: 'UNKNOWN', label: 'UNKNOWN - Unspecified' }
       ]
     },
-    { key: 'alteration', label: 'Alteration', type: 'text', width: '18%', defaultValue: '' },
-    { key: 'mineralization', label: 'Mineralization', type: 'text', width: '18%', defaultValue: '' },
-    { key: 'description', label: 'Description', type: 'text', width: '22%', defaultValue: '', placeholder: 'Texture, grain size...' }
+    { key: 'description', label: 'Description', type: 'text', width: '22%', defaultValue: '', placeholder: 'Texture, grain size...' },
+    { key: 'color', label: 'Color', type: 'text', width: '12%', readOnly: true, defaultValue: '' },
+    { key: 'graphic', label: 'Graphic', type: 'text', width: '12%', readOnly: true, defaultValue: '' }
   ], []);
 
   // Define Columns for TCR/RQD Geotech Tab

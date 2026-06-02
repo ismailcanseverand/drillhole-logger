@@ -74,10 +74,10 @@
 
 /* Data Entry (Left Panel) */
 .data-entry-panel {
-  width: 60%;
+  width: 50%;
   display: flex;
   flex-direction: column;
-  background-color: #ffffff;
+  background-color: var(--bg-card);
   border-right: 1px solid var(--border-light);
 }
 
@@ -126,7 +126,7 @@
 
 /* Visualization & Audit Log (Right Panel) */
 .visuals-panel {
-  width: 40%;
+  width: 50%;
   display: flex;
   flex-direction: column;
   background-color: var(--bg-sidebar);
@@ -142,7 +142,7 @@
 
 .visuals-tab-toggle {
   display: flex;
-  background: #f1f5f9;
+  background: var(--bg-sidebar);
   border-bottom: 1px solid var(--border-light);
   padding: 8px 16px;
   gap: 8px;
@@ -155,7 +155,7 @@
   font-weight: 700;
   border: 1px solid var(--border-light);
   border-radius: var(--radius-sm);
-  background: #ffffff;
+  background: var(--bg-card);
   color: var(--text-secondary);
   cursor: pointer;
   text-transform: uppercase;
@@ -182,7 +182,7 @@
 }
 
 .form-card {
-  background: #ffffff;
+  background: var(--bg-card);
   border: 1px solid var(--border-light);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
@@ -191,7 +191,7 @@
 
 .form-card .card-header {
   padding: 12px 18px;
-  background: #fafafa;
+  background: var(--bg-sidebar);
   border-bottom: 1px solid var(--border-light);
 }
 
@@ -283,7 +283,7 @@
   overflow: auto;
   border: 1px solid var(--border-light);
   border-radius: var(--radius-md);
-  background: #ffffff;
+  background: var(--bg-card);
 }
 
 .grid-table {
@@ -301,7 +301,7 @@
 }
 
 .grid-table th {
-  background-color: #f8fafc;
+  background-color: var(--bg-sidebar);
   color: var(--text-secondary);
   font-size: 11px;
   font-weight: 700;
@@ -315,12 +315,12 @@
 }
 
 .grid-table tr:hover {
-  background-color: #f8fafc;
+  background-color: var(--bg-sidebar);
 }
 
 .cell-row-num {
   text-align: center;
-  background-color: #f8fafc;
+  background-color: var(--bg-sidebar);
   color: var(--text-muted);
   font-weight: 600;
   font-size: 11px;
@@ -349,12 +349,12 @@
 .grid-cell input:focus, .grid-cell select:focus {
   outline: none;
   box-shadow: inset 0 0 0 2px var(--primary);
-  background: #ffffff;
+  background: var(--bg-input);
   z-index: 3;
 }
 
 .cell-readonly {
-  background-color: #f8fafc;
+  background-color: var(--bg-sidebar);
 }
 
 .readonly-value {
@@ -404,7 +404,7 @@
 
 .strip-log-header {
   padding: 16px 20px;
-  background: #ffffff;
+  background: var(--bg-card);
   border-bottom: 1px solid var(--border-light);
 }
 
@@ -446,7 +446,7 @@
   flex-wrap: wrap;
   gap: 12px;
   padding: 12px 20px;
-  background: #ffffff;
+  background: var(--bg-card);
   border-top: 1px solid var(--border-light);
   font-size: 10px;
   font-weight: 700;
@@ -486,7 +486,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 16px 20px;
-  background: #ffffff;
+  background: var(--bg-card);
   border-bottom: 1px solid var(--border-light);
 }
 
@@ -585,7 +585,7 @@
 }
 
 .qaqc-card {
-  background: #ffffff;
+  background: var(--bg-card);
   border: 1px solid var(--border-light);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
@@ -625,7 +625,7 @@
   display: flex;
   justify-content: center;
   padding: 10px;
-  background: #f8fafc;
+  background: var(--bg-sidebar);
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-light);
 }
@@ -645,7 +645,7 @@
 .qaqc-table th {
   font-weight: 700;
   color: var(--text-secondary);
-  background-color: #f8fafc;
+  background-color: var(--bg-sidebar);
   text-transform: uppercase;
   font-size: 10px;
   letter-spacing: 0.5px;
@@ -671,4 +671,16 @@
 .row-highlight-flash {
   animation: highlight-fade 3s ease-out forwards;
 }
+
+/* Graphic Swatch in Grid Table */
+.graphic-swatch {
+  display: block;
+  width: 44px;
+  height: 24px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-medium);
+  margin: auto;
+  box-shadow: var(--shadow-sm);
+}
+
 

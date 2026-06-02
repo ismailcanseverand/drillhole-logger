@@ -18,12 +18,12 @@ interface ColumnConfig {
 }
 
 const ANALYTES = [
-  { key: 'al2o3', label: 'Al2O3 (%)', color: '#6366f1' },
-  { key: 'fe2o3', label: 'Fe2O3 (%)', color: '#f43f5e' },
-  { key: 'sio2', label: 'SiO2 (%)', color: '#10b981' },
-  { key: 'tio2', label: 'TiO2 (%)', color: '#06b6d4' },
-  { key: 'na2o_k2o', label: 'Na2O+K2O (%)', color: '#ec4899' },
-  { key: 'loi', label: 'LOI / AZ (%)', color: '#8b5cf6' }
+  { key: 'al2o3', label: 'Al2O3 (%)', color: '#3b82f6' },   // Royal Blue
+  { key: 'fe2o3', label: 'Fe2O3 (%)', color: '#f43f5e' },   // Rose Red
+  { key: 'sio2', label: 'SiO2 (%)', color: '#10b981' },    // Emerald Green
+  { key: 'tio2', label: 'TiO2 (%)', color: '#eab308' },    // Amber Yellow
+  { key: 'na2o_k2o', label: 'Na2O+K2O (%)', color: '#ec4899' }, // Hot Pink
+  { key: 'loi', label: 'LOI / AZ (%)', color: '#a855f7' }  // Purple
 ];
 
 export const ColumnLog: React.FC<ColumnLogProps> = ({
@@ -50,10 +50,10 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
 
   // Column Configuration state: order, visibility, and width
   const [columns, setColumns] = useState<ColumnConfig[]>([
-    { id: 'scale', label: 'Scale Ruler', width: 55, visible: true },
-    { id: 'lithology', label: 'Lithology', width: 65, visible: true },
-    { id: 'geotech', label: 'TCR / RQD', width: 90, visible: true },
-    { id: 'assays', label: 'Geochem', width: 110, visible: true },
+    { id: 'scale', label: 'Scale Ruler', width: 70, visible: true },
+    { id: 'lithology', label: 'Lithology', width: 130, visible: true },
+    { id: 'geotech', label: 'TCR / RQD', width: 140, visible: true },
+    { id: 'assays', label: 'Geochem', width: 180, visible: true },
   ]);
 
   // Height scaling: 8 pixels per meter is scrollable and readable
@@ -69,7 +69,7 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
     if (col.visible) {
       let width = col.width;
       if (col.id === 'assays') {
-        width = Math.max(100, selectedAnalytes.length * 65);
+        width = Math.max(180, selectedAnalytes.length * 100);
       }
       colPositions[col.id] = { startX: currentX, width: width, visible: true };
       currentX += width;
@@ -118,10 +118,34 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
     }
   };
 
-  const getRqdColor = (rqd: number) => {
-    if (rqd < 50) return '#ef4444'; // Red
-    if (rqd < 75) return '#f59e0b'; // Orange
-    return '#10b981'; // Green
+
+
+  const getRockPatternUrl = (code: string) => {
+    const clean = code.toUpperCase();
+    if (clean === 'GNAYS') return 'url(#pat-gnays)';
+    if (['GRANIT', 'GNT', 'SUBVOLKANIK', 'SIYENIT', 'GRANODIYORIT', 'RIYOLIT', 'DASIT', 'INTRUZIF'].includes(clean)) return 'url(#pat-granit)';
+    if (clean === 'BRES' || clean === 'BXS') return 'url(#pat-bres)';
+    if (clean === 'KUVARSIT' || clean === 'QVN') return 'url(#pat-kuvarsit)';
+    if (['ANDEZIT', 'AND', 'TUF', 'BASALT'].includes(clean)) return 'url(#pat-basalt)';
+    if (clean === 'DOLGU' || clean === 'OB' || clean === 'TOPRAK') return 'url(#pat-dolgu)';
+    if (clean === 'SIST') return 'url(#pat-sist)';
+    if (clean === 'KIL') return 'url(#pat-kil)';
+    if (clean === 'KALSIT') return 'url(#pat-kalsit)';
+    return getRockColor(code);
+  };
+
+  const getRockLabel = (code: string) => {
+    const clean = (code || '').toUpperCase();
+    if (clean === 'OB' || clean === 'DOLGU' || clean === 'TOPRAK') return 'Overburden';
+    if (clean === 'GRANIT' || clean === 'GNT') return 'Granite';
+    if (clean === 'BRES' || clean === 'BXS') return 'Breccia';
+    if (clean === 'ANDEZIT' || clean === 'AND' || clean === 'TUF' || clean === 'BASALT') return 'Basalt';
+    if (clean === 'KUVARSIT' || clean === 'QVN') return 'Quartzite';
+    if (clean === 'SIST') return 'Schist';
+    if (clean === 'KIL') return 'Clay';
+    if (clean === 'KALSIT') return 'Limestone';
+    if (clean === 'GNAYS') return 'Gneiss';
+    return code;
   };
 
   // Reorder columns
@@ -394,17 +418,78 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
             width={svgWidth}
             height={Math.max(200, totalDepth * scaleY) + bodyPaddingTop}
             style={{ 
-              background: '#f8fafc', 
+              background: 'var(--bg-card)', 
               display: 'block', 
-              border: '1px solid #cbd5e1',
+              border: '1px solid var(--border-light)',
               borderRadius: '4px',
               boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
             }}
           >
-            {/* Defs for grid patterns */}
+            {/* Defs for grid and rock patterns */}
             <defs>
               <pattern id="grid-pattern" width="10" height="10" patternUnits="userSpaceOnUse">
-                <path d="M 10 0 L 0 0 0 10" fill="none" stroke="#f1f5f9" strokeWidth="0.5" />
+                <path d="M 10 0 L 0 0 0 10" fill="none" stroke="var(--border-light)" strokeWidth="0.5" />
+              </pattern>
+              {/* Gneiss / GNAYS (wavy lines on grey) */}
+              <pattern id="pat-gnays" width="20" height="20" patternUnits="userSpaceOnUse">
+                <rect width="20" height="20" fill="#475569" />
+                <path d="M0,5 Q5,10 10,5 T20,5 M0,15 Q5,20 10,15 T20,15" fill="none" stroke="#64748b" strokeWidth="1.5" />
+              </pattern>
+              {/* Granite / GRANIT (dots/crosses on pink) */}
+              <pattern id="pat-granit" width="20" height="20" patternUnits="userSpaceOnUse">
+                <rect width="20" height="20" fill="#ec4899" fillOpacity="0.8" />
+                <circle cx="5" cy="5" r="1.5" fill="#9d174d" />
+                <circle cx="15" cy="15" r="1.5" fill="#9d174d" />
+                <line x1="12" y1="4" x2="16" y2="8" stroke="#9d174d" strokeWidth="1" />
+                <line x1="16" y1="4" x2="12" y2="8" stroke="#9d174d" strokeWidth="1" />
+                <line x1="2" y1="12" x2="6" y2="16" stroke="#9d174d" strokeWidth="1" />
+                <line x1="6" y1="12" x2="2" y2="16" stroke="#9d174d" strokeWidth="1" />
+              </pattern>
+              {/* Breccia / BRES (rock pieces on grey) */}
+              <pattern id="pat-bres" width="25" height="25" patternUnits="userSpaceOnUse">
+                <rect width="25" height="25" fill="#52525b" />
+                <polygon points="5,2 12,5 8,12 2,7" fill="#27272a" stroke="#a1a1aa" strokeWidth="0.5" />
+                <polygon points="18,10 23,15 15,20 14,12" fill="#27272a" stroke="#a1a1aa" strokeWidth="0.5" />
+                <polygon points="3,18 9,23 6,24" fill="#18181b" stroke="#71717a" strokeWidth="0.5" />
+              </pattern>
+              {/* Quartzite / KUVARSIT (cyan with fine dots) */}
+              <pattern id="pat-kuvarsit" width="10" height="10" patternUnits="userSpaceOnUse">
+                <rect width="10" height="10" fill="#0891b2" />
+                <circle cx="3" cy="3" r="1.2" fill="#22d3ee" />
+                <circle cx="8" cy="8" r="1.2" fill="#22d3ee" />
+              </pattern>
+              {/* Basalt / BASALT or ANDEZIT (green with chevrons) */}
+              <pattern id="pat-basalt" width="20" height="20" patternUnits="userSpaceOnUse">
+                <rect width="20" height="20" fill="#065f46" />
+                <path d="M 5,5 L 8,8 L 11,5" fill="none" stroke="#10b981" strokeWidth="1.5" />
+                <path d="M 15,15 L 18,18 L 21,15" fill="none" stroke="#10b981" strokeWidth="1.5" />
+              </pattern>
+              {/* Overburden / DOLGU or OB (brown blocks/sand) */}
+              <pattern id="pat-dolgu" width="20" height="20" patternUnits="userSpaceOnUse">
+                <rect width="20" height="20" fill="#78350f" />
+                <circle cx="4" cy="4" r="1.2" fill="#b45309" />
+                <circle cx="14" cy="14" r="1.2" fill="#b45309" />
+                <line x1="2" y1="18" x2="8" y2="18" stroke="#d97706" strokeWidth="1" />
+                <line x1="12" y1="8" x2="18" y2="8" stroke="#d97706" strokeWidth="1" />
+              </pattern>
+              {/* Schist / SIST (wavy lines on light green) */}
+              <pattern id="pat-sist" width="30" height="10" patternUnits="userSpaceOnUse">
+                <rect width="30" height="10" fill="#047857" />
+                <path d="M0,5 Q7.5,0 15,5 T30,5" fill="none" stroke="#34d399" strokeWidth="1" />
+              </pattern>
+              {/* Clay / KIL (orange with horizontal stripes) */}
+              <pattern id="pat-kil" width="10" height="10" patternUnits="userSpaceOnUse">
+                <rect width="10" height="10" fill="#c2410c" />
+                <line x1="0" y1="5" x2="10" y2="5" stroke="#ffedd5" strokeWidth="1" />
+              </pattern>
+              {/* Calcite/Limestone / KALSIT (light rose bricks) */}
+              <pattern id="pat-kalsit" width="20" height="20" patternUnits="userSpaceOnUse">
+                <rect width="20" height="20" fill="#9f1239" />
+                <line x1="0" y1="10" x2="20" y2="10" stroke="#f43f5e" strokeWidth="0.75" />
+                <line x1="0" y1="20" x2="20" y2="20" stroke="#f43f5e" strokeWidth="0.75" />
+                <line x1="10" y1="0" x2="10" y2="10" stroke="#f43f5e" strokeWidth="0.75" />
+                <line x1="20" y1="10" x2="20" y2="20" stroke="#f43f5e" strokeWidth="0.75" />
+                <line x1="0" y1="10" x2="0" y2="20" stroke="#f43f5e" strokeWidth="0.75" />
               </pattern>
             </defs>
             
@@ -420,7 +505,7 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                     y1={tick * scaleY + bodyPaddingTop}
                     x2={svgWidth}
                     y2={tick * scaleY + bodyPaddingTop}
-                    stroke="#e2e8f0"
+                    stroke="var(--border-light)"
                     strokeWidth="1"
                   />
                 </g>
@@ -428,7 +513,7 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
             </g>
 
             {/* Left vertical border line */}
-            <line x1={0} y1={0} x2={0} y2={Math.max(200, totalDepth * scaleY) + bodyPaddingTop} stroke="#cbd5e1" strokeWidth="1" />
+            <line x1={0} y1={0} x2={0} y2={Math.max(200, totalDepth * scaleY) + bodyPaddingTop} stroke="var(--border-light)" strokeWidth="1" />
 
             {/* 1. SCALE TICK LABELS */}
             {colPositions['scale']?.visible && (
@@ -461,102 +546,145 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                     const pos = colPositions['lithology'];
                     const y = l.from * scaleY + bodyPaddingTop;
                     const h = (l.to - l.from) * scaleY;
-                    const color = getRockColor(l.rockCode);
+                    const patternUrl = getRockPatternUrl(l.rockCode);
+                    const labelText = getRockLabel(l.rockCode);
+                    const textWidth = Math.max(30, labelText.length * 6);
                     return (
-                      <rect
-                        key={l.id}
-                        x={pos.startX + 2}
-                        y={y}
-                        width={pos.width - 4}
-                        height={h}
-                        fill={color}
-                        stroke="#ffffff"
-                        strokeWidth="0.5"
-                        style={{ cursor: 'pointer', opacity: 0.85 }}
-                        onClick={() => handleBlockClick('Lithology', l.id)}
-                        onMouseEnter={() =>
-                          setHoverInfo(
-                            `Geology: [${l.rockCode}] ${l.from}m-${l.to}m: ${l.description || 'No description'}`
-                          )
-                        }
-                        onMouseLeave={() => setHoverInfo(null)}
-                      />
-                    );
-                  })}
-              </g>
-            )}
-
-            {/* 3. GEOTECH TCR & RQD Recovery Bars */}
-            {colPositions['geotech']?.visible && (
-              <g>
-                {geotech
-                  .filter(g => g.to > g.from)
-                  .map(g => {
-                    const pos = colPositions['geotech'];
-                    const y = g.from * scaleY + bodyPaddingTop;
-                    const h = (g.to - g.from) * scaleY;
-                    
-                    const colWidth = pos.width;
-                    const tcrWidth = (colWidth / 2) - 3;
-                    const rqdWidth = (colWidth / 2) - 3;
-
-                    const tcrBarWidth = Math.max(1, tcrWidth * (g.tcrPercent / 100));
-                    const rqdBarWidth = Math.max(1, rqdWidth * (g.rqdPercent / 100));
-
-                    return (
-                      <g
-                        key={g.id}
-                        style={{ cursor: 'pointer' }}
-                        onClick={() => handleBlockClick('TCR / RQD', g.id)}
-                        onMouseEnter={() =>
-                          setHoverInfo(
-                            `Geotech run: ${g.from}m-${g.to}m | TCR: ${g.tcrPercent}% | RQD: ${g.rqdPercent}%`
-                          )
-                        }
-                        onMouseLeave={() => setHoverInfo(null)}
-                      >
-                        {/* TCR bar background */}
+                      <g key={l.id}>
                         <rect
                           x={pos.startX + 2}
                           y={y}
-                          width={tcrWidth}
+                          width={pos.width - 4}
                           height={h}
-                          fill="#e2e8f0"
-                          stroke="#ffffff"
+                          fill={patternUrl}
+                          stroke="var(--border-light)"
                           strokeWidth="0.5"
+                          style={{ cursor: 'pointer', opacity: 0.9 }}
+                          onClick={() => handleBlockClick('Lithology', l.id)}
+                          onMouseEnter={() =>
+                            setHoverInfo(
+                              `Geology: [${l.rockCode}] ${l.from}m-${l.to}m: ${l.description || 'No description'}`
+                            )
+                          }
+                          onMouseLeave={() => setHoverInfo(null)}
                         />
-                        {/* TCR filled bar */}
-                        <rect
-                          x={pos.startX + 2}
-                          y={y}
-                          width={tcrBarWidth}
-                          height={h}
-                          fill="#3b82f6"
-                        />
-
-                        {/* RQD bar background */}
-                        <rect
-                          x={pos.startX + (colWidth / 2) + 1}
-                          y={y}
-                          width={rqdWidth}
-                          height={h}
-                          fill="#e2e8f0"
-                          stroke="#ffffff"
-                          strokeWidth="0.5"
-                        />
-                        {/* RQD filled bar */}
-                        <rect
-                          x={pos.startX + (colWidth / 2) + 1}
-                          y={y}
-                          width={rqdBarWidth}
-                          height={h}
-                          fill={getRqdColor(g.rqdPercent)}
-                        />
+                        {h > 15 && (
+                          <g style={{ pointerEvents: 'none' }}>
+                            <rect
+                              x={pos.startX + pos.width / 2 - textWidth / 2 - 4}
+                              y={y + h / 2 - 7}
+                              width={textWidth + 8}
+                              height={14}
+                              rx={4}
+                              fill="var(--bg-card)"
+                              fillOpacity={0.8}
+                            />
+                            <text
+                              x={pos.startX + pos.width / 2}
+                              y={y + h / 2 + 3}
+                              textAnchor="middle"
+                              fill="var(--text-main)"
+                              fontSize="9"
+                              fontWeight="bold"
+                              fontFamily="var(--font-display)"
+                            >
+                              {labelText}
+                            </text>
+                          </g>
+                        )}
                       </g>
                     );
                   })}
               </g>
             )}
+
+            {/* 3. GEOTECH TCR & RQD Line Plot */}
+            {colPositions['geotech']?.visible && (() => {
+              const pos = colPositions['geotech'];
+              const ticks = [0, 25, 50, 75, 100];
+              const sortedGeotech = [...geotech]
+                .filter(g => g.to > g.from)
+                .sort((a, b) => a.from - b.from);
+                
+              const points = sortedGeotech.map(g => {
+                const mid = (g.from + g.to) / 2;
+                const y = mid * scaleY + bodyPaddingTop;
+                const x = pos.startX + 5 + (g.rqdPercent / 100) * (pos.width - 10);
+                return { x, y, rqd: g.rqdPercent, tcr: g.tcrPercent, from: g.from, to: g.to, id: g.id };
+              });
+              
+              return (
+                <g>
+                  {/* Background grid lines for 0, 25, 50, 75, 100% */}
+                  {ticks.map(tick => {
+                    const tickX = pos.startX + 5 + (tick / 100) * (pos.width - 10);
+                    return (
+                      <line
+                        key={`rqd-tick-line-${tick}`}
+                        x1={tickX}
+                        y1={0}
+                        x2={tickX}
+                        y2={Math.max(200, totalDepth * scaleY) + bodyPaddingTop}
+                        stroke="var(--border-light)"
+                        strokeWidth="0.5"
+                        strokeDasharray="2,2"
+                      />
+                    );
+                  })}
+                  
+                  {/* Subtle background TCR bars */}
+                  {sortedGeotech.map(g => {
+                    const y = g.from * scaleY + bodyPaddingTop;
+                    const h = (g.to - g.from) * scaleY;
+                    const tcrBarWidth = Math.max(1, (pos.width - 10) * (g.tcrPercent / 100));
+                    return (
+                      <rect
+                        key={`tcr-bg-${g.id}`}
+                        x={pos.startX + 5}
+                        y={y}
+                        width={tcrBarWidth}
+                        height={h}
+                        fill="#3b82f6"
+                        fillOpacity="0.08"
+                        stroke="none"
+                        style={{ pointerEvents: 'none' }}
+                      />
+                    );
+                  })}
+                  
+                  {/* Continuous RQD Trend Line */}
+                  {points.length > 1 && (
+                    <path
+                      d={points.map((p, idx) => `${idx === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ')}
+                      fill="none"
+                      stroke="#ff9800" // Vibrant orange
+                      strokeWidth="2"
+                    />
+                  )}
+                  
+                  {/* RQD circular markers */}
+                  {points.map(p => (
+                    <circle
+                      key={`rqd-circle-${p.id}`}
+                      cx={p.x}
+                      cy={p.y}
+                      r="4"
+                      fill="#ff9800"
+                      stroke="#ffffff"
+                      strokeWidth="1"
+                      style={{ cursor: 'pointer' }}
+                      onClick={() => handleBlockClick('TCR / RQD', p.id)}
+                      onMouseEnter={() =>
+                        setHoverInfo(
+                          `Geotech: ${p.from}m-${p.to}m | TCR: ${p.tcr}% | RQD: ${p.rqd}%`
+                        )
+                      }
+                      onMouseLeave={() => setHoverInfo(null)}
+                    />
+                  ))}
+                </g>
+              );
+            })()}
 
             {/* 4. GEOCHEMICAL ASSAYS COLUMN */}
             {colPositions['assays']?.visible && (
@@ -590,9 +718,10 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                                 width={barWidth}
                                 height={h}
                                 fill={analyteDetails.color}
-                                fillOpacity={0.7}
+                                fillOpacity={0.3}
                                 stroke={analyteDetails.color}
-                                strokeWidth="0.75"
+                                strokeWidth="1.5"
+                                strokeOpacity={0.9}
                                 style={{ cursor: 'pointer', transition: 'fill-opacity 0.2s' }}
                                 onClick={() => handleBlockClick('Assay', a.id)}
                                 onMouseEnter={() => {

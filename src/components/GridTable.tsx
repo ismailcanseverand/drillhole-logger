@@ -25,6 +25,142 @@ interface GridTableProps {
   highlightedRowId?: string | null;
 }
 
+const getRockColorName = (code: string): string => {
+  switch ((code || '').toUpperCase()) {
+    case 'DOLGU':
+    case 'OB':
+      return 'Brown';
+    case 'ALBIT':
+      return 'White';
+    case 'GNAYS':
+      return 'Grey';
+    case 'ANDEZIT':
+    case 'AND':
+    case 'TUF':
+      return 'Red';
+    case 'KAOLEN':
+    case 'KAO':
+      return 'Yellow';
+    case 'KIL':
+      return 'Orange';
+    case 'KUVARSIT':
+    case 'QVN':
+      return 'Cyan';
+    case 'SIST':
+      return 'Green';
+    case 'GRANIT':
+    case 'GNT':
+      return 'Pink';
+    case 'PERLIT':
+      return 'Purple';
+    case 'KALSIT':
+      return 'Rose';
+    case 'KOMUR':
+      return 'Dark Slate';
+    case 'BRES':
+    case 'BXS':
+      return 'Grey';
+    default:
+      return 'Grey';
+  }
+};
+
+const renderGraphicSwatch = (code: string) => {
+  const clean = (code || '').toUpperCase();
+  const patternId = 'pat-loc-' + Math.random().toString(36).substr(2, 9);
+  let patternContent = null;
+  
+  if (clean === 'GNAYS') {
+    patternContent = (
+      <pattern id={patternId} width="20" height="20" patternUnits="userSpaceOnUse">
+        <rect width="20" height="20" fill="#475569" />
+        <path d="M0,5 Q5,10 10,5 T20,5 M0,15 Q5,20 10,15 T20,15" fill="none" stroke="#64748b" strokeWidth="1.5" />
+      </pattern>
+    );
+  } else if (['GRANIT', 'GNT', 'SUBVOLKANIK', 'SIYENIT', 'GRANODIYORIT', 'RIYOLIT', 'DASIT', 'INTRUZIF'].includes(clean)) {
+    patternContent = (
+      <pattern id={patternId} width="20" height="20" patternUnits="userSpaceOnUse">
+        <rect width="20" height="20" fill="#ec4899" fillOpacity="0.8" />
+        <circle cx="5" cy="5" r="1.5" fill="#9d174d" />
+        <circle cx="15" cy="15" r="1.5" fill="#9d174d" />
+        <line x1="12" y1="4" x2="16" y2="8" stroke="#9d174d" strokeWidth="1" />
+        <line x1="16" y1="4" x2="12" y2="8" stroke="#9d174d" strokeWidth="1" />
+        <line x1="2" y1="12" x2="6" y2="16" stroke="#9d174d" strokeWidth="1" />
+        <line x1="6" y1="12" x2="2" y2="16" stroke="#9d174d" strokeWidth="1" />
+      </pattern>
+    );
+  } else if (clean === 'BRES' || clean === 'BXS') {
+    patternContent = (
+      <pattern id={patternId} width="25" height="25" patternUnits="userSpaceOnUse">
+        <rect width="25" height="25" fill="#52525b" />
+        <polygon points="5,2 12,5 8,12 2,7" fill="#27272a" stroke="#a1a1aa" strokeWidth="0.5" />
+        <polygon points="18,10 23,15 15,20 14,12" fill="#27272a" stroke="#a1a1aa" strokeWidth="0.5" />
+        <polygon points="3,18 9,23 6,24" fill="#18181b" stroke="#71717a" strokeWidth="0.5" />
+      </pattern>
+    );
+  } else if (clean === 'KUVARSIT' || clean === 'QVN') {
+    patternContent = (
+      <pattern id={patternId} width="10" height="10" patternUnits="userSpaceOnUse">
+        <rect width="10" height="10" fill="#0891b2" />
+        <circle cx="3" cy="3" r="1.2" fill="#22d3ee" />
+        <circle cx="8" cy="8" r="1.2" fill="#22d3ee" />
+      </pattern>
+    );
+  } else if (['ANDEZIT', 'AND', 'TUF', 'BASALT'].includes(clean)) {
+    patternContent = (
+      <pattern id={patternId} width="20" height="20" patternUnits="userSpaceOnUse">
+        <rect width="20" height="20" fill="#065f46" />
+        <path d="M 5,5 L 8,8 L 11,5" fill="none" stroke="#10b981" strokeWidth="1.5" />
+        <path d="M 15,15 L 18,18 L 21,15" fill="none" stroke="#10b981" strokeWidth="1.5" />
+      </pattern>
+    );
+  } else if (['DOLGU', 'OB', 'TOPRAK'].includes(clean)) {
+    patternContent = (
+      <pattern id={patternId} width="20" height="20" patternUnits="userSpaceOnUse">
+        <rect width="20" height="20" fill="#78350f" />
+        <circle cx="4" cy="4" r="1.2" fill="#b45309" />
+        <circle cx="14" cy="14" r="1.2" fill="#b45309" />
+        <line x1="2" y1="18" x2="8" y2="18" stroke="#d97706" strokeWidth="1" />
+        <line x1="12" y1="8" x2="18" y2="8" stroke="#d97706" strokeWidth="1" />
+      </pattern>
+    );
+  } else if (clean === 'SIST') {
+    patternContent = (
+      <pattern id={patternId} width="30" height="10" patternUnits="userSpaceOnUse">
+        <rect width="30" height="10" fill="#047857" />
+        <path d="M0,5 Q7.5,0 15,5 T30,5" fill="none" stroke="#34d399" strokeWidth="1" />
+      </pattern>
+    );
+  } else if (clean === 'KIL') {
+    patternContent = (
+      <pattern id={patternId} width="10" height="10" patternUnits="userSpaceOnUse">
+        <rect width="10" height="10" fill="#c2410c" />
+        <line x1="0" y1="5" x2="10" y2="5" stroke="#ffedd5" strokeWidth="1" />
+      </pattern>
+    );
+  } else if (clean === 'KALSIT') {
+    patternContent = (
+      <pattern id={patternId} width="20" height="20" patternUnits="userSpaceOnUse">
+        <rect width="20" height="20" fill="#9f1239" />
+        <line x1="0" y1="10" x2="20" y2="10" stroke="#f43f5e" strokeWidth="0.75" />
+        <line x1="0" y1="20" x2="20" y2="20" stroke="#f43f5e" strokeWidth="0.75" />
+        <line x1="10" y1="0" x2="10" y2="10" stroke="#f43f5e" strokeWidth="0.75" />
+        <line x1="20" y1="10" x2="20" y2="20" stroke="#f43f5e" strokeWidth="0.75" />
+        <line x1="0" y1="10" x2="0" y2="20" stroke="#f43f5e" strokeWidth="0.75" />
+      </pattern>
+    );
+  } else {
+    return <div className="graphic-swatch" style={{ background: '#4b5563' }} />;
+  }
+  
+  return (
+    <svg className="graphic-swatch">
+      <defs>{patternContent}</defs>
+      <rect width="100%" height="100%" fill={`url(#${patternId})`} />
+    </svg>
+  );
+};
+
 export const GridTable: React.FC<GridTableProps> = ({
   title,
   columns,
@@ -288,7 +424,15 @@ export const GridTable: React.FC<GridTableProps> = ({
 
                     return (
                       <td key={col.key} className={cellClass} title={validationErr?.message}>
-                        {col.readOnly ? (
+                        {tabName === 'Lithology' && col.key === 'color' ? (
+                          <div className="readonly-value">
+                            {getRockColorName(row.rockCode)}
+                          </div>
+                        ) : tabName === 'Lithology' && col.key === 'graphic' ? (
+                          <div style={{ padding: '4px', display: 'flex', justifyContent: 'center' }}>
+                            {renderGraphicSwatch(row.rockCode)}
+                          </div>
+                        ) : col.readOnly ? (
                           <div className="readonly-value">
                             {col.type === 'number'
                               ? (typeof row[col.key] === 'number' ? row[col.key].toFixed(2) : row[col.key])

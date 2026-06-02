@@ -11,8 +11,8 @@ export const DatabaseSettings: React.FC<DatabaseSettingsProps> = ({
   onClose,
   db
 }) => {
-  const [url, setUrl] = useState(localStorage.getItem('sb_url') || '');
-  const [key, setKey] = useState(localStorage.getItem('sb_key') || '');
+  const [url, setUrl] = useState(localStorage.getItem('sb_url') || (import.meta.env.VITE_SUPABASE_URL as string) || '');
+  const [key, setKey] = useState(localStorage.getItem('sb_key') || (import.meta.env.VITE_SUPABASE_ANON_KEY as string) || '');
   const [connectionStatus, setConnectionStatus] = useState<'idle' | 'testing' | 'success' | 'failed'>('idle');
   const [statusMessage, setStatusMessage] = useState('');
   const [migrating, setMigrating] = useState(false);

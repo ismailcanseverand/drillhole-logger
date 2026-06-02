@@ -326,6 +326,7 @@ export const GridTable: React.FC<GridTableProps> = ({
 
   const addRow = () => {
     const lastRow = data[data.length - 1];
+    const firstRow = data[0];
     const newRow: Record<string, any> = {
       id: Math.random().toString(36).substr(2, 9),
     };
@@ -338,6 +339,8 @@ export const GridTable: React.FC<GridTableProps> = ({
         newRow[col.key] = parseFloat(((lastRow.to || 0) + 3.0).toFixed(2));
       } else if (col.key === 'drilledLength' && autoFillNextFrom) {
         newRow[col.key] = 3.0; // standard drill run
+      } else if (col.type === 'select' && firstRow && firstRow[col.key] !== undefined) {
+        newRow[col.key] = firstRow[col.key];
       } else {
         newRow[col.key] = col.defaultValue !== undefined ? col.defaultValue : (col.type === 'number' ? 0 : '');
       }

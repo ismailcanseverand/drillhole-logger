@@ -494,7 +494,7 @@ export const GridTable: React.FC<GridTableProps> = ({
       const workbook = new ExcelJS.Workbook();
       await workbook.xlsx.load(arrayBuffer);
 
-      const worksheet = workbook.getWorksheet(1);
+      const worksheet = workbook.worksheets[0];
       if (!worksheet) {
         throw new Error('Template sheet not found.');
       }

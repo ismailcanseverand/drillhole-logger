@@ -524,7 +524,9 @@ export const GridTable: React.FC<GridTableProps> = ({
         columns.forEach(col => {
           const val = record[col.label] ?? record[col.key];
           if (col.type === 'number') {
-            row[col.key] = val !== undefined && val !== '' ? parseFloat(val) : 0;
+            const parsed = val !== undefined && val !== '' ? parseFloat(val) : 0;
+            const isAssayGrade = tabName === 'Assay' && col.key !== 'from' && col.key !== 'to';
+            row[col.key] = isAssayGrade ? parsed : Math.round(parsed * 100) / 100;
           } else {
             row[col.key] = val ?? '';
           }
@@ -1122,23 +1124,21 @@ export const GridTable: React.FC<GridTableProps> = ({
                           </select>
                         ) : (
                           <input
-                            type={col.type === 'number' ? 'number' : 'text'}
-                            step={col.type === 'number' ? 'any' : undefined}
-                            placeholder={col.placeholder || ''}
-                            value={row[col.key] ?? ''}
-                            onChange={e =>
-                              handleCellChange(
-                                rowIndex,
-                                col.key,
-                                col.type === 'number'
-                                  ? e.target.value === ''
-                                    ? ''
-                                    : parseFloat(e.target.value)
-                                  : e.target.value
-                              )
-                            }
-                            onKeyDown={e => handleKeyDown(e, rowIndex)}
-                          />
+                             type={col.type === 'number' ? 'number' : 'text'}
+                             step={col.type === 'number' ? 'any' : undefined}
+                             placeholder={col.placeholder || ''}
+                             value={row[col.key] ?? ''}
+                             onChange={e => {
+                               let val: any = e.target.value;
+                               if (col.type === 'number' && val !== '') {
+                                 const parsed = parseFloat(val);
+                                 const isAssayGrade = tabName === 'Assay' && col.key !== 'from' && col.key !== 'to';
+                                 val = isAssayGrade ? parsed : Math.round(parsed * 100) / 100;
+                               }
+                               handleCellChange(rowIndex, col.key, val);
+                             }}
+                             onKeyDown={e => handleKeyDown(e, rowIndex)}
+                           />
                         )}
                         {validationErr && (
                           <span className="cell-warning-icon">

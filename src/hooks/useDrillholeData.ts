@@ -174,6 +174,35 @@ function sanitizeCollar(col: any): CollarState {
   };
 }
 
+const cleanNum = (val: any): number => {
+  if (val === undefined || val === null || val === '') return 0;
+  const parsed = Number(val);
+  if (isNaN(parsed)) return 0;
+  return Math.round(parsed * 100) / 100;
+};
+
+function cleanGeotechRow(g: any): GeotechState {
+  const from = cleanNum(g.from_depth !== undefined ? g.from_depth : g.from);
+  const to = cleanNum(g.to_depth !== undefined ? g.to_depth : g.to);
+  const drilledLength = cleanNum(g.drilled_length !== undefined ? g.drilled_length : g.drilledLength);
+  const recoveredLength = cleanNum(g.recovered_length !== undefined ? g.recovered_length : g.recoveredLength);
+  const solidPiecesOver10cm = cleanNum(g.solid_pieces_over_10cm !== undefined ? g.solid_pieces_over_10cm : g.solidPiecesOver10cm);
+  
+  const tcrPercent = drilledLength > 0 ? parseFloat(((recoveredLength / drilledLength) * 100).toFixed(2)) : 0;
+  const rqdPercent = drilledLength > 0 ? parseFloat(((solidPiecesOver10cm / drilledLength) * 100).toFixed(2)) : 0;
+
+  return {
+    id: g.id,
+    from,
+    to,
+    drilledLength,
+    recoveredLength,
+    solidPiecesOver10cm,
+    tcrPercent,
+    rqdPercent
+  };
+}
+
 export function useDrillholeData() {
   const [db, setDb] = useState<Record<string, any>>({});
   const [holeList, setHoleList] = useState<string[]>([]);
@@ -260,17 +289,17 @@ export function useDrillholeData() {
 
             setSurveys((sData || []).map((s: any) => ({
               id: s.id,
-              depth: s.depth,
-              dip: s.dip,
-              azimuth: s.azimuth
+              depth: cleanNum(s.depth),
+              dip: cleanNum(s.dip),
+              azimuth: cleanNum(s.azimuth)
             })));
 
             setLithology((lData || []).map((l: any) => {
               const { description, photo } = parsePhotoFromDescription(l.description || '');
               return {
                 id: l.id,
-                from: l.from_depth,
-                to: l.to_depth,
+                from: cleanNum(l.from_depth),
+                to: cleanNum(l.to_depth),
                 rockCode: l.rock_code,
                 alteration: l.alteration || '',
                 mineralization: l.mineralization || '',
@@ -279,16 +308,8 @@ export function useDrillholeData() {
               };
             }).sort((a: LithologyState, b: LithologyState) => a.from - b.from));
 
-            setGeotech((gData || []).map((g: any) => ({
-              id: g.id,
-              from: g.from_depth,
-              to: g.to_depth,
-              drilledLength: g.drilled_length,
-              recoveredLength: g.recovered_length,
-              solidPiecesOver10cm: g.solid_pieces_over_10cm,
-              tcrPercent: g.tcr_percent,
-              rqdPercent: g.rqd_percent
-            })).sort((a: GeotechState, b: GeotechState) => a.from - b.from));
+            setGeotech((gData || []).map((g: any) => cleanGeotechRow(g))
+              .sort((a: GeotechState, b: GeotechState) => a.from - b.from));
 
             const dbHole = db[selectedHoleId];
             const isHoleMetallic = METALLIC_HOLES.includes(selectedHoleId.trim().toUpperCase());
@@ -296,8 +317,8 @@ export function useDrillholeData() {
             let loadedAssays = (aData || []).map((a: any) => ({
               id: a.id,
               sampleId: a.sample_id,
-              from: a.from_depth,
-              to: a.to_depth,
+              from: cleanNum(a.from_depth),
+              to: cleanNum(a.to_depth),
               sampleType: a.sample_type,
               al2o3: a.al2o3,
               fe2o3: a.fe2o3,
@@ -341,7 +362,11 @@ export function useDrillholeData() {
               }
             }
 
-            setAssays(loadedAssays.sort((a: AssayState, b: AssayState) => a.from - b.from));
+            setAssays(loadedAssays.map((a: any) => ({
+              ...a,
+              from: cleanNum(a.from),
+              to: cleanNum(a.to)
+            })).sort((a: AssayState, b: AssayState) => a.from - b.from));
 
             return; // Successfully loaded from Supabase database
           }
@@ -380,10 +405,28 @@ export function useDrillholeData() {
           localStorage.removeItem(`dh_${selectedHoleId}_sampleprep_metallic`);
 
           setCollar(sanitizeCollar(dbHole.collar));
-          setSurveys(dbHole.surveys);
-          setLithology(dbHole.lithology);
-          setGeotech(dbHole.geotech);
-          setAssays(dbHole.assays);
+          
+          setSurveys((dbHole.surveys || []).map((s: any) => ({
+            id: s.id,
+            depth: cleanNum(s.depth),
+            dip: cleanNum(s.dip),
+            azimuth: cleanNum(s.azimuth)
+          })));
+          
+          setLithology((dbHole.lithology || []).map((l: any) => ({
+            ...l,
+            from: cleanNum(l.from),
+            to: cleanNum(l.to)
+          })));
+
+          setGeotech((dbHole.geotech || []).map((g: any) => cleanGeotechRow(g)));
+
+          setAssays((dbHole.assays || []).map((a: any) => ({
+            ...a,
+            from: cleanNum(a.from),
+            to: cleanNum(a.to)
+          })));
+
           setSamplePrep([]);
           setSamplePrepMetallic([]);
         } else {
@@ -425,29 +468,71 @@ export function useDrillholeData() {
           }
 
           setCollar(sanitizeCollar(parsedCollar));
-          setSurveys(localSurveys ? JSON.parse(localSurveys) : []);
-          setLithology(localLitho ? JSON.parse(localLitho) : []);
-          setGeotech(localGeotech ? JSON.parse(localGeotech) : []);
-          setAssays(mergedAssays);
-          setSamplePrep(localSamplePrep ? JSON.parse(localSamplePrep) : []);
-          setSamplePrepMetallic(localSamplePrepMetallic ? JSON.parse(localSamplePrepMetallic) : []);
+
+          setSurveys((localSurveys ? JSON.parse(localSurveys) : []).map((s: any) => ({
+            id: s.id,
+            depth: cleanNum(s.depth),
+            dip: cleanNum(s.dip),
+            azimuth: cleanNum(s.azimuth)
+          })));
+
+          setLithology((localLitho ? JSON.parse(localLitho) : []).map((l: any) => ({
+            ...l,
+            from: cleanNum(l.from),
+            to: cleanNum(l.to)
+          })));
+
+          setGeotech((localGeotech ? JSON.parse(localGeotech) : []).map((g: any) => cleanGeotechRow(g)));
+
+          setAssays(mergedAssays.map((a: any) => ({
+            ...a,
+            from: cleanNum(a.from),
+            to: cleanNum(a.to)
+          })));
+
+          setSamplePrep((localSamplePrep ? JSON.parse(localSamplePrep) : []).map((sp: any) => ({
+            ...sp,
+            from: cleanNum(sp.from),
+            to: cleanNum(sp.to)
+          })));
+
+          setSamplePrepMetallic((localSamplePrepMetallic ? JSON.parse(localSamplePrepMetallic) : []).map((spm: any) => ({
+            ...spm,
+            from: cleanNum(spm.from),
+            to: cleanNum(spm.to)
+          })));
         }
       } else if (db[selectedHoleId]) {
         // Fallback: Read from the read-only JSON database templates
         const holeData = db[selectedHoleId];
         setCollar(sanitizeCollar(holeData.collar));
 
-        setSurveys(holeData.surveys);
+        setSurveys((holeData.surveys || []).map((s: any) => ({
+          id: s.id,
+          depth: cleanNum(s.depth),
+          dip: cleanNum(s.dip),
+          azimuth: cleanNum(s.azimuth)
+        })));
+
         setLithology((holeData.lithology || []).map((l: any) => {
           const { description, photo } = parsePhotoFromDescription(l.description || '');
           return {
             ...l,
+            from: cleanNum(l.from),
+            to: cleanNum(l.to),
             description,
             photo
           };
         }));
-        setGeotech(holeData.geotech);
-        setAssays(holeData.assays);
+
+        setGeotech((holeData.geotech || []).map((g: any) => cleanGeotechRow(g)));
+
+        setAssays((holeData.assays || []).map((a: any) => ({
+          ...a,
+          from: cleanNum(a.from),
+          to: cleanNum(a.to)
+        })));
+
         setSamplePrep([]);
         setSamplePrepMetallic([]);
       } else {

@@ -21,7 +21,7 @@ interface GridTableProps {
   data: Array<any>;
   onChange: (newData: Array<any>) => void;
   errors: ValidationError[];
-  tabName: 'Survey' | 'Lithology' | 'Geotech' | 'Assay';
+  tabName: 'Survey' | 'Lithology' | 'Geotech' | 'Assay' | 'SamplePrep';
   autoFillNextFrom?: boolean; // automatically prefill 'from' of new row with 'to' of last row
   highlightedRowId?: string | null;
   holeId?: string;
@@ -255,6 +255,11 @@ export const GridTable: React.FC<GridTableProps> = ({
 
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const capturingRowIndexRef = useRef<number | null>(null);
+  const [ruhsatAdi, setRuhsatAdi] = useState(() => localStorage.getItem('ruhsat_adi') || 'ÇAMLICA');
+
+  useEffect(() => {
+    localStorage.setItem('ruhsat_adi', ruhsatAdi);
+  }, [ruhsatAdi]);
 
   const handlePhotoCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -465,6 +470,107 @@ export const GridTable: React.FC<GridTableProps> = ({
     exportToCSV(exportData, `Drillhole_${tabName}_Data`);
   };
 
+  const handleExportLabForm = async () => {
+    if (data.length === 0) {
+      alert('No data rows to export.');
+      return;
+    }
+
+    try {
+      const response = await fetch('/Numune_Teslim_Formu.xlsx');
+      const arrayBuffer = await response.arrayBuffer();
+
+      const ExcelJS = await import('exceljs');
+      const workbook = new ExcelJS.default.Workbook();
+      await workbook.xlsx.load(arrayBuffer);
+
+      const worksheet = workbook.getWorksheet(1);
+      if (!worksheet) {
+        throw new Error('Template sheet not found.');
+      }
+
+      const today = new Date();
+      const dd = String(today.getDate()).padStart(2, '0');
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const yyyy = today.getFullYear();
+      
+      // Write the date to Row 4 Col AE (Index 31)
+      const dateCell = worksheet.getCell(4, 31);
+      dateCell.value = `. . .${dd}. . /. .${mm} . . /. . ${yyyy} . . . `;
+
+      let easting = 0;
+      let northing = 0;
+      let elevation = 0;
+      if (holeId) {
+        try {
+          const collarStr = localStorage.getItem(`dh_${holeId}_collar`);
+          if (collarStr) {
+            const collarData = JSON.parse(collarStr);
+            easting = collarData.easting || 0;
+            northing = collarData.northing || 0;
+            elevation = collarData.elevation || 0;
+          }
+        } catch (e) {
+          console.error('Error fetching collar coordinates for export:', e);
+        }
+      }
+
+      // Clear template rows 10 to 47 (columns B to AE)
+      for (let r = 10; r <= 47; r++) {
+        for (let c = 2; c <= 31; c++) {
+          worksheet.getCell(r, c).value = null;
+        }
+      }
+
+      // Fill data
+      data.forEach((row, index) => {
+        const rIdx = 10 + index;
+        if (rIdx > 47) return;
+
+        worksheet.getCell(rIdx, 2).value = row.sampleTag || `S${String(index + 1).padStart(4, '0')}`;
+        worksheet.getCell(rIdx, 3).value = row.description || '';
+        worksheet.getCell(rIdx, 4).value = ruhsatAdi || 'ÇAMLICA';
+        worksheet.getCell(rIdx, 5).value = easting;
+        worksheet.getCell(rIdx, 6).value = northing;
+        worksheet.getCell(rIdx, 7).value = elevation;
+
+        if (Array.isArray(row.physical) && row.physical.length > 0) {
+          worksheet.getCell(rIdx, 8).value = row.physical.join(', ');
+        } else {
+          worksheet.getCell(rIdx, 8).value = '';
+        }
+
+        if (row.chemical === 'XRF' || row.chemical === 'XRF + XRD') {
+          worksheet.getCell(rIdx, 25).value = 'X';
+        }
+
+        if (row.so4) {
+          worksheet.getCell(rIdx, 26).value = 'X';
+        }
+
+        if (row.chemical === 'XRD' || row.chemical === 'XRF + XRD') {
+          worksheet.getCell(rIdx, 28).value = 'XRD';
+        }
+        
+        worksheet.getCell(rIdx, 30).value = 'X'; // normal priority
+      });
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${holeId || 'Drillhole'}_Numune_Teslim_Formu.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      console.error('Error generating lab Excel sheet:', err);
+      alert('Failed to export Excel delivery form. Please check template file.');
+    }
+  };
+
   const getCellValidationError = (rowId: string, colKey: string) => {
     return errors.find(e => e.id === rowId && e.field === colKey);
   };
@@ -477,7 +583,34 @@ export const GridTable: React.FC<GridTableProps> = ({
           <span className="row-counter">{data.length} {data.length === 1 ? 'row' : 'rows'}</span>
         </div>
 
-        <div className="grid-actions">
+        <div className="grid-actions" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          {tabName === 'SamplePrep' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginRight: '10px' }}>
+              <label style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>Ruhsat Adı:</label>
+              <input
+                type="text"
+                value={ruhsatAdi}
+                onChange={e => setRuhsatAdi(e.target.value.toUpperCase())}
+                style={{
+                  padding: '4px 8px',
+                  fontSize: '12px',
+                  width: '120px',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--border-medium)',
+                  background: 'var(--bg-input, #0f172a)',
+                  color: 'var(--text-main)',
+                  outline: 'none'
+                }}
+              />
+            </div>
+          )}
+
+          {tabName === 'SamplePrep' && (
+            <button className="btn btn-success btn-sm" onClick={handleExportLabForm} style={{ background: '#10b981', borderColor: '#10b981', color: '#fff' }}>
+              <Download size={14} /> Export Lab Form
+            </button>
+          )}
+
           <button className="btn btn-secondary btn-sm" onClick={handleCSVExport}>
             <Download size={14} /> Export CSV
           </button>
@@ -597,6 +730,53 @@ export const GridTable: React.FC<GridTableProps> = ({
                                 <span>Capture</span>
                               </button>
                             )}
+                          </div>
+                        ) : tabName === 'SamplePrep' && col.key === 'physical' ? (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px', padding: '2px', justifyContent: 'center' }}>
+                            {['Granite', 'SG', 'Duvar Karosu', 'Yer Karosu'].map(opt => {
+                              const isSelected = Array.isArray(row.physical) && row.physical.includes(opt);
+                              return (
+                                <button
+                                  key={opt}
+                                  type="button"
+                                  onClick={() => {
+                                    const current = Array.isArray(row.physical) ? row.physical : [];
+                                    const next = current.includes(opt)
+                                      ? current.filter((x: string) => x !== opt)
+                                      : [...current, opt];
+                                    handleCellChange(rowIndex, 'physical', next);
+                                  }}
+                                  style={{
+                                    fontSize: '9px',
+                                    padding: '2px 4px',
+                                    borderRadius: '4px',
+                                    border: '1px solid',
+                                    borderColor: isSelected ? 'var(--primary)' : 'var(--border-medium)',
+                                    background: isSelected ? 'rgba(99, 102, 241, 0.2)' : 'transparent',
+                                    color: isSelected ? 'var(--primary)' : 'var(--text-secondary)',
+                                    fontWeight: isSelected ? 'bold' : 'normal',
+                                    cursor: 'pointer',
+                                    whiteSpace: 'nowrap'
+                                  }}
+                                >
+                                  {opt}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        ) : tabName === 'SamplePrep' && col.key === 'so4' ? (
+                          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', padding: '4px' }}>
+                            <input
+                              type="checkbox"
+                              checked={!!row.so4}
+                              onChange={e => handleCellChange(rowIndex, 'so4', e.target.checked)}
+                              style={{
+                                width: '15px',
+                                height: '15px',
+                                cursor: 'pointer',
+                                accentColor: 'var(--primary)'
+                              }}
+                            />
                           </div>
                         ) : tabName === 'Lithology' && col.key === 'color' ? (
                           <div className="readonly-value">

@@ -33,6 +33,8 @@ function App() {
     setGeotech,
     assays,
     setAssays,
+    samplePrep,
+    setSamplePrep,
     errors,
     resetToDefault,
     clearAllData,
@@ -174,6 +176,29 @@ function App() {
     { key: 'loi', label: 'LOI/AZ (%)', type: 'number', width: '10%', defaultValue: 0 }
   ], []);
 
+  // Define Columns for Sample Preparation Tab
+  const samplePrepColumns = useMemo<GridColumn[]>(() => [
+    { key: 'sampleTag', label: 'Sample Tag', type: 'text', width: '12%', defaultValue: 'S0001' },
+    { key: 'from', label: 'Depth From (m)', type: 'number', width: '8%', defaultValue: 0 },
+    { key: 'to', label: 'Depth To (m)', type: 'number', width: '8%', defaultValue: 0 },
+    { key: 'description', label: 'Description', type: 'text', width: '28%', defaultValue: '', placeholder: 'Altered Gnays, albitic...' },
+    {
+      key: 'chemical',
+      label: 'Chemical Analysis',
+      type: 'select',
+      width: '15%',
+      defaultValue: '',
+      options: [
+        { value: '', label: 'None' },
+        { value: 'XRF', label: 'XRF' },
+        { value: 'XRD', label: 'XRD' },
+        { value: 'XRF + XRD', label: 'XRF + XRD' }
+      ]
+    },
+    { key: 'physical', label: 'Physical Analysis', type: 'text', width: '18%', readOnly: true, defaultValue: [] },
+    { key: 'so4', label: 'SO4', type: 'text', width: '7%', readOnly: true, defaultValue: false }
+  ], []);
+
   // Count errors by tab for rendering notification badges in headers
   const getTabErrorCount = (tabName: string) => {
     let mapping = tabName;
@@ -283,7 +308,7 @@ function App() {
         {/* Data Log Editor (Left, 60% Width) */}
         <section className="data-entry-panel">
           <nav className="tab-navigation">
-            {['Collar', 'Survey', 'Lithology', 'TCR / RQD', 'Assay', 'QA/QC Dashboard'].map(tab => {
+            {['Collar', 'Survey', 'Lithology', 'TCR / RQD', 'Assay', 'Sample Preparation', 'QA/QC Dashboard'].map(tab => {
               const errCount = getTabErrorCount(tab);
               return (
                 <button
@@ -356,6 +381,20 @@ function App() {
                 tabName="Assay"
                 autoFillNextFrom={true}
                 highlightedRowId={highlightedRowId}
+              />
+            )}
+
+            {activeTab === 'Sample Preparation' && (
+              <GridTable
+                title="Sample Preparation & Laboratory Delivery Log"
+                columns={samplePrepColumns}
+                data={samplePrep}
+                onChange={setSamplePrep}
+                errors={errors}
+                tabName="SamplePrep"
+                autoFillNextFrom={true}
+                highlightedRowId={highlightedRowId}
+                holeId={selectedHoleId}
               />
             )}
 

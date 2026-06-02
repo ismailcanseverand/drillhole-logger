@@ -264,10 +264,42 @@ export const GridTable: React.FC<GridTableProps> = ({
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const capturingRowIndexRef = useRef<number | null>(null);
   const [ruhsatAdi, setRuhsatAdi] = useState(() => localStorage.getItem('ruhsat_adi') || 'ÇAMLICA');
+  const [colWidths, setColWidths] = useState<Record<string, number>>({});
 
   useEffect(() => {
     localStorage.setItem('ruhsat_adi', ruhsatAdi);
   }, [ruhsatAdi]);
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>, colKey: string) => {
+    e.preventDefault();
+    const thElement = e.currentTarget.parentElement;
+    if (!thElement) return;
+
+    const startWidth = thElement.getBoundingClientRect().width;
+    const startX = e.clientX;
+    
+    document.body.classList.add('resizing-col');
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const deltaX = moveEvent.clientX - startX;
+      const newWidth = Math.max(60, startWidth + deltaX);
+      setColWidths(prev => ({
+        ...prev,
+        [colKey]: newWidth
+      }));
+    };
+
+    const handleMouseUp = () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.classList.remove('resizing-col');
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    document.body.style.cursor = 'col-resize';
+  };
 
   const handlePhotoCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -923,8 +955,14 @@ export const GridTable: React.FC<GridTableProps> = ({
             <tr>
               <th className="cell-action-header">#</th>
               {columns.map(col => (
-                <th key={col.key} style={{ width: col.width || 'auto' }}>
-                  {col.label}
+                <th key={col.key} style={{ width: colWidths[col.key] || col.width || 'auto', position: 'relative', userSelect: 'none' }}>
+                  <span style={{ display: 'block', paddingRight: col.readOnly ? '0' : '6px' }}>{col.label}</span>
+                  {!col.readOnly && (
+                    <div
+                      className="col-resizer"
+                      onMouseDown={(e) => handleMouseDown(e, col.key)}
+                    />
+                  )}
                 </th>
               ))}
               <th className="cell-action-header">Actions</th>

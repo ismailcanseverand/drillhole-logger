@@ -560,9 +560,8 @@ function App() {
 
       {/* Split Screens Panel */}
       <main className="app-main">
-        {/* Data Log Editor (Left, 60% Width) */}
         <section className="data-entry-panel">
-          <nav className="tab-navigation">
+          <nav className="tab-navigation" onWheel={(e) => { e.currentTarget.scrollLeft += e.deltaY; }}>
             {['Collar', 'Survey', 'Lithology', 'TCR / RQD', 'Assay', 'Sample Preparation', 'Sample Prep Metallic', 'QA/QC Dashboard'].map(tab => {
               const errCount = getTabErrorCount(tab);
               return (

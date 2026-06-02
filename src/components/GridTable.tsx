@@ -107,56 +107,87 @@ const getRockColorName = (code: string): string => {
     case 'DOLGU':
     case 'OB':
     case 'TO':
-      return 'Brown';
+    case 'TOPRAK':
+      return 'Gri-Kahve';
     case 'ALBIT':
-      return 'White';
+      return 'Felsik Mavi';
     case 'GNAYS':
     case 'GNYS':
-      return 'Grey';
+      return 'Yeşil';
     case 'ANDEZIT':
     case 'AND':
+    case 'VIA.A':
+      return 'Mor';
     case 'TUF':
     case 'VIA':
-    case 'VIA.A':
-    case 'VIA.P':
     case 'VIA.T':
     case 'VIA:T':
-      return 'Red';
+    case 'VIA.P':
+    case 'BRES':
+    case 'BXS':
+    case 'IGNIMBIRIT':
+      return 'Açık Mor';
     case 'KAOLEN':
     case 'KAO':
-      return 'Yellow';
     case 'KIL':
-      return 'Orange';
+      return 'Sarı-Bej';
     case 'KUVARSIT':
     case 'QVN':
-      return 'Cyan';
+      return 'Sarı-Yeşil';
     case 'SIST':
     case 'MTSH':
     case 'MTSL':
     case 'MTSS':
-      return 'Green';
+      return 'Koyu Yeşil';
+    case 'SEDIMENT':
+      return 'Koyu Yeşil-Sarı';
     case 'GRANIT':
     case 'GNT':
     case 'GRA':
+      return 'Kırmızı';
+    case 'DASIT':
+      return 'Açık Eflatun';
+    case 'RIYOLIT':
+      return 'Eflatun';
+    case 'SIYENIT':
+      return 'Pembe';
+    case 'GRANODIYORIT':
+      return 'Açık Kırmızı';
+    case 'SUBVOLKANIK':
+    case 'INTRUZIF':
     case 'VFD':
-      return 'Pink';
+    case 'DAYK':
+      return 'Koyu Kırmızı';
     case 'PERLIT':
-      return 'Purple';
+      return 'Açık Pembe';
     case 'KALSIT':
+      return 'Açık Mavi';
     case 'MRB':
-      return 'Rose';
+      return 'Mavi';
     case 'KOMUR':
-      return 'Dark Slate';
-    case 'BRES':
-    case 'BXS':
+      return 'Kül Grisi';
     case 'XBH':
     case 'FLT':
-      return 'Grey';
+    case 'YANAL':
+      return 'Sarı';
     case 'OFY':
+      return 'Koyu Yeşil-Gri';
     case 'SERP':
-      return 'Green';
+      return 'Açık Yeşil-Gri';
+    case 'VSM':
+    case 'VOLKANOSEDIMANTER':
+      return 'Koyu Mor';
+    case 'UNC':
+      return 'Koyu Gri';
+    case 'KUM':
+      return 'Sarı';
+    case 'OKSIT':
+    case 'SULFIT':
+      return 'Haki Yeşil';
+    case 'ALUNIT':
+      return 'Kirli Beyaz';
     default:
-      return 'Grey';
+      return 'Gri';
   }
 };
 
@@ -168,103 +199,120 @@ const renderGraphicSwatch = (code: string) => {
   if (clean === 'GNAYS' || clean === 'GNYS') {
     patternContent = (
       <pattern id={patternId} width="20" height="20" patternUnits="userSpaceOnUse">
-        <rect width="20" height="20" fill="#475569" />
-        <path d="M0,5 Q5,10 10,5 T20,5 M0,15 Q5,20 10,15 T20,15" fill="none" stroke="#64748b" strokeWidth="1.5" />
+        <rect width="20" height="20" fill="#61E07A" />
+        <path d="M0,5 Q5,10 10,5 T20,5 M0,15 Q5,20 10,15 T20,15" fill="none" stroke="#15803D" strokeWidth="1.5" />
       </pattern>
     );
   } else if (clean === 'ALBIT') {
     patternContent = (
       <pattern id={patternId} width="20" height="20" patternUnits="userSpaceOnUse">
-        <rect width="20" height="20" fill="#2d3748" />
-        <path d="M 5,2 L 2,5 M 15,12 L 12,15" stroke="#4a5568" strokeWidth="1.5" />
+        <rect width="20" height="20" fill="#E0F3FE" />
+        <path d="M 5,2 L 2,5 M 15,12 L 12,15" stroke="#0E7490" strokeWidth="1.5" />
       </pattern>
     );
   } else if (clean === 'KAOLEN' || clean === 'KAO') {
     patternContent = (
       <pattern id={patternId} width="20" height="20" patternUnits="userSpaceOnUse">
-        <rect width="20" height="20" fill="#3f3f46" />
-        <circle cx="5" cy="5" r="1.5" fill="#facc15" fillOpacity="0.4" />
-        <circle cx="15" cy="15" r="1.5" fill="#facc15" fillOpacity="0.4" />
+        <rect width="20" height="20" fill="#FAF2BF" />
+        <circle cx="5" cy="5" r="1.5" fill="#D9C333" fillOpacity="0.8" />
+        <circle cx="15" cy="15" r="1.5" fill="#D9C333" fillOpacity="0.8" />
       </pattern>
     );
-  } else if (['GRANIT', 'GNT', 'SUBVOLKANIK', 'SIYENIT', 'GRANODIYORIT', 'RIYOLIT', 'DASIT', 'INTRUZIF', 'GRA', 'VFD'].includes(clean)) {
+  } else if (['GRANIT', 'GNT', 'SUBVOLKANIK', 'SIYENIT', 'GRANODIYORIT', 'RIYOLIT', 'DASIT', 'INTRUZIF', 'GRA', 'VFD', 'DAYK'].includes(clean)) {
     patternContent = (
       <pattern id={patternId} width="20" height="20" patternUnits="userSpaceOnUse">
-        <rect width="20" height="20" fill="#ec4899" fillOpacity="0.8" />
-        <circle cx="5" cy="5" r="1.5" fill="#9d174d" />
-        <circle cx="15" cy="15" r="1.5" fill="#9d174d" />
-        <line x1="12" y1="4" x2="16" y2="8" stroke="#9d174d" strokeWidth="1" />
-        <line x1="16" y1="4" x2="12" y2="8" stroke="#9d174d" strokeWidth="1" />
-        <line x1="2" y1="12" x2="6" y2="16" stroke="#9d174d" strokeWidth="1" />
-        <line x1="6" y1="12" x2="2" y2="16" stroke="#9d174d" strokeWidth="1" />
+        <rect width="20" height="20" fill="#FF4D4D" />
+        <circle cx="5" cy="5" r="1.5" fill="#B91C1C" />
+        <circle cx="15" cy="15" r="1.5" fill="#B91C1C" />
+        <line x1="12" y1="4" x2="16" y2="8" stroke="#B91C1C" strokeWidth="1" />
+        <line x1="16" y1="4" x2="12" y2="8" stroke="#B91C1C" strokeWidth="1" />
+        <line x1="2" y1="12" x2="6" y2="16" stroke="#B91C1C" strokeWidth="1" />
+        <line x1="6" y1="12" x2="2" y2="16" stroke="#B91C1C" strokeWidth="1" />
       </pattern>
     );
-  } else if (clean === 'BRES' || clean === 'BXS' || clean === 'XBH' || clean === 'FLT') {
+  } else if (clean === 'BRES' || clean === 'BXS' || clean === 'VIA.P') {
     patternContent = (
       <pattern id={patternId} width="25" height="25" patternUnits="userSpaceOnUse">
-        <rect width="25" height="25" fill="#52525b" />
-        <polygon points="5,2 12,5 8,12 2,7" fill="#27272a" stroke="#a1a1aa" strokeWidth="0.5" />
-        <polygon points="18,10 23,15 15,20 14,12" fill="#27272a" stroke="#a1a1aa" strokeWidth="0.5" />
-        <polygon points="3,18 9,23 6,24" fill="#18181b" stroke="#71717a" strokeWidth="0.5" />
+        <rect width="25" height="25" fill="#BF66D9" />
+        <polygon points="5,2 12,5 8,12 2,7" fill="#701A75" stroke="#E9D5FF" strokeWidth="0.5" />
+        <polygon points="18,10 23,15 15,20 14,12" fill="#701A75" stroke="#E9D5FF" strokeWidth="0.5" />
+        <polygon points="3,18 9,23 6,24" fill="#4A044E" stroke="#D8B4FE" strokeWidth="0.5" />
+      </pattern>
+    );
+  } else if (clean === 'XBH' || clean === 'FLT' || clean === 'YANAL') {
+    patternContent = (
+      <pattern id={patternId} width="20" height="20" patternUnits="userSpaceOnUse">
+        <rect width="20" height="20" fill="#E6E600" />
+        <line x1="0" y1="0" x2="20" y2="20" stroke="#991B1B" strokeWidth="1" />
+        <line x1="20" y1="0" x2="0" y2="20" stroke="#991B1B" strokeWidth="1" />
       </pattern>
     );
   } else if (clean === 'KUVARSIT' || clean === 'QVN') {
     patternContent = (
       <pattern id={patternId} width="10" height="10" patternUnits="userSpaceOnUse">
-        <rect width="10" height="10" fill="#0891b2" />
-        <circle cx="3" cy="3" r="1.2" fill="#22d3ee" />
-        <circle cx="8" cy="8" r="1.2" fill="#22d3ee" />
+        <rect width="10" height="10" fill="#E6F259" />
+        <circle cx="3" cy="3" r="1.2" fill="#A1A11A" />
+        <circle cx="8" cy="8" r="1.2" fill="#A1A11A" />
       </pattern>
     );
-  } else if (['ANDEZIT', 'AND', 'TUF', 'VIA', 'VIA.A', 'VIA.P', 'VIA.T', 'VIA:T'].includes(clean)) {
+  } else if (['ANDEZIT', 'AND', 'TUF', 'VIA', 'VIA.A', 'VIA.T', 'VIA:T', 'IGNIMBIRIT'].includes(clean)) {
+    const isAnd = ['ANDEZIT', 'AND', 'VIA.A'].includes(clean);
     patternContent = (
       <pattern id={patternId} width="20" height="20" patternUnits="userSpaceOnUse">
-        <rect width="20" height="20" fill="#991b1b" />
-        <path d="M 4,6 L 7,3 L 10,6" fill="none" stroke="#f87171" strokeWidth="1.5" />
-        <path d="M 12,16 L 15,13 L 18,16" fill="none" stroke="#f87171" strokeWidth="1.5" />
+        <rect width="20" height="20" fill={isAnd ? "#9145EB" : "#BF66D9"} />
+        <path d="M 4,6 L 7,3 L 10,6" fill="none" stroke={isAnd ? "#5B21B6" : "#701A75"} strokeWidth="1.5" />
+        <path d="M 12,16 L 15,13 L 18,16" fill="none" stroke={isAnd ? "#5B21B6" : "#701A75"} strokeWidth="1.5" />
       </pattern>
     );
   } else if (clean === 'BASALT' || clean === 'OFY' || clean === 'SERP') {
+    const isSerp = clean === 'SERP';
+    const isOfy = clean === 'OFY';
+    const bgFill = isSerp ? "#8CBF80" : (isOfy ? "#8AB580" : "#6600FF");
+    const strokeCol = isSerp ? "#15803D" : (isOfy ? "#166534" : "#4338CA");
     patternContent = (
       <pattern id={patternId} width="20" height="20" patternUnits="userSpaceOnUse">
-        <rect width="20" height="20" fill="#065f46" />
-        <path d="M 5,5 L 8,8 L 11,5" fill="none" stroke="#10b981" strokeWidth="1.5" />
-        <path d="M 15,15 L 18,18 L 21,15" fill="none" stroke="#10b981" strokeWidth="1.5" />
+        <rect width="20" height="20" fill={bgFill} />
+        <path d="M 5,5 L 8,8 L 11,5" fill="none" stroke={strokeCol} strokeWidth="1.5" />
+        <path d="M 15,15 L 18,18 L 21,15" fill="none" stroke={strokeCol} strokeWidth="1.5" />
       </pattern>
     );
   } else if (['DOLGU', 'OB', 'TOPRAK', 'TO'].includes(clean)) {
     patternContent = (
       <pattern id={patternId} width="20" height="20" patternUnits="userSpaceOnUse">
-        <rect width="20" height="20" fill="#78350f" />
-        <circle cx="4" cy="4" r="1.2" fill="#b45309" />
-        <circle cx="14" cy="14" r="1.2" fill="#b45309" />
-        <line x1="2" y1="18" x2="8" y2="18" stroke="#d97706" strokeWidth="1" />
-        <line x1="12" y1="8" x2="18" y2="8" stroke="#d97706" strokeWidth="1" />
+        <rect width="20" height="20" fill="#ADA699" />
+        <circle cx="4" cy="4" r="1.2" fill="#57534E" />
+        <circle cx="14" cy="14" r="1.2" fill="#57534E" />
+        <line x1="2" y1="18" x2="8" y2="18" stroke="#78716C" strokeWidth="1" />
+        <line x1="12" y1="8" x2="18" y2="8" stroke="#78716C" strokeWidth="1" />
       </pattern>
     );
-  } else if (['SIST', 'MTSH', 'MTSL', 'MTSS', 'VSM'].includes(clean)) {
+  } else if (['SIST', 'MTSH', 'MTSL', 'MTSS', 'VSM', 'VOLKANOSEDIMANTER', 'SEDIMENT'].includes(clean)) {
+    const isSed = clean === 'SEDIMENT';
+    const fillCol = isSed ? "#CCB266" : (clean === 'VSM' || clean === 'VOLKANOSEDIMANTER' ? "#B259CC" : "#33A666");
+    const strokeCol = isSed ? "#78350f" : (clean === 'VSM' || clean === 'VOLKANOSEDIMANTER' ? "#701A75" : "#14532D");
     patternContent = (
       <pattern id={patternId} width="30" height="10" patternUnits="userSpaceOnUse">
-        <rect width="30" height="10" fill="#047857" />
-        <path d="M0,5 Q7.5,0 15,5 T30,5" fill="none" stroke="#34d399" strokeWidth="1" />
+        <rect width="30" height="10" fill={fillCol} />
+        <path d="M0,5 Q7.5,0 15,5 T30,5" fill="none" stroke={strokeCol} strokeWidth="1" />
       </pattern>
     );
   } else if (clean === 'KIL') {
     patternContent = (
       <pattern id={patternId} width="10" height="10" patternUnits="userSpaceOnUse">
-        <rect width="10" height="10" fill="#c2410c" />
-        <line x1="0" y1="5" x2="10" y2="5" stroke="#ffedd5" strokeWidth="1" />
+        <rect width="10" height="10" fill="#FAF2BF" />
+        <line x1="0" y1="5" x2="10" y2="5" stroke="#D97706" strokeWidth="1" />
       </pattern>
     );
   } else if (clean === 'KALSIT' || clean === 'MRB') {
+    const isMrb = clean === 'MRB';
     patternContent = (
       <pattern id={patternId} width="20" height="20" patternUnits="userSpaceOnUse">
-        <rect width="20" height="20" fill="#9f1239" />
-        <line x1="0" y1="10" x2="20" y2="10" stroke="#f43f5e" strokeWidth="0.75" />
-        <line x1="0" y1="20" x2="20" y2="20" stroke="#f43f5e" strokeWidth="0.75" />
-        <line x1="10" y1="0" x2="10" y2="10" stroke="#f43f5e" strokeWidth="0.75" />
-        <line x1="20" y1="10" x2="20" y2="20" stroke="#f43f5e" strokeWidth="0.75" />
-        <line x1="0" y1="10" x2="0" y2="20" stroke="#f43f5e" strokeWidth="0.75" />
+        <rect width="20" height="20" fill={isMrb ? "#33B3E6" : "#66B2F2"} />
+        <line x1="0" y1="10" x2="20" y2="10" stroke={isMrb ? "#0369a1" : "#1D4ED8"} strokeWidth="0.75" />
+        <line x1="0" y1="20" x2="20" y2="20" stroke={isMrb ? "#0369a1" : "#1D4ED8"} strokeWidth="0.75" />
+        <line x1="10" y1="0" x2="10" y2="10" stroke={isMrb ? "#0369a1" : "#1D4ED8"} strokeWidth="0.75" />
+        <line x1="20" y1="10" x2="20" y2="20" stroke={isMrb ? "#0369a1" : "#1D4ED8"} strokeWidth="0.75" />
+        <line x1="0" y1="10" x2="0" y2="20" stroke={isMrb ? "#0369a1" : "#1D4ED8"} strokeWidth="0.75" />
       </pattern>
     );
   } else if (clean === 'UNC') {
@@ -272,6 +320,14 @@ const renderGraphicSwatch = (code: string) => {
       <pattern id={patternId} width="20" height="20" patternUnits="userSpaceOnUse">
         <rect width="20" height="20" fill="#64748b" />
         <path d="M 0,10 L 20,10" stroke="#94a3b8" strokeWidth="2" strokeDasharray="4,4" />
+      </pattern>
+    );
+  } else if (clean === 'KUM') {
+    patternContent = (
+      <pattern id={patternId} width="10" height="10" patternUnits="userSpaceOnUse">
+        <rect width="10" height="10" fill="#F2D973" />
+        <circle cx="2" cy="2" r="0.8" fill="#B45309" />
+        <circle cx="7" cy="7" r="0.8" fill="#B45309" />
       </pattern>
     );
   } else {

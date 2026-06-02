@@ -785,82 +785,92 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
       case 'OB':
       case 'TO':
       case 'TOPRAK':
-        return '#fde047'; // Sand yellow / soil brown
+        return '#ADA699'; // Düzeltilmiş Toprak
       case 'ALBIT':
-        return '#e2e8f0'; // Clean feldspar off-white
+        return '#E0F3FE'; // Felsik Gnays (Albit için en yakın temiz açık renk)
       case 'GNAYS':
       case 'GNYS':
-        return '#94a3b8'; // Slate grey
+        return '#61E07A'; // Gnays
       case 'ANDEZIT':
       case 'AND':
+      case 'VIA.A':
+        return '#9145EB'; // Andezit
       case 'TUF':
       case 'VIA':
-      case 'VIA.A':
-      case 'VIA.P':
       case 'VIA.T':
       case 'VIA:T':
-        return '#f87171'; // Andesite light red
+        return '#BF66D9'; // Tüf
+      case 'VIA.P':
+        return '#BF66D9'; // Piroklastik Breş / Breş (Tüf grubu)
       case 'KAOLEN':
       case 'KAO':
-        return '#fef08a'; // Kaolin creamy yellow
       case 'KIL':
-        return '#fed7aa'; // Clay pale brown
+        return '#FAF2BF'; // Kil
       case 'KUVARSIT':
       case 'QVN':
-        return '#22d3ee'; // Quartzite cyan
+        return '#E6F259'; // Kuvarsit
       case 'SIST':
       case 'MTSH':
       case 'MTSL':
       case 'MTSS':
+        return '#33A666'; // Şist
       case 'SEDIMENT':
-        return '#a7f3d0'; // Schist / Meta-mudstone light green
+        return '#CCB266'; // Klastik Sedimanter Kayaçlar
       case 'GRANIT':
       case 'GNT':
       case 'GRA':
+        return '#FF4D4D'; // Granit
       case 'VFD':
-      case 'DASIT':
-      case 'RIYOLIT':
-      case 'IGNIMBIRIT':
-      case 'SIYENIT':
-      case 'GRANODIYORIT':
       case 'SUBVOLKANIK':
       case 'INTRUZIF':
-        return '#f472b6'; // Granite / Dacite / Felsic Igneous pink
+      case 'DAYK':
+        return '#FF3333'; // Granitoid
+      case 'DASIT':
+        return '#B373F2'; // Dasit
+      case 'RIYOLIT':
+        return '#C799F2'; // Riyolit
+      case 'IGNIMBIRIT':
+        return '#BF66D9'; // Ignimbirit (Tüf grubu)
+      case 'SIYENIT':
+        return '#FF66E6'; // Siyenit
+      case 'GRANODIYORIT':
+        return '#FF8080'; // Granodiyorit
       case 'PERLIT':
-        return '#d8b4fe'; // Perlite light purple
+        return '#FFD1EA'; // Perlit (Obsidiyen grubu)
       case 'KALSIT':
+        return '#66B2F2'; // Kireçtaşı (Kalsit)
       case 'MRB':
-        return '#fda4af'; // Calcite / Marble light rose
+        return '#33B3E6'; // Mermer
       case 'KOMUR':
-        return '#1e293b'; // Coal dark slate
+        return '#B3BFBF'; // Kömür
       case 'BRES':
       case 'BXS':
+        return '#BF66D9'; // Breş (Tüf grubu)
       case 'XBH':
       case 'FLT':
       case 'YANAL':
-        return '#a1a1aa'; // Breccia / Fault grey
+        return '#E6E600'; // Milonitik Kayaç (Fay)
       case 'OFY':
+        return '#8AB580'; // Ofiyolitik Melanj
       case 'SERP':
-        return '#065f46'; // Ophiolite / Serpentinite dark green
+        return '#8CBF80'; // Serpantinit
       case 'VSM':
       case 'VOLKANOSEDIMANTER':
-        return '#cbd5e1'; // Volcanosedimentary greyish
+        return '#B259CC'; // Volkanik kül tüfü (Volkanosedimanter)
       case 'UNC':
-        return '#64748b'; // Unconformity grey
-      case 'DAYK':
-        return '#f43f5e'; // Dyke red-rose
+        return '#64748b'; // Uyumsuzluk
       case 'KUM':
-        return '#fef9c3'; // Sand light yellow
+        return '#F2D973'; // Kumtaşı
       case 'OKSIT':
       case 'SULFIT':
-        return '#d97706'; // Oxide/Sulfide orange-brown
+        return '#BFCC66'; // Demirce Zengin Sedimanter Kayaç
       case 'ALUNIT':
-        return '#f1f5f9'; // Alunite white-grey
+        return '#F1F5F9'; // Alunit
       case 'BU':
       case 'KAROT':
       case 'NONE':
       default:
-        return '#cbd5e1'; // Slate grey default
+        return '#cbd5e1'; // Varsayılan gri
     }
   };
 
@@ -888,23 +898,44 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
 
   const getRockLabel = (code: string) => {
     const clean = (code || '').toUpperCase();
-    if (clean === 'OB' || clean === 'DOLGU' || clean === 'TOPRAK' || clean === 'TO') return 'Overburden';
-    if (['GRANIT', 'GNT', 'GRA', 'GRANODIYORIT', 'SIYENIT', 'INTRUZIF', 'SUBVOLKANIK'].includes(clean)) return 'Granite/Intru';
-    if (clean === 'BRES' || clean === 'BXS' || clean === 'XBH' || clean === 'FLT' || clean === 'YANAL') return 'Breccia/Fault';
-    if (['ANDEZIT', 'AND', 'TUF', 'VIA', 'VIA.A', 'VIA.P', 'VIA.T', 'VIA:T'].includes(clean)) return 'Andesite';
-    if (clean === 'BASALT' || clean === 'OFY' || clean === 'SERP') return 'Basalt/Oph';
-    if (clean === 'KUVARSIT' || clean === 'QVN') return 'Quartzite';
-    if (['SIST', 'MTSH', 'MTSL', 'MTSS', 'SEDIMENT'].includes(clean)) return 'Schist/Meta';
-    if (clean === 'KIL') return 'Clay';
-    if (clean === 'KALSIT' || clean === 'MRB') return 'Limestone/Marble';
-    if (clean === 'GNAYS' || clean === 'GNYS') return 'Gneiss';
-    if (clean === 'VFD' || clean === 'DASIT') return 'Dacite';
-    if (clean === 'VSM' || clean === 'VOLKANOSEDIMANTER') return 'Volc-Sed';
-    if (clean === 'UNC') return 'Unconformity';
-    if (clean === 'DAYK') return 'Dyke';
-    if (clean === 'KUM') return 'Sand';
-    if (clean === 'OKSIT') return 'Oxide';
-    if (clean === 'SULFIT') return 'Sulfide';
+    if (clean === 'OB' || clean === 'DOLGU' || clean === 'TOPRAK' || clean === 'TO') return 'Toprak / Dolgu (ALV)';
+    if (clean === 'GRANIT' || clean === 'GNT' || clean === 'GRA') return 'Granit (GRT)';
+    if (clean === 'GRANODIYORIT') return 'Granodiyorit (GRD)';
+    if (clean === 'SIYENIT') return 'Siyenit (SY)';
+    if (clean === 'INTRUZIF' || clean === 'SUBVOLKANIK') return 'Granitoid (GRND)';
+    if (clean === 'BRES' || clean === 'BXS') return 'Breş (BRS)';
+    if (clean === 'XBH' || clean === 'FLT' || clean === 'YANAL') return 'Fay Zonu (MLK)';
+    if (clean === 'ANDEZIT' || clean === 'AND') return 'Andezit (AND)';
+    if (clean === 'TUF' || clean === 'VIA.T' || clean === 'VIA:T') return 'Tüf (TF)';
+    if (clean === 'VIA.A') return 'Andezit (AND)';
+    if (clean === 'VIA.P') return 'Volkanik Breş (BRS)';
+    if (clean === 'VIA') return 'Volkanik (TF)';
+    if (clean === 'BASALT') return 'Bazalt (BAZ)';
+    if (clean === 'OFY') return 'Ofiyolitik Melanj (OFM)';
+    if (clean === 'SERP') return 'Serpantinit (SRP)';
+    if (clean === 'KUVARSIT') return 'Kuvarsit (KVS)';
+    if (clean === 'QVN') return 'Kuvars Damarı (KVS)';
+    if (['SIST', 'MTSH', 'MTSL', 'MTSS'].includes(clean)) return 'Şist (SST)';
+    if (clean === 'SEDIMENT') return 'Sedimanter (KLSED)';
+    if (clean === 'KIL') return 'Kil (KL)';
+    if (clean === 'KALSIT') return 'Kalsit Damarı (KÇT)';
+    if (clean === 'MRB') return 'Mermer (MER)';
+    if (clean === 'GNAYS' || clean === 'GNYS') return 'Gnays (GNS)';
+    if (clean === 'VFD') return 'Felsik Damar (GRND)';
+    if (clean === 'DASIT') return 'Dasit (DST)';
+    if (clean === 'RIYOLIT') return 'Riyolit (RYL)';
+    if (clean === 'IGNIMBIRIT') return 'İgnimbirit (TF)';
+    if (clean === 'VSM' || clean === 'VOLKANOSEDIMANTER') return 'Volkanosedimanter (VKT)';
+    if (clean === 'UNC') return 'Uyumsuzluk Zonu (UNC)';
+    if (clean === 'DAYK') return 'Dayk (GRND)';
+    if (clean === 'KUM') return 'Kumtaşı (KMT)';
+    if (clean === 'OKSIT') return 'Oksit Zonu (DSED)';
+    if (clean === 'SULFIT') return 'Sülfit Zonu (DSED)';
+    if (clean === 'ALBIT') return 'Albit (FGNS)';
+    if (clean === 'ALUNIT') return 'Alunit Alterasyonu';
+    if (clean === 'KAOLEN' || clean === 'KAO') return 'Kaolen (KL)';
+    if (clean === 'PERLIT') return 'Perlit (OBS)';
+    if (clean === 'KOMUR') return 'Kömür (KMR)';
     return code;
   };
 
@@ -1190,7 +1221,7 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
           <svg
             ref={bodySvgRef}
             width={svgWidth}
-            height={Math.max(200, totalDepth * scaleY) + bodyPaddingTop}
+            height={Math.max(200, totalDepth * scaleY) + bodyPaddingTop + 40}
             style={{
               background: 'var(--bg-card)',
               display: 'block',
@@ -1206,19 +1237,19 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
               </pattern>
               {/* Feldspar / ALBIT (soft gray diagonal patterns) */}
               <pattern id="pat-albit" width="20" height="20" patternUnits="userSpaceOnUse">
-                <rect width="20" height="20" fill="#2d3748" />
-                <path d="M 5,2 L 2,5 M 15,12 L 12,15" stroke="#4a5568" strokeWidth="1.5" />
+                <rect width="20" height="20" fill="#E0F3FE" />
+                <path d="M 5,2 L 2,5 M 15,12 L 12,15" stroke="#0E7490" strokeWidth="1.5" />
               </pattern>
               {/* Kaolin / KAOLEN (soft yellow texture) */}
               <pattern id="pat-kaolen" width="20" height="20" patternUnits="userSpaceOnUse">
-                <rect width="20" height="20" fill="#3f3f46" />
-                <circle cx="5" cy="5" r="1.5" fill="#facc15" fillOpacity="0.4" />
-                <circle cx="15" cy="15" r="1.5" fill="#facc15" fillOpacity="0.4" />
+                <rect width="20" height="20" fill="#FAF2BF" />
+                <circle cx="5" cy="5" r="1.5" fill="#D9C333" fillOpacity="0.8" />
+                <circle cx="15" cy="15" r="1.5" fill="#D9C333" fillOpacity="0.8" />
               </pattern>
               {/* Gneiss / GNAYS (wavy lines on grey) */}
               <pattern id="pat-gnays" width="20" height="20" patternUnits="userSpaceOnUse">
-                <rect width="20" height="20" fill="#475569" />
-                <path d="M0,5 Q5,10 10,5 T20,5 M0,15 Q5,20 10,15 T20,15" fill="none" stroke="#64748b" strokeWidth="1.5" />
+                <rect width="20" height="20" fill="#61E07A" />
+                <path d="M0,5 Q5,10 10,5 T20,5 M0,15 Q5,20 10,15 T20,15" fill="none" stroke="#15803D" strokeWidth="1.5" />
               </pattern>
               {/* Unconformity / UNC (dashed lines on grey) */}
               <pattern id="pat-unc" width="20" height="20" patternUnits="userSpaceOnUse">
@@ -1227,82 +1258,82 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
               </pattern>
               {/* Granite / GRANIT (dots/crosses on pink) */}
               <pattern id="pat-granit" width="20" height="20" patternUnits="userSpaceOnUse">
-                <rect width="20" height="20" fill="#ec4899" fillOpacity="0.8" />
-                <circle cx="5" cy="5" r="1.5" fill="#9d174d" />
-                <circle cx="15" cy="15" r="1.5" fill="#9d174d" />
-                <line x1="12" y1="4" x2="16" y2="8" stroke="#9d174d" strokeWidth="1" />
-                <line x1="16" y1="4" x2="12" y2="8" stroke="#9d174d" strokeWidth="1" />
-                <line x1="2" y1="12" x2="6" y2="16" stroke="#9d174d" strokeWidth="1" />
-                <line x1="6" y1="12" x2="2" y2="16" stroke="#9d174d" strokeWidth="1" />
+                <rect width="20" height="20" fill="#FF4D4D" />
+                <circle cx="5" cy="5" r="1.5" fill="#B91C1C" />
+                <circle cx="15" cy="15" r="1.5" fill="#B91C1C" />
+                <line x1="12" y1="4" x2="16" y2="8" stroke="#B91C1C" strokeWidth="1" />
+                <line x1="16" y1="4" x2="12" y2="8" stroke="#B91C1C" strokeWidth="1" />
+                <line x1="2" y1="12" x2="6" y2="16" stroke="#B91C1C" strokeWidth="1" />
+                <line x1="6" y1="12" x2="2" y2="16" stroke="#B91C1C" strokeWidth="1" />
               </pattern>
               {/* Breccia / BRES (rock pieces on grey) */}
               <pattern id="pat-bres" width="25" height="25" patternUnits="userSpaceOnUse">
-                <rect width="25" height="25" fill="#52525b" />
-                <polygon points="5,2 12,5 8,12 2,7" fill="#27272a" stroke="#a1a1aa" strokeWidth="0.5" />
-                <polygon points="18,10 23,15 15,20 14,12" fill="#27272a" stroke="#a1a1aa" strokeWidth="0.5" />
-                <polygon points="3,18 9,23 6,24" fill="#18181b" stroke="#71717a" strokeWidth="0.5" />
+                <rect width="25" height="25" fill="#BF66D9" />
+                <polygon points="5,2 12,5 8,12 2,7" fill="#701A75" stroke="#E9D5FF" strokeWidth="0.5" />
+                <polygon points="18,10 23,15 15,20 14,12" fill="#701A75" stroke="#E9D5FF" strokeWidth="0.5" />
+                <polygon points="3,18 9,23 6,24" fill="#4A044E" stroke="#D8B4FE" strokeWidth="0.5" />
               </pattern>
               {/* Quartzite / KUVARSIT (cyan with fine dots) */}
               <pattern id="pat-kuvarsit" width="10" height="10" patternUnits="userSpaceOnUse">
-                <rect width="10" height="10" fill="#0891b2" />
-                <circle cx="3" cy="3" r="1.2" fill="#22d3ee" />
-                <circle cx="8" cy="8" r="1.2" fill="#22d3ee" />
+                <rect width="10" height="10" fill="#E6F259" />
+                <circle cx="3" cy="3" r="1.2" fill="#A1A11A" />
+                <circle cx="8" cy="8" r="1.2" fill="#A1A11A" />
               </pattern>
               {/* Andesite / ANDEZIT, AND, TUF (red-brown with V-shapes) */}
               <pattern id="pat-andezit" width="20" height="20" patternUnits="userSpaceOnUse">
-                <rect width="20" height="20" fill="#991b1b" />
-                <path d="M 4,6 L 7,3 L 10,6" fill="none" stroke="#f87171" strokeWidth="1.5" />
-                <path d="M 12,16 L 15,13 L 18,16" fill="none" stroke="#f87171" strokeWidth="1.5" />
+                <rect width="20" height="20" fill="#9145EB" />
+                <path d="M 4,6 L 7,3 L 10,6" fill="none" stroke="#5B21B6" strokeWidth="1.5" />
+                <path d="M 12,16 L 15,13 L 18,16" fill="none" stroke="#5B21B6" strokeWidth="1.5" />
               </pattern>
               {/* Basalt / BASALT (dark green with chevrons) */}
               <pattern id="pat-basalt" width="20" height="20" patternUnits="userSpaceOnUse">
-                <rect width="20" height="20" fill="#065f46" />
-                <path d="M 5,5 L 8,8 L 11,5" fill="none" stroke="#10b981" strokeWidth="1.5" />
-                <path d="M 15,15 L 18,18 L 21,15" fill="none" stroke="#10b981" strokeWidth="1.5" />
+                <rect width="20" height="20" fill="#6600FF" />
+                <path d="M 5,5 L 8,8 L 11,5" fill="none" stroke="#4338CA" strokeWidth="1.5" />
+                <path d="M 15,15 L 18,18 L 21,15" fill="none" stroke="#4338CA" strokeWidth="1.5" />
               </pattern>
               {/* Overburden / DOLGU or OB (brown blocks/sand) */}
               <pattern id="pat-dolgu" width="20" height="20" patternUnits="userSpaceOnUse">
-                <rect width="20" height="20" fill="#78350f" />
-                <circle cx="4" cy="4" r="1.2" fill="#b45309" />
-                <circle cx="14" cy="14" r="1.2" fill="#b45309" />
-                <line x1="2" y1="18" x2="8" y2="18" stroke="#d97706" strokeWidth="1" />
-                <line x1="12" y1="8" x2="18" y2="8" stroke="#d97706" strokeWidth="1" />
+                <rect width="20" height="20" fill="#ADA699" />
+                <circle cx="4" cy="4" r="1.2" fill="#57534E" />
+                <circle cx="14" cy="14" r="1.2" fill="#57534E" />
+                <line x1="2" y1="18" x2="8" y2="18" stroke="#78716C" strokeWidth="1" />
+                <line x1="12" y1="8" x2="18" y2="8" stroke="#78716C" strokeWidth="1" />
               </pattern>
               {/* Schist / SIST (wavy lines on light green) */}
               <pattern id="pat-sist" width="30" height="10" patternUnits="userSpaceOnUse">
-                <rect width="30" height="10" fill="#047857" />
-                <path d="M0,5 Q7.5,0 15,5 T30,5" fill="none" stroke="#34d399" strokeWidth="1" />
+                <rect width="30" height="10" fill="#33A666" />
+                <path d="M0,5 Q7.5,0 15,5 T30,5" fill="none" stroke="#14532D" strokeWidth="1" />
               </pattern>
               {/* Clay / KIL (orange with horizontal stripes) */}
               <pattern id="pat-kil" width="10" height="10" patternUnits="userSpaceOnUse">
-                <rect width="10" height="10" fill="#c2410c" />
-                <line x1="0" y1="5" x2="10" y2="5" stroke="#ffedd5" strokeWidth="1" />
+                <rect width="10" height="10" fill="#FAF2BF" />
+                <line x1="0" y1="5" x2="10" y2="5" stroke="#D97706" strokeWidth="1" />
               </pattern>
               {/* Calcite/Limestone / KALSIT (light rose bricks) */}
               <pattern id="pat-kalsit" width="20" height="20" patternUnits="userSpaceOnUse">
-                <rect width="20" height="20" fill="#9f1239" />
-                <line x1="0" y1="10" x2="20" y2="10" stroke="#f43f5e" strokeWidth="0.75" />
-                <line x1="0" y1="20" x2="20" y2="20" stroke="#f43f5e" strokeWidth="0.75" />
-                <line x1="10" y1="0" x2="10" y2="10" stroke="#f43f5e" strokeWidth="0.75" />
-                <line x1="20" y1="10" x2="20" y2="20" stroke="#f43f5e" strokeWidth="0.75" />
-                <line x1="0" y1="10" x2="0" y2="20" stroke="#f43f5e" strokeWidth="0.75" />
+                <rect width="20" height="20" fill="#66B2F2" />
+                <line x1="0" y1="10" x2="20" y2="10" stroke="#1D4ED8" strokeWidth="0.75" />
+                <line x1="0" y1="20" x2="20" y2="20" stroke="#1D4ED8" strokeWidth="0.75" />
+                <line x1="10" y1="0" x2="10" y2="10" stroke="#1D4ED8" strokeWidth="0.75" />
+                <line x1="20" y1="10" x2="20" y2="20" stroke="#1D4ED8" strokeWidth="0.75" />
+                <line x1="0" y1="10" x2="0" y2="20" stroke="#1D4ED8" strokeWidth="0.75" />
               </pattern>
               {/* Dyke / DAYK (diagonal red blocks) */}
               <pattern id="pat-dayk" width="20" height="20" patternUnits="userSpaceOnUse">
-                <rect width="20" height="20" fill="#f43f5e" />
-                <line x1="0" y1="0" x2="20" y2="20" stroke="#be123c" strokeWidth="2" />
-                <line x1="20" y1="0" x2="0" y2="20" stroke="#be123c" strokeWidth="2" />
+                <rect width="20" height="20" fill="#FF3333" />
+                <line x1="0" y1="0" x2="20" y2="20" stroke="#991B1B" strokeWidth="2" />
+                <line x1="20" y1="0" x2="0" y2="20" stroke="#991B1B" strokeWidth="2" />
               </pattern>
               {/* Sand / KUM (yellow with fine dots) */}
               <pattern id="pat-kum" width="10" height="10" patternUnits="userSpaceOnUse">
-                <rect width="10" height="10" fill="#fef9c3" />
-                <circle cx="2" cy="2" r="0.8" fill="#ca8a04" />
-                <circle cx="7" cy="7" r="0.8" fill="#ca8a04" />
+                <rect width="10" height="10" fill="#F2D973" />
+                <circle cx="2" cy="2" r="0.8" fill="#B45309" />
+                <circle cx="7" cy="7" r="0.8" fill="#B45309" />
               </pattern>
             </defs>
 
             {/* Background grid */}
-            <rect width={svgWidth} height={Math.max(200, totalDepth * scaleY) + bodyPaddingTop} fill="url(#grid-pattern)" />
+            <rect width={svgWidth} height={Math.max(200, totalDepth * scaleY) + bodyPaddingTop + 40} fill="url(#grid-pattern)" />
 
             {/* Scale Horizontal Helper Lines */}
             <g>
@@ -1321,7 +1352,7 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
             </g>
 
             {/* Left vertical border line */}
-            <line x1={0} y1={0} x2={0} y2={Math.max(200, totalDepth * scaleY) + bodyPaddingTop} stroke="var(--border-light)" strokeWidth="1" />
+            <line x1={0} y1={0} x2={0} y2={Math.max(200, totalDepth * scaleY) + bodyPaddingTop + 40} stroke="var(--border-light)" strokeWidth="1" />
 
             {/* 1. SCALE TICK LABELS */}
             {colPositions['scale']?.visible && (
@@ -1453,7 +1484,7 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                         x1={tickX}
                         y1={0}
                         x2={tickX}
-                        y2={Math.max(200, totalDepth * scaleY) + bodyPaddingTop}
+                        y2={Math.max(200, totalDepth * scaleY) + bodyPaddingTop + 40}
                         stroke="var(--border-light)"
                         strokeWidth="0.5"
                         strokeDasharray="2,2"
@@ -1629,7 +1660,7 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                     x1={dividerX}
                     y1={0}
                     x2={dividerX}
-                    y2={Math.max(200, totalDepth * scaleY) + bodyPaddingTop}
+                    y2={Math.max(200, totalDepth * scaleY) + bodyPaddingTop + 40}
                     stroke="var(--border-light)"
                     strokeWidth="1"
                   />
@@ -1643,7 +1674,7 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                           x1={pos.startX + i * subColWidth}
                           y1={0}
                           x2={pos.startX + i * subColWidth}
-                          y2={Math.max(200, totalDepth * scaleY) + bodyPaddingTop}
+                          y2={Math.max(200, totalDepth * scaleY) + bodyPaddingTop + 40}
                           stroke="var(--border-medium)"
                           strokeWidth="1"
                           strokeDasharray="2,2"
@@ -1665,18 +1696,15 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
           <div style={{ fontSize: '10px', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase', width: '100%', marginBottom: '2px' }}>Legend Keys</div>
 
           {colPositions['lithology']?.visible && (
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', maxWidth: '400px' }}>
-              <div className="legend-item"><span className="legend-color" style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#94a3b8', display: 'inline-block' }}></span><span>GNAYS</span></div>
-              <div className="legend-item"><span className="legend-color" style={{ width: '10px', height: '10px', borderRadius: '2px', border: '1px solid var(--border-medium)', background: '#e2e8f0', display: 'inline-block' }}></span><span>ALBIT</span></div>
-              <div className="legend-item"><span className="legend-color" style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#f87171', display: 'inline-block' }}></span><span>ANDEZIT</span></div>
-              <div className="legend-item"><span className="legend-color" style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#fed7aa', display: 'inline-block' }}></span><span>KIL</span></div>
-              <div className="legend-item"><span className="legend-color" style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#fde047', display: 'inline-block' }}></span><span>DOLGU</span></div>
-              <div className="legend-item"><span className="legend-color" style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#fef08a', display: 'inline-block' }}></span><span>KAOLEN</span></div>
-              <div className="legend-item"><span className="legend-color" style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#a7f3d0', display: 'inline-block' }}></span><span>SIST</span></div>
-              <div className="legend-item"><span className="legend-color" style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#22d3ee', display: 'inline-block' }}></span><span>KUVARSIT</span></div>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', maxWidth: '500px' }}>
+              {Array.from(new Set(lithology.map(l => l.rockCode).filter(Boolean))).map(code => (
+                <div key={code} className="legend-item">
+                  <span className="legend-color" style={{ width: '10px', height: '10px', borderRadius: '2px', background: getRockColor(code), display: 'inline-block', border: '1px solid var(--border-medium)' }}></span>
+                  <span>{getRockLabel(code)}</span>
+                </div>
+              ))}
             </div>
           )}
-
           {(colPositions['geotech']?.visible || colPositions['assays']?.visible) && (
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', borderLeft: '1px solid var(--border-light)', paddingLeft: '10px' }}>
               {colPositions['geotech']?.visible && (

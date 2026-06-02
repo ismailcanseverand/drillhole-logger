@@ -369,7 +369,20 @@ function App() {
     { key: 'sampleTag', label: 'Sample Tag', type: 'text', width: '10%', defaultValue: 'S0001' },
     { key: 'from', label: 'Depth From (m)', type: 'number', width: '7%', defaultValue: 0 },
     { key: 'to', label: 'Depth To (m)', type: 'number', width: '7%', defaultValue: 0 },
-    { key: 'oreType', label: 'Ore Type', type: 'text', width: '12%', defaultValue: '', placeholder: 'Input text here...' },
+    {
+      key: 'sampleType',
+      label: 'Type',
+      type: 'select',
+      width: '10%',
+      defaultValue: 'Core',
+      options: [
+        { value: 'Core', label: 'Core Interval' },
+        { value: 'Standard', label: 'CRM Standard' },
+        { value: 'Blank', label: 'Blank Control' },
+        { value: 'Duplicate', label: 'Field Duplicate' }
+      ]
+    },
+    { key: 'oreType', label: 'Ore Type', type: 'text', width: '10%', defaultValue: '', placeholder: 'Input text here...' },
     { key: 'description', label: 'Description', type: 'text', width: '18%', defaultValue: '', placeholder: 'Input text here...' },
     {
       key: 'chemical',
@@ -422,7 +435,20 @@ function App() {
     { key: 'sampleTag', label: 'Sample Tag', type: 'text', width: '12%', defaultValue: 'M0001' },
     { key: 'from', label: 'Depth From (m)', type: 'number', width: '10%', defaultValue: 0 },
     { key: 'to', label: 'Depth To (m)', type: 'number', width: '10%', defaultValue: 0 },
-    { key: 'oreType', label: 'Ore Type', type: 'text', width: '15%', defaultValue: '', placeholder: 'Input text here...' },
+    {
+      key: 'sampleType',
+      label: 'Type',
+      type: 'select',
+      width: '10%',
+      defaultValue: 'Core',
+      options: [
+        { value: 'Core', label: 'Core Interval' },
+        { value: 'Standard', label: 'CRM Standard' },
+        { value: 'Blank', label: 'Blank Control' },
+        { value: 'Duplicate', label: 'Field Duplicate' }
+      ]
+    },
+    { key: 'oreType', label: 'Ore Type', type: 'text', width: '12%', defaultValue: '', placeholder: 'Input text here...' },
     { key: 'description', label: 'Description', type: 'text', width: '25%', defaultValue: '', placeholder: 'Input text here...' },
     {
       key: 'analysisCode',

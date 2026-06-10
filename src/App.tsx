@@ -17,7 +17,12 @@ import {
   CloudOff,
   Plus,
   ChevronDown,
-  Search
+  Search,
+  Map,
+  Layers,
+  ArrowRight,
+  ChevronLeft,
+  Home
 } from 'lucide-react';
 import { DatabaseSettings } from './components/DatabaseSettings';
 import { isSupabaseConfigured } from './utils/supabaseClient';
@@ -53,6 +58,7 @@ function App() {
     db
   } = useDrillholeData();
 
+  const [appMode, setAppMode] = useState<'landing' | 'drillhole' | 'surface'>('landing');
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [isSavingToDb, setIsSavingToDb] = useState<boolean>(false);
   const [highlightedRowId, setHighlightedRowId] = useState<string | null>(null);
@@ -499,11 +505,134 @@ function App() {
     );
   }
 
+  if (appMode === 'landing') {
+    return (
+      <div className="portal-container" style={{ backgroundImage: "url('/geology_bg.png')" }}>
+        <div className="portal-overlay" />
+        <div className="portal-content">
+          <header className="portal-header">
+            <div className="portal-logo animate-pulse">
+              <Database size={48} className="logo-icon" />
+            </div>
+            <h1>KALEMADEN VERİ PORTALI</h1>
+            <p className="portal-subtitle">Jeolojik Veri Analiz ve Yönetim Sistemleri</p>
+          </header>
+
+          <div className="portal-grid">
+            <div className="portal-card animate-fade-in" onClick={() => setAppMode('drillhole')}>
+              <div className="card-glow" />
+              <div className="card-content">
+                <div className="card-icon-wrapper cyan">
+                  <Database size={32} />
+                </div>
+                <h3>Sondaj Veritabanı</h3>
+                <p>
+                  Sondaj lokasyonları (collar), kuyu içi yön ölçümleri (survey), jeolojik loglama, TCR/RQD jeoteknik verileri ve laboratuvar numune hazırlık süreçlerinin yönetimi.
+                </p>
+                <div className="card-footer-btn">
+                  <span>Sondaj Sistemine Giriş</span>
+                  <ArrowRight size={16} />
+                </div>
+              </div>
+            </div>
+
+            <div className="portal-card animate-fade-in" onClick={() => setAppMode('surface')}>
+              <div className="card-glow" />
+              <div className="card-content">
+                <div className="card-icon-wrapper amber">
+                  <Layers size={32} />
+                </div>
+                <h3>Yüzey Veritabanı</h3>
+                <p>
+                  Jeokimya örneklemeleri, yüzey yapısal jeoloji haritalama verileri, uzaktan algılama (Sentinel-2, ASTER) katmanları ve drone fotogrametri sonuçlarının GIS entegrasyonu.
+                </p>
+                <div className="card-footer-btn">
+                  <span>Yüzey Sistemine Giriş</span>
+                  <ArrowRight size={16} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <footer className="portal-footer">
+            <p>© {new Date().getFullYear()} Kale Maden A.Ş. — Her hakkı saklıdır. Çanakkale / Biga Yarımadası Projeleri.</p>
+          </footer>
+        </div>
+      </div>
+    );
+  }
+
+  if (appMode === 'surface') {
+    return (
+      <div className="portal-container surface-mode" style={{ backgroundImage: "url('/geology_bg.png')" }}>
+        <div className="portal-overlay" />
+        <div className="portal-content">
+          <button className="btn btn-secondary back-to-portal-btn" onClick={() => setAppMode('landing')}>
+            <ChevronLeft size={16} /> Portala Dön
+          </button>
+          
+          <header className="portal-header">
+            <div className="portal-logo animate-pulse">
+              <Map size={48} className="logo-icon amber" />
+            </div>
+            <h1>YÜZEY VERİTABANI</h1>
+            <p className="portal-subtitle">Jeokimya, Yapısal Jeoloji ve Uzaktan Algılama Modülü</p>
+          </header>
+
+          <div className="coming-soon-container">
+            <div className="coming-soon-card">
+              <div className="coming-soon-badge">YAKINDA HİZMETİNİZDE</div>
+              <h2>AI Destekli Yüzey Haritalama & GIS Modülü</h2>
+              <p>
+                Biga Yarımadası genelindeki Sentinel-2, ASTER ve MTA jeoloji katmanları ile entegre, sahada toplanan jeokimya örneklerinin ve drone fotogrametri çıktılarının 2D/3D analiz edileceği CBS modülü geliştirilmektedir.
+              </p>
+              
+              <div className="features-preview-grid">
+                <div className="feature-preview-item">
+                  <Layers size={20} className="feature-icon" />
+                  <h4>Spektral Anomali Haritası</h4>
+                  <p>Hydrothermal alteration mapping via satellite bands.</p>
+                </div>
+                <div className="feature-preview-item">
+                  <Map size={20} className="feature-icon" />
+                  <h4>Drone Fotogrametri Entegrasyonu</h4>
+                  <p>High-res orthophotos and digital elevation models.</p>
+                </div>
+              </div>
+
+              <div className="coming-soon-progress">
+                <div className="progress-label">
+                  <span>Geliştirme Aşaması</span>
+                  <span>75%</span>
+                </div>
+                <div className="progress-bar-container">
+                  <div className="progress-bar-fill" style={{ width: '75%' }}></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <footer className="portal-footer">
+            <p>© {new Date().getFullYear()} Kale Maden A.Ş. — Her hakkı saklıdır. Çanakkale / Biga Yarımadası Projeleri.</p>
+          </footer>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="app-container">
       {/* Top Application Bar */}
       <header className="app-header">
         <div className="header-brand">
+          <button 
+            className="btn btn-secondary portal-nav-btn" 
+            onClick={() => setAppMode('landing')}
+            title="Ana Portala Dön"
+          >
+            <Home size={14} />
+            <span>Portal</span>
+          </button>
           <Database size={24} />
           <h1>KaleMaden Drillhole Manager</h1>
         </div>

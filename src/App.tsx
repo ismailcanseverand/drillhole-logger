@@ -58,7 +58,8 @@ function App() {
     db
   } = useDrillholeData();
 
-  const [appMode, setAppMode] = useState<'landing' | 'drillhole' | 'surface'>('landing');
+  const [appMode, setAppMode] = useState<'landing' | 'sondaj_menu' | 'yuzey_menu' | 'sondaj_search' | 'yuzey_search' | 'yuzey_browse' | 'drillhole'>('landing');
+  const [portalSearchQuery, setPortalSearchQuery] = useState<string>('');
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [isSavingToDb, setIsSavingToDb] = useState<boolean>(false);
   const [highlightedRowId, setHighlightedRowId] = useState<string | null>(null);
@@ -169,6 +170,20 @@ function App() {
 
     return filtered;
   }, [categorizedHoles, selectorCategory, selectorSearch]);
+
+  const portalSearchResults = useMemo(() => {
+    const query = portalSearchQuery.toLowerCase().trim();
+    if (!query) return holeList;
+    return holeList.filter(hId => {
+      const proj = getHoleProjectName(hId).toLowerCase();
+      const logger = (db[hId]?.collar?.logger || '').toLowerCase();
+      const status = (db[hId]?.collar?.status || '').toLowerCase();
+      return hId.toLowerCase().includes(query) || 
+             proj.includes(query) || 
+             logger.includes(query) || 
+             status.includes(query);
+    });
+  }, [holeList, portalSearchQuery, db]);
 
   // Click-Outside closer for Popover dropdown
   useEffect(() => {
@@ -519,7 +534,7 @@ function App() {
           </header>
 
           <div className="portal-grid">
-            <div className="portal-card animate-fade-in" onClick={() => setAppMode('drillhole')}>
+            <div className="portal-card animate-fade-in" onClick={() => setAppMode('sondaj_menu')}>
               <div className="card-glow" />
               <div className="card-content">
                 <div className="card-icon-wrapper cyan">
@@ -530,13 +545,13 @@ function App() {
                   Sondaj lokasyonları (collar), kuyu içi yön ölçümleri (survey), jeolojik loglama, TCR/RQD jeoteknik verileri ve laboratuvar numune hazırlık süreçlerinin yönetimi.
                 </p>
                 <div className="card-footer-btn">
-                  <span>Sondaj Sistemine Giriş</span>
+                  <span>Sondaj Portalı</span>
                   <ArrowRight size={16} />
                 </div>
               </div>
             </div>
 
-            <div className="portal-card animate-fade-in" onClick={() => setAppMode('surface')}>
+            <div className="portal-card animate-fade-in" onClick={() => setAppMode('yuzey_menu')}>
               <div className="card-glow" />
               <div className="card-content">
                 <div className="card-icon-wrapper amber">
@@ -547,7 +562,7 @@ function App() {
                   Jeokimya örneklemeleri, yüzey yapısal jeoloji haritalama verileri, uzaktan algılama (Sentinel-2, ASTER) katmanları ve drone fotogrametri sonuçlarının GIS entegrasyonu.
                 </p>
                 <div className="card-footer-btn">
-                  <span>Yüzey Sistemine Giriş</span>
+                  <span>Yüzey Portalı</span>
                   <ArrowRight size={16} />
                 </div>
               </div>
@@ -562,58 +577,313 @@ function App() {
     );
   }
 
-  if (appMode === 'surface') {
+  if (appMode === 'sondaj_menu') {
     return (
-      <div className="portal-container surface-mode" style={{ backgroundImage: "url('/geology_bg.png')" }}>
+      <div className="portal-container" style={{ backgroundImage: "url('/geology_bg.png')" }}>
         <div className="portal-overlay" />
         <div className="portal-content">
           <button className="btn btn-secondary back-to-portal-btn" onClick={() => setAppMode('landing')}>
-            <ChevronLeft size={16} /> Portala Dön
+            <ChevronLeft size={16} /> Ana Portala Dön
           </button>
           
           <header className="portal-header">
             <div className="portal-logo animate-pulse">
-              <Map size={48} className="logo-icon amber" />
+              <Database size={48} className="logo-icon" />
             </div>
-            <h1>YÜZEY VERİTABANI</h1>
-            <p className="portal-subtitle">Jeokimya, Yapısal Jeoloji ve Uzaktan Algılama Modülü</p>
+            <h1>SONDAJ VERİTABANI</h1>
+            <p className="portal-subtitle">Kuyu Verileri ve Log Yönetimi</p>
           </header>
 
-          <div className="coming-soon-container">
-            <div className="coming-soon-card">
-              <div className="coming-soon-badge">YAKINDA HİZMETİNİZDE</div>
-              <h2>AI Destekli Yüzey Haritalama & GIS Modülü</h2>
-              <p>
-                Biga Yarımadası genelindeki Sentinel-2, ASTER ve MTA jeoloji katmanları ile entegre, sahada toplanan jeokimya örneklerinin ve drone fotogrametri çıktılarının 2D/3D analiz edileceği CBS modülü geliştirilmektedir.
-              </p>
-              
-              <div className="features-preview-grid">
-                <div className="feature-preview-item">
-                  <Layers size={20} className="feature-icon" />
-                  <h4>Spektral Anomali Haritası</h4>
-                  <p>Hydrothermal alteration mapping via satellite bands.</p>
+          <div className="portal-grid">
+            <div className="portal-card animate-fade-in" onClick={() => setAppMode('sondaj_search')}>
+              <div className="card-glow" />
+              <div className="card-content">
+                <div className="card-icon-wrapper cyan">
+                  <Search size={32} />
                 </div>
-                <div className="feature-preview-item">
-                  <Map size={20} className="feature-icon" />
-                  <h4>Drone Fotogrametri Entegrasyonu</h4>
-                  <p>High-res orthophotos and digital elevation models.</p>
+                <h3>Arama Yap</h3>
+                <p>
+                  Sondaj kuyu kodlarına (Hole ID), projelere, loglayan mühendise veya çalışma durumuna göre hızlı arama ve filtreleme yapın.
+                </p>
+                <div className="card-footer-btn">
+                  <span>Arama Ekranını Aç</span>
+                  <ArrowRight size={16} />
                 </div>
               </div>
+            </div>
 
-              <div className="coming-soon-progress">
-                <div className="progress-label">
-                  <span>Geliştirme Aşaması</span>
-                  <span>75%</span>
+            <div className="portal-card animate-fade-in" onClick={() => setAppMode('drillhole')}>
+              <div className="card-glow" />
+              <div className="card-content">
+                <div className="card-icon-wrapper cyan">
+                  <Database size={32} />
                 </div>
-                <div className="progress-bar-container">
-                  <div className="progress-bar-fill" style={{ width: '75%' }}></div>
+                <h3>Veritabanını İncele</h3>
+                <p>
+                  Tüm kuyu kayıtlarını, survey ölçümlerini, litoloji katmanlarını, RQD jeoteknik verilerini ve laboratuvar numune hazırlık tablolarını detaylıca görüntüleyin.
+                </p>
+                <div className="card-footer-btn">
+                  <span>Tablo ve Analiz Ekranına Git</span>
+                  <ArrowRight size={16} />
                 </div>
               </div>
             </div>
           </div>
 
           <footer className="portal-footer">
-            <p>© {new Date().getFullYear()} Kale Maden A.Ş. — Her hakkı saklıdır. Çanakkale / Biga Yarımadası Projeleri.</p>
+            <p>© {new Date().getFullYear()} Kale Maden A.Ş. — Çanakkale / Biga Projeleri.</p>
+          </footer>
+        </div>
+      </div>
+    );
+  }
+
+  if (appMode === 'yuzey_menu') {
+    return (
+      <div className="portal-container" style={{ backgroundImage: "url('/geology_bg.png')" }}>
+        <div className="portal-overlay" />
+        <div className="portal-content">
+          <button className="btn btn-secondary back-to-portal-btn" onClick={() => setAppMode('landing')}>
+            <ChevronLeft size={16} /> Ana Portala Dön
+          </button>
+          
+          <header className="portal-header">
+            <div className="portal-logo animate-pulse">
+              <Layers size={48} className="logo-icon amber" />
+            </div>
+            <h1>YÜZEY VERİTABANI</h1>
+            <p className="portal-subtitle">Jeokimya, Haritalama ve GIS Portalı</p>
+          </header>
+
+          <div className="portal-grid">
+            <div className="portal-card animate-fade-in" onClick={() => setAppMode('yuzey_search')}>
+              <div className="card-glow" />
+              <div className="card-content">
+                <div className="card-icon-wrapper amber">
+                  <Search size={32} />
+                </div>
+                <h3>Arama Yap</h3>
+                <p>
+                  Yüzey jeokimya örnek kodlarına, spektrometre ölçümlerine, koordinat bölgelerine veya mineral alterasyon tiplerine göre arama yapın.
+                </p>
+                <div className="card-footer-btn">
+                  <span>Arama Ekranını Aç (Yakında)</span>
+                  <ArrowRight size={16} />
+                </div>
+              </div>
+            </div>
+
+            <div className="portal-card animate-fade-in" onClick={() => setAppMode('yuzey_browse')}>
+              <div className="card-glow" />
+              <div className="card-content">
+                <div className="card-icon-wrapper amber">
+                  <Map size={32} />
+                </div>
+                <h3>Veritabanını İncele</h3>
+                <p>
+                  Yüzey yapısal haritalama verilerini, Sentinel-2 ve ASTER spektral anomali bantlarını GIS entegrasyonuyla harita üzerinde inceleyin.
+                </p>
+                <div className="card-footer-btn">
+                  <span>Harita Ekranına Git (Yakında)</span>
+                  <ArrowRight size={16} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <footer className="portal-footer">
+            <p>© {new Date().getFullYear()} Kale Maden A.Ş. — Çanakkale / Biga Projeleri.</p>
+          </footer>
+        </div>
+      </div>
+    );
+  }
+
+  if (appMode === 'sondaj_search') {
+    return (
+      <div className="portal-container" style={{ backgroundImage: "url('/geology_bg.png')" }}>
+        <div className="portal-overlay" />
+        <div className="portal-content search-mode-content">
+          <button className="btn btn-secondary back-to-portal-btn" onClick={() => setAppMode('sondaj_menu')}>
+            <ChevronLeft size={16} /> Geri Dön
+          </button>
+          
+          <header className="portal-header">
+            <h1>SONDAJ ARAMA PANELİ</h1>
+            <p className="portal-subtitle">Kuyu ID, Proje, Logger veya Durum Bilgisine Göre Arama</p>
+          </header>
+
+          <div className="search-bar-container">
+            <Search size={20} className="search-bar-icon" />
+            <input 
+              type="text" 
+              className="portal-search-input"
+              placeholder="Aramak istediğiniz kuyu kodu, proje adı veya logger bilgisini yazın..." 
+              value={portalSearchQuery}
+              onChange={e => setPortalSearchQuery(e.target.value)}
+              autoFocus
+            />
+          </div>
+
+          <div className="search-results-container">
+            {portalSearchResults.length === 0 ? (
+              <div className="no-search-results">
+                <Search size={48} style={{ opacity: 0.3, marginBottom: '16px' }} />
+                <h3>Eşleşen Kuyu Bulunamadı</h3>
+                <p>Arama teriminizi kontrol edin veya farklı bir anahtar kelime deneyin.</p>
+              </div>
+            ) : (
+              <div className="search-results-grid">
+                {portalSearchResults.map(hId => {
+                  const proj = getHoleProjectName(hId) || 'Belirtilmemiş';
+                  const isMetallic = METALLIC_HOLES.includes(hId.trim().toUpperCase());
+                  const cData = db[hId]?.collar || {};
+                  const depth = cData.totalDepth || 0;
+                  const logger = cData.logger || 'Bilinmiyor';
+                  const status = cData.status || 'Planned';
+                  
+                  return (
+                    <div 
+                      key={hId} 
+                      className={`search-result-card ${isMetallic ? 'metallic-border' : 'industrial-border'}`}
+                      onClick={() => {
+                        setSelectedHoleId(hId);
+                        setAppMode('drillhole');
+                        setPortalSearchQuery('');
+                      }}
+                    >
+                      <div className="result-card-header">
+                        <span className="result-hole-id">{hId}</span>
+                        <span className={`badge ${
+                          status === 'Completed' ? 'badge-success' : 
+                          status === 'In Progress' ? 'badge-warning' : 'badge-danger'
+                        }`}>
+                          {status}
+                        </span>
+                      </div>
+                      
+                      <div className="result-card-body">
+                        <div className="result-meta-row">
+                          <span className="meta-label">Proje:</span>
+                          <span className="meta-value">{proj}</span>
+                        </div>
+                        <div className="result-meta-row">
+                          <span className="meta-label">Tip:</span>
+                          <span className="meta-value">{isMetallic ? 'Metalik' : 'Endüstriyel'}</span>
+                        </div>
+                        <div className="result-meta-row">
+                          <span className="meta-label">Derinlik:</span>
+                          <span className="meta-value">{depth} m</span>
+                        </div>
+                        <div className="result-meta-row">
+                          <span className="meta-label">Logger:</span>
+                          <span className="meta-value">{logger}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="result-card-footer">
+                        <span>Detayları Görüntüle</span>
+                        <ArrowRight size={14} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <footer className="portal-footer">
+            <p>© {new Date().getFullYear()} Kale Maden A.Ş. — Toplam {holeList.length} kayıt arasından arama yapılıyor.</p>
+          </footer>
+        </div>
+      </div>
+    );
+  }
+
+  if (appMode === 'yuzey_search') {
+    return (
+      <div className="portal-container surface-mode" style={{ backgroundImage: "url('/geology_bg.png')" }}>
+        <div className="portal-overlay" />
+        <div className="portal-content">
+          <button className="btn btn-secondary back-to-portal-btn" onClick={() => setAppMode('yuzey_menu')}>
+            <ChevronLeft size={16} /> Geri Dön
+          </button>
+          
+          <header className="portal-header">
+            <div className="portal-logo animate-pulse">
+              <Search size={48} className="logo-icon amber" />
+            </div>
+            <h1>YÜZEY JEOKİMYA ARAMA</h1>
+            <p className="portal-subtitle">Jeokimya Örnekleri ve Spektrometre Arama Modülü</p>
+          </header>
+
+          <div className="coming-soon-container">
+            <div className="coming-soon-card">
+              <div className="coming-soon-badge">YAKINDA HİZMETİNİZDE</div>
+              <h2>Sahadan Toplanan Yüzey Verileri Filtreleme Sistemi</h2>
+              <p>
+                Biga Yarımadası projelerimiz kapsamında araziden alınan jeokimya örnek verilerinin analiz sonuçları, XRD/XRF spektral bulguları ve yüzey alterasyon haritaları üzerinde akıllı sorgulama yapabileceğiniz arama altyapısı hazırlanmaktadır.
+              </p>
+              
+              <div className="coming-soon-progress">
+                <div className="progress-label">
+                  <span>Geliştirme Aşaması (Arama Altyapısı)</span>
+                  <span>60%</span>
+                </div>
+                <div className="progress-bar-container">
+                  <div className="progress-bar-fill" style={{ width: '60%' }}></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <footer className="portal-footer">
+            <p>© {new Date().getFullYear()} Kale Maden A.Ş. — Çanakkale / Biga Projeleri.</p>
+          </footer>
+        </div>
+      </div>
+    );
+  }
+
+  if (appMode === 'yuzey_browse') {
+    return (
+      <div className="portal-container surface-mode" style={{ backgroundImage: "url('/geology_bg.png')" }}>
+        <div className="portal-overlay" />
+        <div className="portal-content">
+          <button className="btn btn-secondary back-to-portal-btn" onClick={() => setAppMode('yuzey_menu')}>
+            <ChevronLeft size={16} /> Geri Dön
+          </button>
+          
+          <header className="portal-header">
+            <div className="portal-logo animate-pulse">
+              <Map size={48} className="logo-icon amber" />
+            </div>
+            <h1>YÜZEY CBS HARİTA BROWSER</h1>
+            <p className="portal-subtitle">Uzaktan Algılama ve Yapısal Jeoloji GIS Katmanları</p>
+          </header>
+
+          <div className="coming-soon-container">
+            <div className="coming-soon-card">
+              <div className="coming-soon-badge">YAKINDA HİZMETİNİZDE</div>
+              <h2>İnteraktif Web GIS & Katman İnceleme Modülü</h2>
+              <p>
+                Sentinel-2 ve ASTER uydu görüntülerinden elde edilen spektral mineral indeksleri (demir oksit, kil, alterasyon anomalileri) ve MTA 1/25.000 jeoloji haritalarının CBS katmanı olarak harita üzerinde görüntülenebileceği web ara yüzü hazırlanmaktadır.
+              </p>
+              
+              <div className="coming-soon-progress">
+                <div className="progress-label">
+                  <span>Geliştirme Aşaması (GIS Entegrasyonu)</span>
+                  <span>80%</span>
+                </div>
+                <div className="progress-bar-container">
+                  <div className="progress-bar-fill" style={{ width: '80%' }}></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <footer className="portal-footer">
+            <p>© {new Date().getFullYear()} Kale Maden A.Ş. — Çanakkale / Biga Projeleri.</p>
           </footer>
         </div>
       </div>
@@ -627,8 +897,8 @@ function App() {
         <div className="header-brand">
           <button 
             className="btn btn-secondary portal-nav-btn" 
-            onClick={() => setAppMode('landing')}
-            title="Ana Portala Dön"
+            onClick={() => setAppMode('sondaj_menu')}
+            title="Sondaj Menüsüne Dön"
           >
             <Home size={14} />
             <span>Portal</span>

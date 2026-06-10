@@ -255,7 +255,7 @@ label {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  opacity: 0.6; /* 40% transparent (60% opaque) */
+  opacity: 1; /* Arka plan resmi tam görünür */
   z-index: 0;
   pointer-events: none;
 }
@@ -266,8 +266,9 @@ label {
   left: 0;
   width: 100%;
   height: 100%;
-  background: radial-gradient(circle at center, rgba(8, 13, 26, 0.7) 0%, rgba(8, 13, 26, 0.96) 100%);
-  backdrop-filter: blur(8px);
+  /* Üzerindeki siyah perdenin saydamlığı artırıldı */
+  background: radial-gradient(circle at center, rgba(8, 13, 26, 0.25) 0%, rgba(8, 13, 26, 0.65) 100%);
+  backdrop-filter: blur(3px); /* Detayların görünmesi için blur azaltıldı */
   z-index: 1;
 }
 

@@ -236,13 +236,28 @@ label {
   align-items: center;
   width: 100vw;
   height: 100vh;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  background-image: none !important;
+  background-color: var(--bg-app);
   overflow-y: auto;
   color: var(--text-main);
   padding: 40px 20px;
   box-sizing: border-box;
+}
+
+.portal-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url('/geology_bg.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.6; /* 40% transparent (60% opaque) */
+  z-index: 0;
+  pointer-events: none;
 }
 
 .portal-overlay {

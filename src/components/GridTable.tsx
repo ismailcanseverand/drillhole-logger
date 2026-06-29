@@ -106,15 +106,15 @@ const uploadPhotoToSupabase = async (base64Data: string, rowId: string, holeId?:
 const getRockColorName = (code: string): string => {
   switch ((code || '').toUpperCase()) {
     // Magmatik Kayaçlar
-    case 'TFR':
+    case 'TFR': return '178, 77, 204';
     case 'VK':
-    case 'LPL':
+    case 'LPL': return '191, 77, 204';
     case 'VKB':
     case 'VBR':
-    case 'BTF':
+    case 'BTF': return '204, 89, 217';
     case 'VKT':
     case 'LTS':
-    case 'LTF':
+    case 'LTF': return '178, 89, 204';
     case 'TF':
     case 'TUF':
     case 'BRS':
@@ -125,277 +125,224 @@ const getRockColorName = (code: string): string => {
     case 'VIA.T':
     case 'VIA:T':
     case 'VIA.P':
-    case 'IGNIMBIRIT':
-      return 'Mor / Eflatun';
-
-    case 'AP':
+      return '191, 102, 217';
+    case 'AP': return '255, 204, 51';
     case 'PEG':
-    case 'PEGMATIT':
-      return 'Sarı / Turuncu';
-
+    case 'PEGMATIT': return '255, 178, 25';
     case 'GRND':
     case 'INTRUZIF':
     case 'SUBVOLKANIK':
     case 'VFD':
-    case 'DAYK':
-      return 'Koyu Kırmızı';
-
+    case 'DAYK': return '255, 51, 51';
     case 'GRT':
     case 'GRA':
     case 'GNT':
-    case 'GRANIT':
-    case 'AFGR':
-    case 'MGR':
-    case 'SGR':
-    case 'TRND':
-    case 'TNLT':
-      return 'Kırmızı';
-
+    case 'GRANIT': return '255, 77, 77';
+    case 'AFGR': return '255, 209, 220';
+    case 'MGR': return '242, 77, 89';
+    case 'SGR': return '230, 77, 77';
+    case 'TRND': return '255, 167, 188';
+    case 'TNLT': return '255, 102, 102';
     case 'GRD':
-    case 'GRANODIYORIT':
-      return 'Açık Kırmızı';
-
-    case 'DRD':
+    case 'GRANODIYORIT': return '255, 128, 128';
+    case 'DRD': return '217, 64, 140';
     case 'DYR':
-    case 'DIYORIT':
-    case 'KSD':
-    case 'MDYR':
-      return 'Pembe';
-
-    case 'GBY':
+    case 'DIYORIT': return '230, 115, 166';
+    case 'KSD': return '224, 102, 161';
+    case 'MDYR': return '219, 97, 173';
+    case 'GBY': return '242, 51, 102';
     case 'GB':
-    case 'GABRO':
-    case 'MGB':
-    case 'KMG':
-    case 'NOR':
-    case 'TROK':
-    case 'DOLE':
+    case 'GABRO': return '242, 64, 115';
+    case 'MGB': return '230, 64, 115';
+    case 'KMG': return '255, 111, 91';
+    case 'NOR': return '255, 214, 209';
+    case 'TROK': return '255, 191, 206';
+    case 'DOLE': return '128, 25, 204';
     case 'DB':
-    case 'DIYABAZ':
-      return 'Koyu Pembe-Mor';
-
-    case 'SYD':
+    case 'DIYABAZ': return '242, 64, 115';
+    case 'ANR': return '247, 171, 196';
+    case 'SYD': return '242, 38, 166';
     case 'SY':
-    case 'SIYENIT':
-    case 'KSY':
-    case 'FDS':
-    case 'MONZ':
-    case 'KSM':
-      return 'Pembe / Siyenit';
-
+    case 'SIYENIT': return '255, 77, 204';
+    case 'KSY': return '255, 89, 217';
+    case 'FDS': return '255, 115, 242';
+    case 'MONZ': return '242, 64, 191';
+    case 'KSM': return '242, 77, 204';
+    case 'FOD': return '247, 145, 195';
+    case 'FDG': return '242, 115, 191';
+    case 'FDSY': return '237, 84, 184';
+    case 'FDL': return '230, 51, 179';
     case 'RYL':
-    case 'RIYOLIT':
-    case 'AFR':
+    case 'RIYOLIT': return '199, 153, 242';
+    case 'AFR': return '204, 66, 242';
     case 'DST':
-    case 'DASIT':
-    case 'RYD':
-      return 'Eflatun / Lila';
-
-    case 'TRKD':
-    case 'TRKT':
-    case 'TRKA':
-    case 'TRKB':
-    case 'LA':
-    case 'KLA':
-      return 'Koyu Lila / Mor';
-
+    case 'DASIT': return '179, 115, 242';
+    case 'RYD': return '254, 198, 42';
+    case 'TRKD': return '153, 102, 230';
+    case 'TRKT': return '161, 122, 237';
+    case 'TRKA': return '201, 82, 1';
+    case 'TRKB': return '236, 213, 198';
+    case 'LA': return '173, 140, 242';
+    case 'KLA': return '254, 135, 54';
     case 'AND':
     case 'ANDEZIT':
-    case 'VIA.A':
-    case 'BON':
-      return 'Mor';
-
+    case 'VIA.A': return '145, 69, 235';
+    case 'BON': return '158, 82, 235';
     case 'BAZ':
-    case 'BAZALT':
-    case 'AOB':
-    case 'TLB':
-      return 'Koyu Mavi-Mor';
-
-    case 'FND':
-    case 'FON':
-    case 'TFFD':
-    case 'TEF':
-    case 'BAS':
+    case 'BAZALT': return '102, 0, 255';
+    case 'AOB': return '115, 51, 230';
+    case 'TLB': return '128, 77, 237';
+    case 'FND': return '89, 38, 242';
+    case 'FON': return '89, 77, 242';
+    case 'TFFD': return '115, 89, 242';
+    case 'TEF': return '115, 115, 242';
+    case 'BAS': return '128, 128, 242';
     case 'FDD':
-    case 'FDT':
-      return 'Mavi-Mor';
-
-    case 'PRD':
-    case 'PRKS':
-    case 'KOM':
-    case 'HAR':
-    case 'LER':
-    case 'DUN':
-    case 'VER':
-    case 'KMB':
-    case 'HBT':
-      return 'Koyu Pembe-Kırmızı';
-
-    case 'KAR':
-    case 'KAL-MEL':
-    case 'EKS':
-    case 'POR':
-    case 'OBS':
-    case 'PMS':
-    case 'LAMB':
-      return 'Açık Pembe / Turkuaz';
+    case 'FDT': return '128, 77, 230';
+    case 'PRD': return '217, 13, 153';
+    case 'PRKS': return '230, 38, 166';
+    case 'KOM': return '240, 69, 171';
+    case 'HAR': return '217, 15, 102';
+    case 'LER': return '217, 64, 89';
+    case 'DUN': return '217, 111, 140';
+    case 'VER': return '217, 30, 158';
+    case 'KMB': return '193, 1, 10';
+    case 'HBT': return '163, 1, 9';
+    case 'KAR': return '0, 255, 255';
+    case 'KAL-MEL': return '230, 178, 0';
+    case 'EKS': return '178, 0, 217';
+    case 'POR': return '153, 25, 178';
+    case 'OBS': return '255, 209, 234';
+    case 'PMS': return '255, 229, 243';
+    case 'LAMB': return '228, 88, 145';
 
     // Sedimanter
     case 'ALV':
     case 'DOLGU':
     case 'TOPRAK':
-    case 'TO':
-      return 'Sarı (Alüvyon)';
-    case 'DMK':
-    case 'CK':
-    case 'CM':
-      return 'Açık Sarı';
+    case 'TO': return '255, 255, 153';
+    case 'DMK': return '242, 242, 191';
+    case 'CK': return '255, 255, 204';
+    case 'CM': return '255, 242, 178';
     case 'KL':
     case 'KIL':
-    case 'KAOLEN':
-    case 'SL':
-      return 'Sarı-Bej';
-    case 'KBS':
-    case 'KKS':
-      return 'Mavi-Yeşil';
-    case 'BYS':
-    case 'OZS':
-    case 'OOZ':
-    case 'TRB':
-    case 'SPR':
-      return 'Haki Sarı';
-    case 'KOOZ':
-    case 'SOOZ':
-      return 'Kirli Beyaz';
+    case 'KAOLEN': return '250, 242, 191';
+    case 'SL': return '242, 230, 191';
+    case 'KBS': return '13, 179, 201';
+    case 'KKS': return '51, 199, 217';
+    case 'BYS': return '217, 204, 128';
+    case 'OZS': return '222, 212, 140';
+    case 'OOZ': return '230, 217, 166';
+    case 'TRB': return '230, 214, 148';
+    case 'SPR': return '235, 222, 158';
+    case 'KOOZ': return '230, 230, 204';
+    case 'SOOZ': return '237, 224, 178';
     case 'KLSED':
-    case 'SEDIMENT':
-      return 'Yeşil-Kahve';
-    case 'DMKT':
-    case 'KONG':
-      return 'Haki Yeşil-Kahve';
+    case 'SEDIMENT': return '204, 178, 102';
+    case 'DMKT': return '204, 191, 140';
+    case 'KONG': return '204, 191, 166';
     case 'KMT':
-    case 'KUM':
-    case 'ARN':
-    case 'CKMT':
-      return 'Sarı';
-    case 'CMT':
-    case 'KLT':
-    case 'SLT':
-    case 'SY':
-      return 'Kahve / Yeşil-Sarı';
-    case 'OSED':
+    case 'KUM': return '242, 217, 115';
+    case 'ARN': return '242, 224, 128';
+    case 'CKMT': return '242, 230, 145';
+    case 'CMT': return '178, 140, 89';
+    case 'KLT': return '191, 153, 107';
+    case 'SLT': return '204, 166, 18';
+    case 'SY': return '209, 176, 140';
+    case 'OSED': return '179, 179, 153';
     case 'KMR':
-    case 'KOMUR':
-    case 'LNY':
-    case 'BTK':
-    case 'ANTR':
-      return 'Gri / Siyah';
-    case 'KSED':
-    case 'SKASED':
-    case 'DOSED-MASED':
-    case 'DOL':
-      return 'Mavi';
+    case 'KOMUR': return '179, 191, 191';
+    case 'LNY': return '191, 179, 166';
+    case 'BTK': return '204, 184, 166';
+    case 'ANTR': return '191, 191, 191';
+    case 'KSED': return '77, 128, 255';
+    case 'SKASED': return '89, 140, 242';
+    case 'DOSED-MASED': return '102, 153, 242';
+    case 'DOL': return '115, 166, 242';
     case 'KÇT':
-    case 'KALSIT':
-    case 'TBT':
-    case 'TRV':
-    case 'KKSED':
-    case 'KKÇT-MRN':
-    case 'KDOL':
-      return 'Açık Mavi';
-    case 'KOSS':
-    case 'BSSED':
+    case 'KALSIT': return '102, 178, 242';
+    case 'TBT': return '115, 191, 242';
+    case 'TRV': return '126, 204, 242';
+    case 'KKSED': return '51, 179, 230';
+    case 'KKÇT-MRN': return '89, 191, 241';
+    case 'KDOL': return '102, 204, 242';
+    case 'KOSS': return '179, 204, 102';
+    case 'BSSED': return '191, 217, 115';
     case 'DSED':
     case 'OKSIT':
-    case 'SULFIT':
-      return 'Yeşil-Sarı (Haki)';
-    case 'CNCT':
-    case 'ORCT':
-    case 'KİSED':
-    case 'EVP':
-    case 'KAT':
-    case 'JPS-ANH':
-      return 'Açık Mavi-Gri';
-    case 'BNT':
-    case 'ARJ':
-    case 'ARK':
-    case 'OLS':
-    case 'SBR':
-    case 'KARN':
-    case 'CRT':
-      return 'Gri-Yeşil';
+    case 'SULFIT': return '191, 204, 102';
+    case 'CNCT': return '217, 178, 127';
+    case 'ORCT': return '217, 186, 153';
+    case 'KİSED': return '204, 204, 230';
+    case 'EVP': return '153, 204, 230';
+    case 'KAT': return '170, 218, 242';
+    case 'JPS-ANH': return '178, 230, 242';
+    case 'BNT': return '192, 208, 192';
+    case 'ARJ': return '225, 240, 216';
+    case 'ARK': return '105, 207, 156';
+    case 'OLS': return '141, 190, 205';
+    case 'SBR': return '167, 186, 134';
+    case 'KARN': return '154, 206, 254';
+    case 'CRT': return '154, 191, 192';
 
     // Metamorfik
-    case 'FOM':
+    case 'FOM': return '77, 217, 102';
     case 'GNS':
     case 'GNAYS':
-    case 'GNYS':
-    case 'OGNS':
-    case 'PGNS':
-      return 'Yeşil (Gnays)';
+    case 'GNYS': return '97, 224, 122';
+    case 'OGNS': return '115, 230, 140';
+    case 'PGNS': return '133, 240, 158';
     case 'FGNS':
-    case 'ALBIT':
-      return 'Açık Mavi-Gri (Felsik)';
-    case 'GGNS':
-    case 'BGNS':
-    case 'MGNS':
-      return 'Soluk Yeşil';
-    case 'FLL':
-    case 'SLY':
-      return 'Yeşil';
+    case 'ALBIT': return '224, 243, 254';
+    case 'GGNS': return '193, 225, 201';
+    case 'BGNS': return '174, 214, 193';
+    case 'MGNS': return '187, 251, 222';
+    case 'FLL': return '115, 242, 140';
+    case 'SLY': return '128, 242, 153';
     case 'SST':
-    case 'SIST':
-    case 'MSST':
-    case 'YSST':
-    case 'MVST':
-    case 'PSST':
-    case 'KFST':
-    case 'AMFS':
-    case 'KSST':
-    case 'KAE':
-    case 'GLE':
-      return 'Koyu Yeşil (Şist)';
+    case 'SIST': return '51, 166, 102';
+    case 'MSST': return '77, 191, 128';
+    case 'YSST': return '69, 184, 114';
+    case 'MVST': return '24, 139, 63';
+    case 'PSST': return '34, 149, 91';
+    case 'KFST': return '57, 109, 63';
+    case 'AMFS': return '69, 69, 81';
+    case 'KSST': return '14, 129, 77';
+    case 'KAE': return '38, 153, 77';
+    case 'GLE': return '115, 179, 128';
     case 'SRP':
-    case 'SERP':
-      return 'Açık Yeşil (Serp)';
+    case 'SERP': return '140, 191, 128';
     case 'KVS':
-    case 'KUVARSIT':
-      return 'Sarı-Yeşil';
-    case 'AMF':
+    case 'KUVARSIT': return '230, 242, 89';
+    case 'AMF': return '64, 217, 115';
     case 'MER':
-    case 'MRB':
-    case 'GRNL':
-    case 'EKL':
-    case 'MGM':
-      return 'Mavi-Yeşil';
-    case 'GRF':
-    case 'HRF':
-    case 'MTZ':
-    case 'SKR':
-    case 'SPL':
-      return 'Yeşil';
-    case 'YKS':
-    case 'BKS':
-    case 'DRC':
-    case 'KAM':
-      return 'Gri-Yeşil';
+    case 'MRB': return '51, 179, 230';
+    case 'GRNL': return '102, 204, 128';
+    case 'EKL': return '51, 204, 89';
+    case 'MGM': return '25, 191, 102';
+    case 'GRF': return '128, 178, 128';
+    case 'HRF': return '140, 191, 140';
+    case 'MTZ': return '128, 230, 77';
+    case 'SKR': return '153, 230, 89';
+    case 'SPL': return '166, 230, 102';
+    case 'YKS': return '166, 217, 204';
+    case 'BKS': return '191, 230, 217';
+    case 'DRC': return '179, 230, 217';
+    case 'KAM': return '204, 242, 230';
     case 'MLK':
-    case 'FLT':
-      return 'Sarı (Fay/Milonit)';
-    case 'CMS':
-    case 'MKON':
-    case 'MAR':
-    case 'MVOL':
-    case 'MRYL':
-    case 'KRT':
-    case 'MBZ':
-    case 'GRY':
+    case 'FLT': return '230, 230, 0';
+    case 'CMS': return '0, 179, 102';
+    case 'MKON': return '233, 255, 233';
+    case 'MAR': return '201, 255, 201';
+    case 'MVOL': return '255, 87, 255';
+    case 'MRYL': return '255, 167, 255';
+    case 'KRT': return '254, 103, 0';
+    case 'MBZ': return '135, 43, 76';
+    case 'GRY': return '164, 73, 255';
     case 'OFM':
-    case 'OFY':
-      return 'Yeşil / Mor';
+    case 'OFY': return '138, 181, 128';
 
-    default:
-      return 'Gri';
+    default: return '';
   }
 };
 
@@ -404,21 +351,21 @@ const renderGraphicSwatch = (code: string) => {
   const patternId = 'pat-loc-' + Math.random().toString(36).substr(2, 9);
   let patternContent = null;
   
-  if (clean === 'GNAYS' || clean === 'GNYS') {
+  if (clean === 'GNS' || clean === 'GNAYS' || clean === 'GNYS') {
     patternContent = (
       <pattern id={patternId} width="20" height="20" patternUnits="userSpaceOnUse">
         <rect width="20" height="20" fill="#61E07A" />
         <path d="M0,5 Q5,10 10,5 T20,5 M0,15 Q5,20 10,15 T20,15" fill="none" stroke="#15803D" strokeWidth="1.5" />
       </pattern>
     );
-  } else if (clean === 'ALBIT') {
+  } else if (clean === 'FGNS' || clean === 'ALBIT') {
     patternContent = (
       <pattern id={patternId} width="20" height="20" patternUnits="userSpaceOnUse">
         <rect width="20" height="20" fill="#E0F3FE" />
         <path d="M 5,2 L 2,5 M 15,12 L 12,15" stroke="#0E7490" strokeWidth="1.5" />
       </pattern>
     );
-  } else if (clean === 'KAOLEN' || clean === 'KAO') {
+  } else if (clean === 'KL' || clean === 'KAOLEN' || clean === 'KAO') {
     patternContent = (
       <pattern id={patternId} width="20" height="20" patternUnits="userSpaceOnUse">
         <rect width="20" height="20" fill="#FAF2BF" />
@@ -426,10 +373,10 @@ const renderGraphicSwatch = (code: string) => {
         <circle cx="15" cy="15" r="1.5" fill="#D9C333" fillOpacity="0.8" />
       </pattern>
     );
-  } else if (['GRANIT', 'GNT', 'SUBVOLKANIK', 'SIYENIT', 'GRANODIYORIT', 'RIYOLIT', 'DASIT', 'INTRUZIF', 'GRA', 'VFD', 'DAYK'].includes(clean)) {
+  } else if (['GRT', 'GRANIT', 'GNT', 'GRA', 'GRND', 'SUBVOLKANIK', 'SIYENIT', 'SY', 'GRD', 'GRANODIYORIT', 'RYL', 'RIYOLIT', 'DST', 'DASIT', 'INTRUZIF', 'VFD', 'DAYK', 'AP', 'PEG'].includes(clean)) {
     patternContent = (
       <pattern id={patternId} width="20" height="20" patternUnits="userSpaceOnUse">
-        <rect width="20" height="20" fill="#FF4D4D" />
+        <rect width="20" height="20" fill={clean === 'DST' || clean === 'DASIT' ? "#B373F2" : (clean === 'RYL' || clean === 'RIYOLIT' ? "#C799F2" : "#FF4D4D")} />
         <circle cx="5" cy="5" r="1.5" fill="#B91C1C" />
         <circle cx="15" cy="15" r="1.5" fill="#B91C1C" />
         <line x1="12" y1="4" x2="16" y2="8" stroke="#B91C1C" strokeWidth="1" />
@@ -438,7 +385,7 @@ const renderGraphicSwatch = (code: string) => {
         <line x1="6" y1="12" x2="2" y2="16" stroke="#B91C1C" strokeWidth="1" />
       </pattern>
     );
-  } else if (clean === 'BRES' || clean === 'BXS' || clean === 'VIA.P') {
+  } else if (clean === 'BRS' || clean === 'BRES' || clean === 'BXS' || clean === 'VIA.P') {
     patternContent = (
       <pattern id={patternId} width="25" height="25" patternUnits="userSpaceOnUse">
         <rect width="25" height="25" fill="#BF66D9" />
@@ -447,7 +394,7 @@ const renderGraphicSwatch = (code: string) => {
         <polygon points="3,18 9,23 6,24" fill="#4A044E" stroke="#D8B4FE" strokeWidth="0.5" />
       </pattern>
     );
-  } else if (clean === 'XBH' || clean === 'FLT' || clean === 'YANAL') {
+  } else if (clean === 'MLK' || clean === 'XBH' || clean === 'FLT' || clean === 'YANAL') {
     patternContent = (
       <pattern id={patternId} width="20" height="20" patternUnits="userSpaceOnUse">
         <rect width="20" height="20" fill="#E6E600" />
@@ -455,15 +402,15 @@ const renderGraphicSwatch = (code: string) => {
         <line x1="20" y1="0" x2="0" y2="20" stroke="#991B1B" strokeWidth="1" />
       </pattern>
     );
-  } else if (clean === 'KUVARSIT' || clean === 'QVN') {
+  } else if (clean === 'KVS' || clean === 'KUVARSIT' || clean === 'QVN' || clean === 'KUVARS' || clean === 'SILIS') {
     patternContent = (
       <pattern id={patternId} width="10" height="10" patternUnits="userSpaceOnUse">
-        <rect width="10" height="10" fill="#E6F259" />
+        <rect width="10" height="10" fill={clean === 'KVS' || clean === 'KUVARSIT' ? "#E6F259" : "#FFFFFF"} />
         <circle cx="3" cy="3" r="1.2" fill="#A1A11A" />
         <circle cx="8" cy="8" r="1.2" fill="#A1A11A" />
       </pattern>
     );
-  } else if (['ANDEZIT', 'AND', 'TUF', 'VIA', 'VIA.A', 'VIA.T', 'VIA:T', 'IGNIMBIRIT'].includes(clean)) {
+  } else if (['ANDEZIT', 'AND', 'TUF', 'TF', 'VIA', 'VIA.A', 'VIA.T', 'VIA:T', 'IGNIMBIRIT', 'IGB'].includes(clean)) {
     const isAnd = ['ANDEZIT', 'AND', 'VIA.A'].includes(clean);
     patternContent = (
       <pattern id={patternId} width="20" height="20" patternUnits="userSpaceOnUse">
@@ -472,9 +419,9 @@ const renderGraphicSwatch = (code: string) => {
         <path d="M 12,16 L 15,13 L 18,16" fill="none" stroke={isAnd ? "#5B21B6" : "#701A75"} strokeWidth="1.5" />
       </pattern>
     );
-  } else if (clean === 'BASALT' || clean === 'OFY' || clean === 'SERP') {
-    const isSerp = clean === 'SERP';
-    const isOfy = clean === 'OFY';
+  } else if (clean === 'BAZ' || clean === 'BAZALT' || clean === 'BSL' || clean === 'OFM' || clean === 'OFY' || clean === 'SRP' || clean === 'SERP') {
+    const isSerp = clean === 'SERP' || clean === 'SRP';
+    const isOfy = clean === 'OFY' || clean === 'OFM';
     const bgFill = isSerp ? "#8CBF80" : (isOfy ? "#8AB580" : "#6600FF");
     const strokeCol = isSerp ? "#15803D" : (isOfy ? "#166534" : "#4338CA");
     patternContent = (
@@ -484,35 +431,35 @@ const renderGraphicSwatch = (code: string) => {
         <path d="M 15,15 L 18,18 L 21,15" fill="none" stroke={strokeCol} strokeWidth="1.5" />
       </pattern>
     );
-  } else if (['DOLGU', 'OB', 'TOPRAK', 'TO'].includes(clean)) {
+  } else if (['ALV', 'DOLGU', 'OB', 'TOPRAK', 'TO'].includes(clean)) {
     patternContent = (
       <pattern id={patternId} width="20" height="20" patternUnits="userSpaceOnUse">
-        <rect width="20" height="20" fill="#ADA699" />
+        <rect width="20" height="20" fill="#FFFF99" />
         <circle cx="4" cy="4" r="1.2" fill="#57534E" />
         <circle cx="14" cy="14" r="1.2" fill="#57534E" />
         <line x1="2" y1="18" x2="8" y2="18" stroke="#78716C" strokeWidth="1" />
         <line x1="12" y1="8" x2="18" y2="8" stroke="#78716C" strokeWidth="1" />
       </pattern>
     );
-  } else if (['SIST', 'MTSH', 'MTSL', 'MTSS', 'VSM', 'VOLKANOSEDIMANTER', 'SEDIMENT'].includes(clean)) {
-    const isSed = clean === 'SEDIMENT';
-    const fillCol = isSed ? "#CCB266" : (clean === 'VSM' || clean === 'VOLKANOSEDIMANTER' ? "#B259CC" : "#33A666");
-    const strokeCol = isSed ? "#78350f" : (clean === 'VSM' || clean === 'VOLKANOSEDIMANTER' ? "#701A75" : "#14532D");
+  } else if (['SST', 'SIST', 'MTSH', 'MTSL', 'MTSS', 'VKT', 'VSM', 'VOLKANOSEDIMANTER', 'KLSED', 'SEDIMENT'].includes(clean)) {
+    const isSed = clean === 'SEDIMENT' || clean === 'KLSED';
+    const fillCol = isSed ? "#CCB266" : (clean === 'VSM' || clean === 'VOLKANOSEDIMANTER' || clean === 'VKT' ? "#B259CC" : "#33A666");
+    const strokeCol = isSed ? "#78350f" : (clean === 'VSM' || clean === 'VOLKANOSEDIMANTER' || clean === 'VKT' ? "#701A75" : "#14532D");
     patternContent = (
       <pattern id={patternId} width="30" height="10" patternUnits="userSpaceOnUse">
         <rect width="30" height="10" fill={fillCol} />
         <path d="M0,5 Q7.5,0 15,5 T30,5" fill="none" stroke={strokeCol} strokeWidth="1" />
       </pattern>
     );
-  } else if (clean === 'KIL') {
+  } else if (clean === 'KL' || clean === 'KIL') {
     patternContent = (
       <pattern id={patternId} width="10" height="10" patternUnits="userSpaceOnUse">
         <rect width="10" height="10" fill="#FAF2BF" />
         <line x1="0" y1="5" x2="10" y2="5" stroke="#D97706" strokeWidth="1" />
       </pattern>
     );
-  } else if (clean === 'KALSIT' || clean === 'MRB') {
-    const isMrb = clean === 'MRB';
+  } else if (clean === 'KÇT' || clean === 'KALSIT' || clean === 'MER' || clean === 'MRB') {
+    const isMrb = clean === 'MRB' || clean === 'MER';
     patternContent = (
       <pattern id={patternId} width="20" height="20" patternUnits="userSpaceOnUse">
         <rect width="20" height="20" fill={isMrb ? "#33B3E6" : "#66B2F2"} />
@@ -530,7 +477,7 @@ const renderGraphicSwatch = (code: string) => {
         <path d="M 0,10 L 20,10" stroke="#94a3b8" strokeWidth="2" strokeDasharray="4,4" />
       </pattern>
     );
-  } else if (clean === 'KUM') {
+  } else if (clean === 'KMT' || clean === 'KUM') {
     patternContent = (
       <pattern id={patternId} width="10" height="10" patternUnits="userSpaceOnUse">
         <rect width="10" height="10" fill="#F2D973" />

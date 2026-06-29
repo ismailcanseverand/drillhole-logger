@@ -226,7 +226,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess, onContinu
                 </span>
                 <input
                   type="text"
-                  placeholder="İsmail Cansever"
+                  placeholder="İsmailcan Sever"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required

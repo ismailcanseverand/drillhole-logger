@@ -1196,16 +1196,16 @@ export function useDrillholeData() {
       } catch (err) {
         console.error('Error fetching session in syncHoleToSupabase:', err);
       }
-      const isAdmin = currentUserEmail.trim().toLowerCase() === 'ismailcansever@kale.com.tr';
+      const canOverwrite = ['ismailcansever@kale.com.tr', 'leventcan@kale.com.tr'].includes(currentUserEmail.trim().toLowerCase());
 
-      // Protect other users' data during background sync (bypass for admin)
+      // Protect other users' data during background sync (bypass for authorized overwrite users)
       const { data: dbCollar } = await client
         .from('collars')
         .select('logger')
         .eq('hole_id', hId)
         .maybeSingle();
 
-      if (!isAdmin && dbCollar && dbCollar.logger) {
+      if (!canOverwrite && dbCollar && dbCollar.logger) {
         const dbLogger = dbCollar.logger.trim().toLowerCase();
         const localLogger = (localCollar.logger || '').trim().toLowerCase();
         if (dbLogger && dbLogger !== localLogger) {
@@ -1426,13 +1426,13 @@ export function useDrillholeData() {
         } catch (err) {
           console.error('Error fetching session in saveActiveHoleToSupabase:', err);
         }
-        const isAdmin = currentUserEmail.trim().toLowerCase() === 'ismailcansever@kale.com.tr';
+        const canOverwrite = ['ismailcansever@kale.com.tr', 'leventcan@kale.com.tr'].includes(currentUserEmail.trim().toLowerCase());
 
         const dbLogger = (dbCollar.logger || '').trim().toLowerCase();
         const localLogger = (collar.logger || '').trim().toLowerCase();
         
-        // Prevent overwriting if user is not admin, and database has a different logger
-        if (!isAdmin && dbLogger && dbLogger !== localLogger) {
+        // Prevent overwriting if user is not authorized to overwrite, and database has a different logger
+        if (!canOverwrite && dbLogger && dbLogger !== localLogger) {
           return {
             success: false,
             message: `Bu kuyu (${collar.holeId}) başka bir kullanıcı (${dbCollar.logger}) tarafından kaydedilmiş. Veri kaybını önlemek için üzerine yazma işlemi engellendi.`

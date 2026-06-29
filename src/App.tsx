@@ -83,6 +83,7 @@ function App() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [authChecked, setAuthChecked] = useState<boolean>(false);
   const isAdmin = userEmail?.trim().toLowerCase() === 'ismailcansever@kale.com.tr';
+  const canOverwrite = ['ismailcansever@kale.com.tr', 'leventcan@kale.com.tr'].includes(userEmail?.trim().toLowerCase() || '');
 
   useEffect(() => {
     const checkUser = async () => {
@@ -1620,7 +1621,7 @@ function App() {
 
           <div className="tab-content">
             {activeTab === 'Collar' && (
-              <CollarTab collar={collar} setCollar={setCollar} errors={errors} onRenameHole={renameDrillhole} isAdmin={isAdmin} />
+              <CollarTab collar={collar} setCollar={setCollar} errors={errors} onRenameHole={renameDrillhole} isAdmin={canOverwrite} />
             )}
 
             {activeTab === 'Survey' && (

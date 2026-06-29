@@ -104,105 +104,295 @@ const uploadPhotoToSupabase = async (base64Data: string, rowId: string, holeId?:
 
 const getRockColorName = (code: string): string => {
   switch ((code || '').toUpperCase()) {
-    case 'DOLGU':
-    case 'OB':
-    case 'TO':
-    case 'TOPRAK':
-      return 'Gri-Kahve';
-    case 'BAZALT':
-    case 'BSL':
-      return 'Koyu Kül Gri';
-    case 'DIYABAZ':
-    case 'DB':
-    case 'GABRO':
-    case 'GB':
-      return 'Koyu Pembe-Mor';
-    case 'DIYORIT':
-    case 'DYR':
-      return 'Koyu Pembe';
-    case 'PEGMATIT':
-    case 'PEG':
-      return 'Turuncu-Sarı';
-    case 'KUVARS':
-    case 'QVN':
-      return 'Açık Sarı-Yeşil';
-    case 'ALBIT':
-      return 'Felsik Mavi';
-    case 'GNAYS':
-    case 'GNYS':
-      return 'Yeşil';
-    case 'ANDEZIT':
-    case 'AND':
-    case 'VIA.A':
-      return 'Mor';
+    // Magmatik Kayaçlar
+    case 'TFR':
+    case 'VK':
+    case 'LPL':
+    case 'VKB':
+    case 'VBR':
+    case 'BTF':
+    case 'VKT':
+    case 'LTS':
+    case 'LTF':
+    case 'TF':
     case 'TUF':
+    case 'BRS':
+    case 'BRES':
+    case 'AGL':
+    case 'PBR':
     case 'VIA':
     case 'VIA.T':
     case 'VIA:T':
     case 'VIA.P':
-    case 'BRES':
-    case 'BXS':
     case 'IGNIMBIRIT':
-      return 'Açık Mor';
-    case 'KAOLEN':
-    case 'KAO':
-    case 'KIL':
-      return 'Sarı-Bej';
-    case 'KUVARSIT':
-    case 'QVN':
-      return 'Sarı-Yeşil';
-    case 'SIST':
-    case 'MTSH':
-    case 'MTSL':
-    case 'MTSS':
-      return 'Koyu Yeşil';
-    case 'SEDIMENT':
-      return 'Koyu Yeşil-Sarı';
-    case 'GRANIT':
-    case 'GNT':
-    case 'GRA':
-      return 'Kırmızı';
-    case 'DASIT':
-      return 'Açık Eflatun';
-    case 'RIYOLIT':
-      return 'Eflatun';
-    case 'SIYENIT':
-      return 'Pembe';
-    case 'GRANODIYORIT':
-      return 'Açık Kırmızı';
-    case 'SUBVOLKANIK':
+      return 'Mor / Eflatun';
+
+    case 'AP':
+    case 'PEG':
+    case 'PEGMATIT':
+      return 'Sarı / Turuncu';
+
+    case 'GRND':
     case 'INTRUZIF':
+    case 'SUBVOLKANIK':
     case 'VFD':
     case 'DAYK':
       return 'Koyu Kırmızı';
-    case 'PERLIT':
-      return 'Açık Pembe';
-    case 'KALSIT':
-      return 'Açık Mavi';
-    case 'MRB':
-      return 'Mavi';
-    case 'KOMUR':
-      return 'Kül Grisi';
-    case 'XBH':
-    case 'FLT':
-    case 'YANAL':
-      return 'Sarı';
-    case 'OFY':
-      return 'Koyu Yeşil-Gri';
-    case 'SERP':
-      return 'Açık Yeşil-Gri';
-    case 'VSM':
-    case 'VOLKANOSEDIMANTER':
-      return 'Koyu Mor';
-    case 'UNC':
-      return 'Koyu Gri';
+
+    case 'GRT':
+    case 'GRA':
+    case 'GNT':
+    case 'GRANIT':
+    case 'AFGR':
+    case 'MGR':
+    case 'SGR':
+    case 'TRND':
+    case 'TNLT':
+      return 'Kırmızı';
+
+    case 'GRD':
+    case 'GRANODIYORIT':
+      return 'Açık Kırmızı';
+
+    case 'DRD':
+    case 'DYR':
+    case 'DIYORIT':
+    case 'KSD':
+    case 'MDYR':
+      return 'Pembe';
+
+    case 'GBY':
+    case 'GB':
+    case 'GABRO':
+    case 'MGB':
+    case 'KMG':
+    case 'NOR':
+    case 'TROK':
+    case 'DOLE':
+    case 'DB':
+    case 'DIYABAZ':
+      return 'Koyu Pembe-Mor';
+
+    case 'SYD':
+    case 'SY':
+    case 'SIYENIT':
+    case 'KSY':
+    case 'FDS':
+    case 'MONZ':
+    case 'KSM':
+      return 'Pembe / Siyenit';
+
+    case 'RYL':
+    case 'RIYOLIT':
+    case 'AFR':
+    case 'DST':
+    case 'DASIT':
+    case 'RYD':
+      return 'Eflatun / Lila';
+
+    case 'TRKD':
+    case 'TRKT':
+    case 'TRKA':
+    case 'TRKB':
+    case 'LA':
+    case 'KLA':
+      return 'Koyu Lila / Mor';
+
+    case 'AND':
+    case 'ANDEZIT':
+    case 'VIA.A':
+    case 'BON':
+      return 'Mor';
+
+    case 'BAZ':
+    case 'BAZALT':
+    case 'AOB':
+    case 'TLB':
+      return 'Koyu Mavi-Mor';
+
+    case 'FND':
+    case 'FON':
+    case 'TFFD':
+    case 'TEF':
+    case 'BAS':
+    case 'FDD':
+    case 'FDT':
+      return 'Mavi-Mor';
+
+    case 'PRD':
+    case 'PRKS':
+    case 'KOM':
+    case 'HAR':
+    case 'LER':
+    case 'DUN':
+    case 'VER':
+    case 'KMB':
+    case 'HBT':
+      return 'Koyu Pembe-Kırmızı';
+
+    case 'KAR':
+    case 'KAL-MEL':
+    case 'EKS':
+    case 'POR':
+    case 'OBS':
+    case 'PMS':
+    case 'LAMB':
+      return 'Açık Pembe / Turkuaz';
+
+    // Sedimanter
+    case 'ALV':
+    case 'DOLGU':
+    case 'TOPRAK':
+    case 'TO':
+      return 'Sarı (Alüvyon)';
+    case 'DMK':
+    case 'CK':
+    case 'CM':
+      return 'Açık Sarı';
+    case 'KL':
+    case 'KIL':
+    case 'KAOLEN':
+    case 'SL':
+      return 'Sarı-Bej';
+    case 'KBS':
+    case 'KKS':
+      return 'Mavi-Yeşil';
+    case 'BYS':
+    case 'OZS':
+    case 'OOZ':
+    case 'TRB':
+    case 'SPR':
+      return 'Haki Sarı';
+    case 'KOOZ':
+    case 'SOOZ':
+      return 'Kirli Beyaz';
+    case 'KLSED':
+    case 'SEDIMENT':
+      return 'Yeşil-Kahve';
+    case 'DMKT':
+    case 'KONG':
+      return 'Haki Yeşil-Kahve';
+    case 'KMT':
     case 'KUM':
+    case 'ARN':
+    case 'CKMT':
       return 'Sarı';
+    case 'CMT':
+    case 'KLT':
+    case 'SLT':
+    case 'SY':
+      return 'Kahve / Yeşil-Sarı';
+    case 'OSED':
+    case 'KMR':
+    case 'KOMUR':
+    case 'LNY':
+    case 'BTK':
+    case 'ANTR':
+      return 'Gri / Siyah';
+    case 'KSED':
+    case 'SKASED':
+    case 'DOSED-MASED':
+    case 'DOL':
+      return 'Mavi';
+    case 'KÇT':
+    case 'KALSIT':
+    case 'TBT':
+    case 'TRV':
+    case 'KKSED':
+    case 'KKÇT-MRN':
+    case 'KDOL':
+      return 'Açık Mavi';
+    case 'KOSS':
+    case 'BSSED':
+    case 'DSED':
     case 'OKSIT':
     case 'SULFIT':
-      return 'Haki Yeşil';
-    case 'ALUNIT':
-      return 'Kirli Beyaz';
+      return 'Yeşil-Sarı (Haki)';
+    case 'CNCT':
+    case 'ORCT':
+    case 'KİSED':
+    case 'EVP':
+    case 'KAT':
+    case 'JPS-ANH':
+      return 'Açık Mavi-Gri';
+    case 'BNT':
+    case 'ARJ':
+    case 'ARK':
+    case 'OLS':
+    case 'SBR':
+    case 'KARN':
+    case 'CRT':
+      return 'Gri-Yeşil';
+
+    // Metamorfik
+    case 'FOM':
+    case 'GNS':
+    case 'GNAYS':
+    case 'GNYS':
+    case 'OGNS':
+    case 'PGNS':
+      return 'Yeşil (Gnays)';
+    case 'FGNS':
+    case 'ALBIT':
+      return 'Açık Mavi-Gri (Felsik)';
+    case 'GGNS':
+    case 'BGNS':
+    case 'MGNS':
+      return 'Soluk Yeşil';
+    case 'FLL':
+    case 'SLY':
+      return 'Yeşil';
+    case 'SST':
+    case 'SIST':
+    case 'MSST':
+    case 'YSST':
+    case 'MVST':
+    case 'PSST':
+    case 'KFST':
+    case 'AMFS':
+    case 'KSST':
+    case 'KAE':
+    case 'GLE':
+      return 'Koyu Yeşil (Şist)';
+    case 'SRP':
+    case 'SERP':
+      return 'Açık Yeşil (Serp)';
+    case 'KVS':
+    case 'KUVARSIT':
+      return 'Sarı-Yeşil';
+    case 'AMF':
+    case 'MER':
+    case 'MRB':
+    case 'GRNL':
+    case 'EKL':
+    case 'MGM':
+      return 'Mavi-Yeşil';
+    case 'GRF':
+    case 'HRF':
+    case 'MTZ':
+    case 'SKR':
+    case 'SPL':
+      return 'Yeşil';
+    case 'YKS':
+    case 'BKS':
+    case 'DRC':
+    case 'KAM':
+      return 'Gri-Yeşil';
+    case 'MLK':
+    case 'FLT':
+      return 'Sarı (Fay/Milonit)';
+    case 'CMS':
+    case 'MKON':
+    case 'MAR':
+    case 'MVOL':
+    case 'MRYL':
+    case 'KRT':
+    case 'MBZ':
+    case 'GRY':
+    case 'OFM':
+    case 'OFY':
+      return 'Yeşil / Mor';
+
     default:
       return 'Gri';
   }

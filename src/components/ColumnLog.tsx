@@ -802,109 +802,233 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
   const svgWidth = Math.max(100, currentX);
 
   const getRockColor = (code: string) => {
-    switch (code.toUpperCase()) {
-      case 'DOLGU':
-      case 'OB':
-      case 'TO':
-      case 'TOPRAK':
-        return '#ADA699'; // Düzeltilmiş Toprak
-      case 'BAZALT':
-      case 'BSL':
-        return '#737373'; // Bazalt (Koyu Kül Gri)
-      case 'DIYABAZ':
-      case 'DB':
-      case 'GABRO':
-      case 'GB':
-        return '#F24073'; // Diyabaz/Gabro (Koyu Pembe-Mor)
-      case 'DIYORIT':
-      case 'DYR':
-        return '#E673A6'; // Diyorit (Koyu Pembe)
-      case 'PEGMATIT':
-      case 'PEG':
-        return '#FFB219'; // Pegmatit (Turuncu-Sarı)
-      case 'KUVARS':
-      case 'QVN':
-        return '#E6F259'; // Kuvars (Açık Sarı-Yeşil)
-      case 'ALBIT':
-        return '#E0F3FE'; // Felsik Gnays (Albit için en yakın temiz açık renk)
-      case 'GNAYS':
-      case 'GNYS':
-        return '#61E07A'; // Gnays
-      case 'ANDEZIT':
-      case 'AND':
-      case 'VIA.A':
-        return '#9145EB'; // Andezit
+    switch ((code || '').toUpperCase()) {
+      // Magmatik Kayaçlar
+      case 'TFR': return '#B24DCC';
+      case 'VK':
+      case 'LPL': return '#BF4DCC';
+      case 'VKB':
+      case 'VBR':
+      case 'BTF': return '#CC59D9';
+      case 'VKT':
+      case 'LTS':
+      case 'LTF': return '#B259CC';
+      case 'TF':
       case 'TUF':
-      case 'VIA':
-      case 'VIA.T':
-      case 'VIA:T':
-        return '#BF66D9'; // Tüf
-      case 'VIA.P':
-        return '#BF66D9'; // Piroklastik Breş / Breş (Tüf grubu)
-      case 'KAOLEN':
-      case 'KAO':
-      case 'KIL':
-        return '#FAF2BF'; // Kil
-      case 'KUVARSIT':
-      case 'QVN':
-        return '#E6F259'; // Kuvarsit
-      case 'SIST':
-      case 'MTSH':
-      case 'MTSL':
-      case 'MTSS':
-        return '#33A666'; // Şist
-      case 'SEDIMENT':
-        return '#CCB266'; // Klastik Sedimanter Kayaçlar
-      case 'GRANIT':
-      case 'GNT':
-      case 'GRA':
-        return '#FF4D4D'; // Granit
-      case 'VFD':
-      case 'SUBVOLKANIK':
-      case 'INTRUZIF':
-      case 'DAYK':
-        return '#FF3333'; // Granitoid
-      case 'DASIT':
-        return '#B373F2'; // Dasit
-      case 'RIYOLIT':
-        return '#C799F2'; // Riyolit
-      case 'IGNIMBIRIT':
-        return '#BF66D9'; // Ignimbirit (Tüf grubu)
-      case 'SIYENIT':
-        return '#FF66E6'; // Siyenit
-      case 'GRANODIYORIT':
-        return '#FF8080'; // Granodiyorit
-      case 'PERLIT':
-        return '#FFD1EA'; // Perlit (Obsidiyen grubu)
-      case 'KALSIT':
-        return '#66B2F2'; // Kireçtaşı (Kalsit)
-      case 'MRB':
-        return '#33B3E6'; // Mermer
-      case 'KOMUR':
-        return '#B3BFBF'; // Kömür
+      case 'BRS':
       case 'BRES':
-      case 'BXS':
-        return '#BF66D9'; // Breş (Tüf grubu)
-      case 'XBH':
-      case 'FLT':
-      case 'YANAL':
-        return '#E6E600'; // Milonitik Kayaç (Fay)
-      case 'OFY':
-        return '#8AB580'; // Ofiyolitik Melanj
-      case 'SERP':
-        return '#8CBF80'; // Serpantinit
-      case 'VSM':
-      case 'VOLKANOSEDIMANTER':
-        return '#B259CC'; // Volkanik kül tüfü (Volkanosedimanter)
-      case 'UNC':
-        return '#64748b'; // Uyumsuzluk
-      case 'KUM':
-        return '#F2D973'; // Kumtaşı
+      case 'AGL':
+      case 'PBR': return '#BF66D9';
+      case 'AP': return '#FFCC33';
+      case 'PEG': return '#FFB219';
+      case 'GRND': return '#FF3333';
+      case 'GRT':
+      case 'GRA':
+      case 'GNT':
+      case 'GRANIT': return '#FF4D4D';
+      case 'AFGR': return '#FFD1DC';
+      case 'MGR': return '#F24D59';
+      case 'SGR': return '#E64D4D';
+      case 'TRND': return '#FFA7BC';
+      case 'TNLT': return '#FF6666';
+      case 'GRD':
+      case 'GRANODIYORIT': return '#FF8080';
+      case 'DRD': return '#D9408C';
+      case 'DYR':
+      case 'DIYORIT': return '#D959A1';
+      case 'KSD': return '#E066A1';
+      case 'MDYR': return '#DB61AD';
+      case 'GBY': return '#F23366';
+      case 'GB':
+      case 'GABRO': return '#F24073';
+      case 'MGB': return '#E64073';
+      case 'KMG': return '#FF6F5B';
+      case 'NOR': return '#FFD6D1';
+      case 'TROK': return '#FFBFCE';
+      case 'DOLE': return '#8019CC';
+      case 'DB':
+      case 'DIYABAZ': return '#F24073';
+      case 'ANR': return '#F7ABC4';
+      case 'SYD': return '#F226A6';
+      case 'SY':
+      case 'SIYENIT': return '#FF4DCC';
+      case 'KSY': return '#FF59D9';
+      case 'FDS': return '#FF73F2';
+      case 'MONZ': return '#F240BF';
+      case 'KSM': return '#F24DCC';
+      case 'FOD': return '#F791C3';
+      case 'FDG': return '#F273BF';
+      case 'FDSY': return '#ED54B8';
+      case 'FDL': return '#E633B3';
+      case 'RYL':
+      case 'RIYOLIT': return '#C799F2';
+      case 'AFR': return '#CC42F2';
+      case 'DST':
+      case 'DASIT': return '#B373F2';
+      case 'RYD': return '#FEC62A';
+      case 'TRKD': return '#9966E6';
+      case 'TRKT': return '#A17AED';
+      case 'TRKA': return '#C95201';
+      case 'TRKB': return '#ECD5C6';
+      case 'LA': return '#AD8CFA';
+      case 'KLA': return '#FE8736';
+      case 'AND':
+      case 'ANDEZIT': return '#9145EB';
+      case 'BON': return '#9E52EB';
+      case 'BAZ':
+      case 'BAZALT': return '#6600FF';
+      case 'AOB': return '#7333E6';
+      case 'TLB': return '#804DED';
+      case 'FND': return '#5926F2';
+      case 'FON': return '#594DF2';
+      case 'TFFD': return '#7359F2';
+      case 'TEF': return '#7373F2';
+      case 'BAS': return '#8080F2';
+      case 'FDD':
+      case 'FDT': return '#804DE6';
+      case 'PRD': return '#D90D99';
+      case 'PRKS': return '#E626A6';
+      case 'KOM': return '#F045AB';
+      case 'HAR': return '#D90F66';
+      case 'LER': return '#D94059';
+      case 'DUN': return '#D96F8C';
+      case 'VER': return '#D91E9E';
+      case 'KMB': return '#C1010A';
+      case 'HBT': return '#A30109';
+      case 'KAR': return '#00FFFF';
+      case 'KAL-MEL': return '#E6B200';
+      case 'EKS': return '#B200D9';
+      case 'POR': return '#9919B2';
+      case 'OBS': return '#FFD1EA';
+      case 'PMS': return '#FFE5F3';
+      case 'LAMB': return '#E45891';
+
+      // Sedimanter Kayaçlar
+      case 'ALV':
+      case 'DOLGU':
+      case 'TOPRAK':
+      case 'TO': return '#FFFF99';
+      case 'DMK': return '#F2F2BF';
+      case 'CK': return '#FFFFCC';
+      case 'CM': return '#FFF2B2';
+      case 'KL':
+      case 'KIL':
+      case 'KAOLEN': return '#FAF2BF';
+      case 'SL': return '#F2E6BF';
+      case 'KBS': return '#0DB3C9';
+      case 'KKS': return '#33C7D9';
+      case 'BYS': return '#D9CC80';
+      case 'OZS': return '#DED48C';
+      case 'OOZ': return '#E6D9A6';
+      case 'TRB': return '#E6D694';
+      case 'SPR': return '#EBDE9E';
+      case 'KOOZ': return '#E6E6CC';
+      case 'SOOZ': return '#EDE0B2';
+      case 'KLSED':
+      case 'SEDIMENT': return '#CCB266';
+      case 'DMKT': return '#CCBF8C';
+      case 'KONG': return '#CCBFA6';
+      case 'KMT':
+      case 'KUM': return '#F2D973';
+      case 'ARN': return '#F2E080';
+      case 'CKMT': return '#F2E691';
+      case 'CMT': return '#B28C59';
+      case 'KLT': return '#BF996B';
+      case 'SLT': return '#CCA612';
+      case 'SY': return '#D1B08C';
+      case 'OSED': return '#B3B399';
+      case 'KMR':
+      case 'KOMUR': return '#B3BFBF';
+      case 'LNY': return '#BFB3A6';
+      case 'BTK': return '#CCB8A6';
+      case 'ANTR': return '#BFBFBF';
+      case 'KSED': return '#4D80FF';
+      case 'SKASED': return '#598CFA';
+      case 'DOSED-MASED': return '#6699FA';
+      case 'DOL': return '#73A6FA';
+      case 'KÇT':
+      case 'KALSIT': return '#66B2F2';
+      case 'TBT': return '#73BFF2';
+      case 'TRV': return '#7ECDF2';
+      case 'KKSED': return '#33B3E6';
+      case 'KKÇT-MRN': return '#59BFF1';
+      case 'KDOL': return '#66CCF2';
+      case 'KOSS': return '#B3CC66';
+      case 'BSSED': return '#BFD973';
+      case 'DSED':
       case 'OKSIT':
-      case 'SULFIT':
-        return '#BFCC66'; // Demirce Zengin Sedimanter Kayaç
-      case 'ALUNIT':
-        return '#F1F5F9'; // Alunit
+      case 'SULFIT': return '#BFCC66';
+      case 'CNCT': return '#D9B27F';
+      case 'ORCT': return '#D9BA99';
+      case 'KİSED': return '#CCCCE6';
+      case 'EVP': return '#99CCE6';
+      case 'KAT': return '#AADEF2';
+      case 'JPS-ANH': return '#B2E6F2';
+      case 'BNT': return '#C0D0C0';
+      case 'ARJ': return '#E1F0D8';
+      case 'ARK': return '#69CF9C';
+      case 'OLS': return '#8DDECD';
+      case 'SBR': return '#A7BA86';
+      case 'KARN': return '#9ACEFE';
+      case 'CRT': return '#9ABFC0';
+
+      // Metamorfik Kayaçlar
+      case 'FOM': return '#4DD966';
+      case 'GNS':
+      case 'GNAYS':
+      case 'GNYS': return '#61E07A';
+      case 'OGNS': return '#73E68C';
+      case 'PGNS': return '#85F09E';
+      case 'FGNS':
+      case 'ALBIT': return '#E0F3FE';
+      case 'GGNS': return '#C1E1C9';
+      case 'BGNS': return '#AED6C1';
+      case 'MGNS': return '#BBFBDE';
+      case 'FLL': return '#73F28C';
+      case 'SLY': return '#80F299';
+      case 'SST':
+      case 'SIST': return '#33A666';
+      case 'MSST': return '#4DBF80';
+      case 'YSST': return '#45B872';
+      case 'MVST': return '#188B3F';
+      case 'PSST': return '#22955B';
+      case 'KFST': return '#396D3F';
+      case 'AMFS': return '#454551';
+      case 'KSST': return '#0E814D';
+      case 'KAE': return '#26994D';
+      case 'GLE': return '#73B380';
+      case 'SRP':
+      case 'SERP': return '#8CBF80';
+      case 'KVS':
+      case 'KUVARSIT': return '#E6F259';
+      case 'AMF': return '#40D973';
+      case 'MER':
+      case 'MRB': return '#33B3E6';
+      case 'GRNL': return '#66CC80';
+      case 'EKL': return '#33CC59';
+      case 'MGM': return '#19BF66';
+      case 'GRF': return '#80B280';
+      case 'HRF': return '#8CBF8C';
+      case 'MTZ': return '#80E64D';
+      case 'SKR': return '#99E659';
+      case 'SPL': return '#A6E666';
+      case 'YKS': return '#A6D9CC';
+      case 'BKS': return '#BFE6D9';
+      case 'DRC': return '#B3E6D9';
+      case 'KAM': return '#CCF2E6';
+      case 'MLK':
+      case 'FLT': return '#E6E600';
+      case 'CMS': return '#00B366';
+      case 'MKON': return '#E9FFE9';
+      case 'MAR': return '#C9FFC9';
+      case 'MVOL': return '#FF57FF';
+      case 'MRYL': return '#FFA7FF';
+      case 'KRT': return '#FE6700';
+      case 'MBZ': return '#872B4C';
+      case 'GRY': return '#A449FF';
+      case 'OFM':
+      case 'OFY': return '#8AB580';
+
       case 'BU':
       case 'KAROT':
       case 'NONE':

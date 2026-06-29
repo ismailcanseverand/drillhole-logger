@@ -1570,30 +1570,45 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                           .map(a => {
                             const y = a.from * scaleY + bodyPaddingTop;
                             const h = (a.to - a.from) * scaleY;
-
                             const val = Number(a[key as keyof AssayState]) || 0;
                             const valRatio = Math.min(1, val / maxValForAnalyte);
                             const barWidth = Math.max(2, valRatio * (subColWidth - 6));
+                            const showLabel = h >= 14 && barWidth > 22 && val > 0;
+                            const formattedVal = isMetallic ? val.toFixed(2) : `%${val.toFixed(1)}`;
 
                             return (
-                              <rect
-                                key={`${key}-${a.id}`}
-                                x={subColX + 3}
-                                y={y}
-                                width={barWidth}
-                                height={h}
-                                fill={analyteDetails.color}
-                                fillOpacity={0.3}
-                                stroke={analyteDetails.color}
-                                strokeWidth="1.5"
-                                strokeOpacity={0.9}
-                                style={{ cursor: 'pointer', transition: 'fill-opacity 0.2s' }}
-                                onClick={() => handleBlockClick('Assay', a.id)}
-                                onMouseEnter={() => {
-                                  setHoverInfo(`Assay Sample [${a.sampleId}] ${a.from}m-${a.to}m | ${analyteDetails.label}: ${val.toFixed(2)}`);
-                                }}
-                                onMouseLeave={() => setHoverInfo(null)}
-                              />
+                              <g key={`${key}-${a.id}`}>
+                                <rect
+                                  x={subColX + 3}
+                                  y={y}
+                                  width={barWidth}
+                                  height={h}
+                                  fill={analyteDetails.color}
+                                  fillOpacity={0.3}
+                                  stroke={analyteDetails.color}
+                                  strokeWidth="1.5"
+                                  strokeOpacity={0.9}
+                                  style={{ cursor: 'pointer', transition: 'fill-opacity 0.2s' }}
+                                  onClick={() => handleBlockClick('Assay', a.id)}
+                                  onMouseEnter={() => {
+                                    setHoverInfo(`Assay Sample [${a.sampleId}] ${a.from}m-${a.to}m | ${analyteDetails.label}: ${val.toFixed(2)}`);
+                                  }}
+                                  onMouseLeave={() => setHoverInfo(null)}
+                                />
+                                {showLabel && (
+                                  <text
+                                    x={subColX + 6}
+                                    y={y + h / 2 + 3}
+                                    fill={analyteDetails.color}
+                                    fontSize="8px"
+                                    fontWeight="bold"
+                                    pointerEvents="none"
+                                    style={{ userSelect: 'none' }}
+                                  >
+                                    {formattedVal}
+                                  </text>
+                                )}
+                              </g>
                             );
                           })}
                       </g>

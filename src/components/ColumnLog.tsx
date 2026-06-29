@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import type { LithologyState, GeotechState, AssayState } from '../hooks/useDrillholeData';
-import { ChevronLeft, ChevronRight, Eye, EyeOff, SlidersHorizontal, Download } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Eye, EyeOff, SlidersHorizontal, Download, X } from 'lucide-react';
 
 interface ColumnLogProps {
   totalDepth: number;
@@ -74,11 +74,29 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
   const [visualStyle, setVisualStyle] = useState<'bars' | 'line'>('bars');
   const [showConfig, setShowConfig] = useState<boolean>(false);
 
+  // Custom metadata states for Excel export
+  const [showExportModal, setShowExportModal] = useState<boolean>(false);
+  const [metaCompany, setMetaCompany] = useState<string>('MCB SONDAJ');
+  const [metaProject, setMetaProject] = useState<string>(collar?.project || '');
+  const [metaCity, setMetaCity] = useState<string>('Çanakkale');
+  const [metaDistrict, setMetaDistrict] = useState<string>('Biga');
+  const [metaVillage, setMetaVillage] = useState<string>('Arabaalan');
+  const [metaDrillMethod, setMetaDrillMethod] = useState<string>('-');
+  const [metaDiameter, setMetaDiameter] = useState<string>('HQ');
+  const [metaWaterTable, setMetaWaterTable] = useState<string>('-');
+  const [metaDriller, setMetaDriller] = useState<string>('-');
+
+  useEffect(() => {
+    if (collar?.project) {
+      setMetaProject(collar.project);
+    }
+  }, [collar?.project]);
+
   const headerSvgRef = useRef<SVGSVGElement>(null);
   const bodySvgRef = useRef<SVGSVGElement>(null);
 
   const handleExportExcel = async () => {
-    const project = collar?.project || '-';
+    const project = metaProject || collar?.project || '-';
     const holeIdVal = holeId || collar?.holeId || '-';
     const easting = collar?.easting !== undefined ? `${collar.easting}` : '-';
     const northing = collar?.northing !== undefined ? `${collar.northing}` : '-';
@@ -231,29 +249,29 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
       // Metadata Rows
       const rowData = [
         {
-          c1Label: 'Yüklenici Firma', c1Val: 'MCB SONDAJ',
+          c1Label: 'Yüklenici Firma', c1Val: metaCompany,
           c2Label: 'Sondaj Derinliği', c2Val: `${collar?.totalDepth !== undefined ? collar.totalDepth : '0'} m`,
-          c3Label: 'Yeraltı Suyu', c3Val: '-'
+          c3Label: 'Yeraltı Suyu', c3Val: metaWaterTable
         },
         {
           c1Label: 'Proje Adı', c1Val: project,
           c2Label: 'Başlama Tarihi', c2Val: collar?.dateStarted || '-',
-          c3Label: 'Makine Tipi/Metodu', c3Val: '-'
+          c3Label: 'Makine Tipi/Metodu', c3Val: metaDrillMethod
         },
         {
-          c1Label: 'İl', c1Val: 'Çanakkale',
+          c1Label: 'İl', c1Val: metaCity,
           c2Label: 'Bitiş Tarihi', c2Val: collar?.dateCompleted || '-',
           c3Label: 'SPT Şahmerdan Tipi', c3Val: '-'
         },
         {
-          c1Label: 'İlçe', c1Val: 'Biga',
+          c1Label: 'İlçe', c1Val: metaDistrict,
           c2Label: 'Sondaj Kotu', c2Val: collar?.elevation !== undefined ? `${collar.elevation} m` : '-',
-          c3Label: 'Delgi Çapı', c3Val: 'HQ'
+          c3Label: 'Delgi Çapı', c3Val: metaDiameter
         },
         {
-          c1Label: 'Mahalle/Köy', c1Val: 'Arabaalan',
+          c1Label: 'Mahalle/Köy', c1Val: metaVillage,
           c2Label: 'Koordinat X (N)', c2Val: northing,
-          c3Label: 'Sondör', c3Val: '-'
+          c3Label: 'Sondör', c3Val: metaDriller
         },
         {
           c1Label: 'Pafta', c1Val: '-',
@@ -990,7 +1008,7 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
             
             <button
               className="btn btn-primary btn-sm"
-              onClick={handleExportExcel}
+              onClick={() => setShowExportModal(true)}
               style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 8px', fontSize: '11px' }}
             >
               <Download size={12} />
@@ -1750,6 +1768,175 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
           )}
         </div>
       </div>
+
+      {showExportModal && (
+        <div className="modal-overlay" style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          backgroundColor: 'rgba(15, 23, 42, 0.4)',
+          backdropFilter: 'blur(2px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 999
+        }}>
+          <div className="modal-container" style={{
+            width: '500px',
+            backgroundColor: '#ffffff',
+            borderRadius: 'var(--radius-md)',
+            boxShadow: 'var(--shadow-lg)',
+            border: '1px solid var(--border-light)',
+            overflow: 'hidden'
+          }}>
+            <div className="modal-header" style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '12px 20px',
+              backgroundColor: '#fafafa',
+              borderBottom: '1px solid var(--border-light)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Download size={18} style={{ color: 'var(--primary)' }} />
+                <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '15px', fontWeight: 'bold', margin: 0, color: 'var(--text-main)' }}>
+                  Excel Rapor Üst Bilgileri (Header Information)
+                </h3>
+              </div>
+              <button
+                className="btn-icon"
+                onClick={() => setShowExportModal(false)}
+                style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: '0 0 4px 0' }}>
+                Excel Sondaj Logunda üst bilgi kısmında yer alacak detayları aşağıdan düzenleyebilirsiniz:
+              </p>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <label style={{ fontSize: '10px', fontWeight: 'bold', color: 'var(--text-muted)' }}>Yüklenici Firma</label>
+                  <input
+                    type="text"
+                    value={metaCompany}
+                    onChange={e => setMetaCompany(e.target.value)}
+                    style={{ padding: '6px 10px', fontSize: '12px', border: '1px solid var(--border-medium)', borderRadius: 'var(--radius-sm)' }}
+                  />
+                </div>
+
+                <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <label style={{ fontSize: '10px', fontWeight: 'bold', color: 'var(--text-muted)' }}>Proje Adı</label>
+                  <input
+                    type="text"
+                    value={metaProject}
+                    onChange={e => setMetaProject(e.target.value)}
+                    style={{ padding: '6px 10px', fontSize: '12px', border: '1px solid var(--border-medium)', borderRadius: 'var(--radius-sm)' }}
+                  />
+                </div>
+
+                <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <label style={{ fontSize: '10px', fontWeight: 'bold', color: 'var(--text-muted)' }}>İl</label>
+                  <input
+                    type="text"
+                    value={metaCity}
+                    onChange={e => setMetaCity(e.target.value)}
+                    style={{ padding: '6px 10px', fontSize: '12px', border: '1px solid var(--border-medium)', borderRadius: 'var(--radius-sm)' }}
+                  />
+                </div>
+
+                <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <label style={{ fontSize: '10px', fontWeight: 'bold', color: 'var(--text-muted)' }}>İlçe</label>
+                  <input
+                    type="text"
+                    value={metaDistrict}
+                    onChange={e => setMetaDistrict(e.target.value)}
+                    style={{ padding: '6px 10px', fontSize: '12px', border: '1px solid var(--border-medium)', borderRadius: 'var(--radius-sm)' }}
+                  />
+                </div>
+
+                <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <label style={{ fontSize: '10px', fontWeight: 'bold', color: 'var(--text-muted)' }}>Mahalle / Köy</label>
+                  <input
+                    type="text"
+                    value={metaVillage}
+                    onChange={e => setMetaVillage(e.target.value)}
+                    style={{ padding: '6px 10px', fontSize: '12px', border: '1px solid var(--border-medium)', borderRadius: 'var(--radius-sm)' }}
+                  />
+                </div>
+
+                <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <label style={{ fontSize: '10px', fontWeight: 'bold', color: 'var(--text-muted)' }}>Makine Tipi / Metodu</label>
+                  <input
+                    type="text"
+                    value={metaDrillMethod}
+                    onChange={e => setMetaDrillMethod(e.target.value)}
+                    style={{ padding: '6px 10px', fontSize: '12px', border: '1px solid var(--border-medium)', borderRadius: 'var(--radius-sm)' }}
+                  />
+                </div>
+
+                <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <label style={{ fontSize: '10px', fontWeight: 'bold', color: 'var(--text-muted)' }}>Delgi Çapı</label>
+                  <input
+                    type="text"
+                    value={metaDiameter}
+                    onChange={e => setMetaDiameter(e.target.value)}
+                    style={{ padding: '6px 10px', fontSize: '12px', border: '1px solid var(--border-medium)', borderRadius: 'var(--radius-sm)' }}
+                  />
+                </div>
+
+                <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <label style={{ fontSize: '10px', fontWeight: 'bold', color: 'var(--text-muted)' }}>Yeraltı Suyu Seviyesi</label>
+                  <input
+                    type="text"
+                    value={metaWaterTable}
+                    onChange={e => setMetaWaterTable(e.target.value)}
+                    style={{ padding: '6px 10px', fontSize: '12px', border: '1px solid var(--border-medium)', borderRadius: 'var(--radius-sm)' }}
+                  />
+                </div>
+
+                <div className="form-group" style={{ display: 'flex', gridColumn: 'span 2', flexDirection: 'column', gap: '4px' }}>
+                  <label style={{ fontSize: '10px', fontWeight: 'bold', color: 'var(--text-muted)' }}>Sondör</label>
+                  <input
+                    type="text"
+                    value={metaDriller}
+                    onChange={e => setMetaDriller(e.target.value)}
+                    style={{ padding: '6px 10px', fontSize: '12px', border: '1px solid var(--border-medium)', borderRadius: 'var(--radius-sm)' }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '14px' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => setShowExportModal(false)}
+                  style={{ fontSize: '11px', padding: '6px 12px' }}
+                >
+                  Vazgeç
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm"
+                  onClick={async () => {
+                    setShowExportModal(false);
+                    await handleExportExcel();
+                  }}
+                  style={{ fontSize: '11px', padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                >
+                  <Download size={12} />
+                  Excel Raporunu İndir
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1394,28 +1394,28 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
               </pattern>
               {/* Feldspar / ALBIT (soft gray diagonal patterns) */}
               <pattern id="pat-albit" width="20" height="20" patternUnits="userSpaceOnUse">
-                <rect width="20" height="20" fill="#E0F3FE" />
+                <rect width="20" height="20" fill="none" />
                 <path d="M 5,2 L 2,5 M 15,12 L 12,15" stroke="#0E7490" strokeWidth="1.5" />
               </pattern>
               {/* Kaolin / KAOLEN (soft yellow texture) */}
               <pattern id="pat-kaolen" width="20" height="20" patternUnits="userSpaceOnUse">
-                <rect width="20" height="20" fill="#FAF2BF" />
+                <rect width="20" height="20" fill="none" />
                 <circle cx="5" cy="5" r="1.5" fill="#D9C333" fillOpacity="0.8" />
                 <circle cx="15" cy="15" r="1.5" fill="#D9C333" fillOpacity="0.8" />
               </pattern>
               {/* Gneiss / GNAYS (wavy lines on grey) */}
               <pattern id="pat-gnays" width="20" height="20" patternUnits="userSpaceOnUse">
-                <rect width="20" height="20" fill="#61E07A" />
+                <rect width="20" height="20" fill="none" />
                 <path d="M0,5 Q5,10 10,5 T20,5 M0,15 Q5,20 10,15 T20,15" fill="none" stroke="#15803D" strokeWidth="1.5" />
               </pattern>
               {/* Unconformity / UNC (dashed lines on grey) */}
               <pattern id="pat-unc" width="20" height="20" patternUnits="userSpaceOnUse">
-                <rect width="20" height="20" fill="#64748b" />
+                <rect width="20" height="20" fill="none" />
                 <path d="M 0,10 L 20,10" stroke="#94a3b8" strokeWidth="2" strokeDasharray="4,4" />
               </pattern>
               {/* Granite / GRANIT (dots/crosses on pink) */}
               <pattern id="pat-granit" width="20" height="20" patternUnits="userSpaceOnUse">
-                <rect width="20" height="20" fill="#FF4D4D" />
+                <rect width="20" height="20" fill="none" />
                 <circle cx="5" cy="5" r="1.5" fill="#B91C1C" />
                 <circle cx="15" cy="15" r="1.5" fill="#B91C1C" />
                 <line x1="12" y1="4" x2="16" y2="8" stroke="#B91C1C" strokeWidth="1" />
@@ -1425,32 +1425,32 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
               </pattern>
               {/* Breccia / BRES (rock pieces on grey) */}
               <pattern id="pat-bres" width="25" height="25" patternUnits="userSpaceOnUse">
-                <rect width="25" height="25" fill="#BF66D9" />
+                <rect width="25" height="25" fill="none" />
                 <polygon points="5,2 12,5 8,12 2,7" fill="#701A75" stroke="#E9D5FF" strokeWidth="0.5" />
                 <polygon points="18,10 23,15 15,20 14,12" fill="#701A75" stroke="#E9D5FF" strokeWidth="0.5" />
                 <polygon points="3,18 9,23 6,24" fill="#4A044E" stroke="#D8B4FE" strokeWidth="0.5" />
               </pattern>
               {/* Quartzite / KUVARSIT (cyan with fine dots) */}
               <pattern id="pat-kuvarsit" width="10" height="10" patternUnits="userSpaceOnUse">
-                <rect width="10" height="10" fill="#E6F259" />
+                <rect width="10" height="10" fill="none" />
                 <circle cx="3" cy="3" r="1.2" fill="#A1A11A" />
                 <circle cx="8" cy="8" r="1.2" fill="#A1A11A" />
               </pattern>
               {/* Andesite / ANDEZIT, AND, TUF (red-brown with V-shapes) */}
               <pattern id="pat-andezit" width="20" height="20" patternUnits="userSpaceOnUse">
-                <rect width="20" height="20" fill="#9145EB" />
+                <rect width="20" height="20" fill="none" />
                 <path d="M 4,6 L 7,3 L 10,6" fill="none" stroke="#5B21B6" strokeWidth="1.5" />
                 <path d="M 12,16 L 15,13 L 18,16" fill="none" stroke="#5B21B6" strokeWidth="1.5" />
               </pattern>
               {/* Basalt / BASALT (dark green with chevrons) */}
               <pattern id="pat-basalt" width="20" height="20" patternUnits="userSpaceOnUse">
-                <rect width="20" height="20" fill="#6600FF" />
+                <rect width="20" height="20" fill="none" />
                 <path d="M 5,5 L 8,8 L 11,5" fill="none" stroke="#4338CA" strokeWidth="1.5" />
                 <path d="M 15,15 L 18,18 L 21,15" fill="none" stroke="#4338CA" strokeWidth="1.5" />
               </pattern>
               {/* Overburden / DOLGU or OB (brown blocks/sand) */}
               <pattern id="pat-dolgu" width="20" height="20" patternUnits="userSpaceOnUse">
-                <rect width="20" height="20" fill="#ADA699" />
+                <rect width="20" height="20" fill="none" />
                 <circle cx="4" cy="4" r="1.2" fill="#57534E" />
                 <circle cx="14" cy="14" r="1.2" fill="#57534E" />
                 <line x1="2" y1="18" x2="8" y2="18" stroke="#78716C" strokeWidth="1" />
@@ -1458,17 +1458,17 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
               </pattern>
               {/* Schist / SIST (wavy lines on light green) */}
               <pattern id="pat-sist" width="30" height="10" patternUnits="userSpaceOnUse">
-                <rect width="30" height="10" fill="#33A666" />
+                <rect width="30" height="10" fill="none" />
                 <path d="M0,5 Q7.5,0 15,5 T30,5" fill="none" stroke="#14532D" strokeWidth="1" />
               </pattern>
               {/* Clay / KIL (orange with horizontal stripes) */}
               <pattern id="pat-kil" width="10" height="10" patternUnits="userSpaceOnUse">
-                <rect width="10" height="10" fill="#FAF2BF" />
+                <rect width="10" height="10" fill="none" />
                 <line x1="0" y1="5" x2="10" y2="5" stroke="#D97706" strokeWidth="1" />
               </pattern>
               {/* Calcite/Limestone / KALSIT (light rose bricks) */}
               <pattern id="pat-kalsit" width="20" height="20" patternUnits="userSpaceOnUse">
-                <rect width="20" height="20" fill="#66B2F2" />
+                <rect width="20" height="20" fill="none" />
                 <line x1="0" y1="10" x2="20" y2="10" stroke="#1D4ED8" strokeWidth="0.75" />
                 <line x1="0" y1="20" x2="20" y2="20" stroke="#1D4ED8" strokeWidth="0.75" />
                 <line x1="10" y1="0" x2="10" y2="10" stroke="#1D4ED8" strokeWidth="0.75" />
@@ -1477,13 +1477,13 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
               </pattern>
               {/* Dyke / DAYK (diagonal red blocks) */}
               <pattern id="pat-dayk" width="20" height="20" patternUnits="userSpaceOnUse">
-                <rect width="20" height="20" fill="#FF3333" />
+                <rect width="20" height="20" fill="none" />
                 <line x1="0" y1="0" x2="20" y2="20" stroke="#991B1B" strokeWidth="2" />
                 <line x1="20" y1="0" x2="0" y2="20" stroke="#991B1B" strokeWidth="2" />
               </pattern>
               {/* Sand / KUM (yellow with fine dots) */}
               <pattern id="pat-kum" width="10" height="10" patternUnits="userSpaceOnUse">
-                <rect width="10" height="10" fill="#F2D973" />
+                <rect width="10" height="10" fill="none" />
                 <circle cx="2" cy="2" r="0.8" fill="#B45309" />
                 <circle cx="7" cy="7" r="0.8" fill="#B45309" />
               </pattern>
@@ -1547,15 +1547,14 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                     const textWidth = Math.max(30, labelText.length * 6);
                     return (
                       <g key={l.id}>
+                        {/* Layer 1: MAPEG solid background color */}
                         <rect
                           x={pos.startX + 2}
                           y={y}
                           width={pos.width - 4}
                           height={h}
-                          fill={patternUrl}
-                          stroke="var(--border-light)"
-                          strokeWidth="0.5"
-                          style={{ cursor: 'pointer', opacity: 0.9 }}
+                          fill={getRockColor(l.rockCode)}
+                          style={{ cursor: 'pointer' }}
                           onClick={() => handleBlockClick('Lithology', l.id)}
                           onMouseEnter={() =>
                             setHoverInfo(
@@ -1564,6 +1563,30 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                           }
                           onMouseLeave={() => setHoverInfo(null)}
                         />
+                        {/* Layer 2: Texture pattern drawn on top with stroke borders */}
+                        {patternUrl.startsWith('url(') ? (
+                          <rect
+                            x={pos.startX + 2}
+                            y={y}
+                            width={pos.width - 4}
+                            height={h}
+                            fill={patternUrl}
+                            stroke="var(--border-light)"
+                            strokeWidth="0.5"
+                            style={{ cursor: 'pointer', pointerEvents: 'none' }}
+                          />
+                        ) : (
+                          <rect
+                            x={pos.startX + 2}
+                            y={y}
+                            width={pos.width - 4}
+                            height={h}
+                            fill="none"
+                            stroke="var(--border-light)"
+                            strokeWidth="0.5"
+                            style={{ cursor: 'pointer', pointerEvents: 'none' }}
+                          />
+                        )}
                         {l.photo && h > 12 && (
                           <g style={{ pointerEvents: 'none' }}>
                             <circle

@@ -1153,14 +1153,23 @@ export function useDrillholeData() {
 
       const localCollar = JSON.parse(localCollarStr);
 
-      // Protect other users' data during background sync
+      let currentUserEmail = '';
+      try {
+        const { data } = await client.auth.getSession();
+        currentUserEmail = data?.session?.user?.email || '';
+      } catch (err) {
+        console.error('Error fetching session in syncHoleToSupabase:', err);
+      }
+      const isAdmin = currentUserEmail.trim().toLowerCase() === 'ismailcansever@kale.com.tr';
+
+      // Protect other users' data during background sync (bypass for admin)
       const { data: dbCollar } = await client
         .from('collars')
         .select('logger')
         .eq('hole_id', hId)
         .maybeSingle();
 
-      if (dbCollar && dbCollar.logger) {
+      if (!isAdmin && dbCollar && dbCollar.logger) {
         const dbLogger = dbCollar.logger.trim().toLowerCase();
         const localLogger = (localCollar.logger || '').trim().toLowerCase();
         if (dbLogger && dbLogger !== localLogger) {
@@ -1374,11 +1383,20 @@ export function useDrillholeData() {
       if (checkErr) throw checkErr;
 
       if (dbCollar) {
+        let currentUserEmail = '';
+        try {
+          const { data } = await client.auth.getSession();
+          currentUserEmail = data?.session?.user?.email || '';
+        } catch (err) {
+          console.error('Error fetching session in saveActiveHoleToSupabase:', err);
+        }
+        const isAdmin = currentUserEmail.trim().toLowerCase() === 'ismailcansever@kale.com.tr';
+
         const dbLogger = (dbCollar.logger || '').trim().toLowerCase();
         const localLogger = (collar.logger || '').trim().toLowerCase();
         
-        // Prevent overwriting if database has a logger and it doesn't match the current user
-        if (dbLogger && dbLogger !== localLogger) {
+        // Prevent overwriting if user is not admin, and database has a different logger
+        if (!isAdmin && dbLogger && dbLogger !== localLogger) {
           return {
             success: false,
             message: `Bu kuyu (${collar.holeId}) başka bir kullanıcı (${dbCollar.logger}) tarafından kaydedilmiş. Veri kaybını önlemek için üzerine yazma işlemi engellendi.`

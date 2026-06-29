@@ -83,6 +83,7 @@ function App() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [guestMode, setGuestMode] = useState<boolean>(false);
   const [authChecked, setAuthChecked] = useState<boolean>(false);
+  const isAdmin = userEmail?.trim().toLowerCase() === 'ismailcansever@kale.com.tr';
 
   useEffect(() => {
     const checkUser = async () => {
@@ -712,9 +713,12 @@ function App() {
       <AuthScreen 
         onAuthSuccess={(email) => {
           setUserEmail(email);
-          // Set logger name to user name part automatically if empty
+          // Set logger name to actual geologist name automatically if empty
           if (!collar.logger) {
-            setCollar(prev => ({ ...prev, logger: email.split('@')[0] }));
+            let name = email.split('@')[0];
+            if (email.toLowerCase() === 'ismailcansever@kale.com.tr') name = 'İsmailcan SEVER';
+            else if (email.toLowerCase() === 'leventcan@kale.com.tr') name = 'Levent CAN';
+            setCollar(prev => ({ ...prev, logger: name }));
           }
         }}
         onContinueOffline={() => setGuestMode(true)}
@@ -1262,9 +1266,11 @@ function App() {
           <button className="btn btn-secondary" onClick={resetToDefault}>
             <RefreshCw size={14} /> Load Demo Project
           </button>
-          <button className="btn btn-danger" onClick={clearAllData}>
-            <Trash2 size={14} /> Reset / Clear
-          </button>
+          {isAdmin && (
+            <button className="btn btn-danger" onClick={clearAllData}>
+              <Trash2 size={14} /> Reset / Clear
+            </button>
+          )}
           {isSupabaseConfigured() && (userEmail || guestMode) && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', borderRadius: '8px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', marginRight: '6px' }}>
               <span style={{ fontSize: '11px', fontWeight: 600, color: '#e2e8f0' }}>
@@ -1287,19 +1293,21 @@ function App() {
               </button>
             </div>
           )}
-          <button 
-            className="btn btn-secondary" 
-            onClick={() => setIsSettingsOpen(true)}
-            style={{ padding: '8px' }}
-            title="Database Connection Settings"
-          >
-            {isSupabaseConfigured() ? (
-              <CloudUpload size={14} style={{ color: 'var(--success)' }} />
-            ) : (
-              <CloudOff size={14} style={{ color: 'var(--text-muted)' }} />
-            )}
-            <Settings size={14} style={{ marginLeft: '4px' }} />
-          </button>
+          {isAdmin && (
+            <button 
+              className="btn btn-secondary" 
+              onClick={() => setIsSettingsOpen(true)}
+              style={{ padding: '8px' }}
+              title="Database Connection Settings"
+            >
+              {isSupabaseConfigured() ? (
+                <CloudUpload size={14} style={{ color: 'var(--success)' }} />
+              ) : (
+                <CloudOff size={14} style={{ color: 'var(--text-muted)' }} />
+              )}
+              <Settings size={14} style={{ marginLeft: '4px' }} />
+            </button>
+          )}
         </div>
       </header>
 
@@ -1328,7 +1336,7 @@ function App() {
 
           <div className="tab-content">
             {activeTab === 'Collar' && (
-              <CollarTab collar={collar} setCollar={setCollar} errors={errors} onRenameHole={renameDrillhole} />
+              <CollarTab collar={collar} setCollar={setCollar} errors={errors} onRenameHole={renameDrillhole} isAdmin={isAdmin} />
             )}
 
             {activeTab === 'Survey' && (

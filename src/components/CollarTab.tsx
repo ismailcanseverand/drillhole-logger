@@ -8,9 +8,10 @@ interface CollarTabProps {
   setCollar: React.Dispatch<React.SetStateAction<CollarState>>;
   errors: ValidationError[];
   onRenameHole: (oldHoleId: string, newHoleId: string) => Promise<boolean>;
+  isAdmin?: boolean;
 }
 
-export const CollarTab: React.FC<CollarTabProps> = ({ collar, setCollar, errors, onRenameHole }) => {
+export const CollarTab: React.FC<CollarTabProps> = ({ collar, setCollar, errors, onRenameHole, isAdmin = false }) => {
   const [localHoleId, setLocalHoleId] = useState(collar.holeId);
 
   useEffect(() => {
@@ -78,13 +79,24 @@ export const CollarTab: React.FC<CollarTabProps> = ({ collar, setCollar, errors,
                     handleRenameSubmit();
                   }
                 }}
+                disabled={!isAdmin}
                 className={getFieldError('holeId') ? 'input-error' : ''}
-                style={{ fontWeight: 'bold', color: 'var(--primary)' }}
+                style={{ 
+                  fontWeight: 'bold', 
+                  color: 'var(--primary)',
+                  cursor: isAdmin ? 'text' : 'not-allowed'
+                }}
                 placeholder="Input text here..."
               />
-              <span style={{ fontSize: '10px', color: 'var(--text-muted)', display: 'block', marginTop: '2px' }}>
-                Press Enter or click away to rename the drillhole.
-              </span>
+              {isAdmin ? (
+                <span style={{ fontSize: '10px', color: 'var(--text-muted)', display: 'block', marginTop: '2px' }}>
+                  Press Enter or click away to rename the drillhole.
+                </span>
+              ) : (
+                <span style={{ fontSize: '10px', color: 'var(--danger)', display: 'block', marginTop: '2px' }}>
+                  Sondaj kuyusu adını sadece yöneticiler değiştirebilir.
+                </span>
+              )}
               {getFieldError('holeId') && <span className="field-error-msg">{getFieldError('holeId')}</span>}
             </div>
 

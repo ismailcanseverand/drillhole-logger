@@ -648,7 +648,7 @@ export function useDrillholeData() {
             from: cleanNum(spm.from),
             to: cleanNum(spm.to)
           })));
-          setAlterations((localAlterations ? JSON.parse(localAlterations) : []).map((alt: any) => ({
+          setAlterations((localAlterations ? JSON.parse(localAlterations) : (db[selectedHoleId]?.alterations || [])).map((alt: any) => ({
             ...alt,
             from: cleanNum(alt.from),
             to: cleanNum(alt.to),

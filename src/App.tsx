@@ -55,7 +55,8 @@ function App() {
     createNewHole,
     renameDrillhole,
     saveActiveHoleToSupabase,
-    db
+    db,
+    isDirty
   } = useDrillholeData();
 
   const [appMode, setAppMode] = useState<'landing' | 'sondaj_menu' | 'yuzey_menu' | 'sondaj_search' | 'yuzey_search' | 'yuzey_browse' | 'drillhole'>('landing');
@@ -64,6 +65,18 @@ function App() {
   const [isSavingToDb, setIsSavingToDb] = useState<boolean>(false);
   const [highlightedRowId, setHighlightedRowId] = useState<string | null>(null);
   
+  const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
   const [leftWidth, setLeftWidth] = useState<number>(50); // initial 50% split width
 
   const handleResizerMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -905,6 +918,34 @@ function App() {
           </button>
           <Database size={24} />
           <h1>KaleMaden Drillhole Manager</h1>
+          <div className="sync-status-indicator" style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: '16px', fontSize: '11px', fontWeight: 600, padding: '4px 8px', borderRadius: '4px', backgroundColor: 'rgba(255,255,255,0.05)' }}>
+            {!isSupabaseConfigured() ? (
+              <span style={{ color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#64748b' }} />
+                Çevrimdışı Mod (Sadece Yerel)
+              </span>
+            ) : !isOnline ? (
+              <span style={{ color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '6px' }} title="İnternet bağlantısı geldiğinde otomatik buluta yedeklenecektir.">
+                <span className="animate-pulse" style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#f59e0b' }} />
+                Çevrimdışı (Eşitleme Bekliyor)
+              </span>
+            ) : isSavingToDb ? (
+              <span style={{ color: '#3b82f6', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span className="animate-pulse" style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#3b82f6' }} />
+                Kaydediliyor...
+              </span>
+            ) : isDirty ? (
+              <span style={{ color: '#f97316', display: 'flex', alignItems: 'center', gap: '6px' }} title="Yerel değişiklikleriniz var, buluta henüz kaydedilmedi.">
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#f97316' }} />
+                Kaydedilmemiş Değişiklikler
+              </span>
+            ) : (
+              <span style={{ color: '#10b981', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10b981' }} />
+                Bulutla Eşitlendi
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="project-meta-controls">

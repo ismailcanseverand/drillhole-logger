@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { calculateDownholeTrace } from '../utils/math';
 import type { Coordinates3D } from '../utils/math';
 import {
@@ -9,7 +9,7 @@ import {
   validateAssays
 } from '../utils/validation';
 import type { ValidationError } from '../utils/validation';
-import { getSupabaseClient } from '../utils/supabaseClient';
+import { getSupabaseClient, isSupabaseConfigured } from '../utils/supabaseClient';
 
 // Helper functions to parse and serialize photo tag from description field
 export function parsePhotoFromDescription(desc: string): { description: string; photo?: string } {
@@ -602,6 +602,41 @@ export function useDrillholeData() {
     localStorage.setItem(`dh_${selectedHoleId}_sampleprep_metallic`, JSON.stringify(samplePrepMetallic));
   }, [samplePrepMetallic, selectedHoleId, collar.holeId]);
 
+  const loadedRef = useRef<boolean>(false);
+  const [isDirty, setIsDirty] = useState<boolean>(false);
+
+  // Track when a new hole starts loading
+  useEffect(() => {
+    loadedRef.current = false;
+    setIsDirty(false);
+  }, [selectedHoleId]);
+
+  // Set loadedRef to true after states are updated by loading (collar match is a good proxy)
+  useEffect(() => {
+    if (selectedHoleId && collar.holeId === selectedHoleId) {
+      // Set timeout to allow other states (litho, geotech) to settle
+      const t = setTimeout(() => {
+        loadedRef.current = true;
+        // Check if there are dirty holes in storage to set initial dirty state
+        const dirtyHoles = JSON.parse(localStorage.getItem('sb_dirty_holes') || '[]');
+        setIsDirty(dirtyHoles.includes(selectedHoleId));
+      }, 100);
+      return () => clearTimeout(t);
+    }
+  }, [collar.holeId, selectedHoleId]);
+
+  // Mark hole as dirty on state change after loading
+  useEffect(() => {
+    if (loadedRef.current && selectedHoleId && collar.holeId === selectedHoleId) {
+      setIsDirty(true);
+      const dirtyHoles = JSON.parse(localStorage.getItem('sb_dirty_holes') || '[]');
+      if (!dirtyHoles.includes(selectedHoleId)) {
+        dirtyHoles.push(selectedHoleId);
+        localStorage.setItem('sb_dirty_holes', JSON.stringify(dirtyHoles));
+      }
+    }
+  }, [collar, surveys, lithology, geotech, assays, samplePrep, samplePrepMetallic, selectedHoleId]);
+
   // 4. Trace calculations and validation routines
   useEffect(() => {
     if (!selectedHoleId) return;
@@ -891,6 +926,172 @@ export function useDrillholeData() {
       setSamplePrepMetallic([]);
     }
   };
+
+  const syncHoleToSupabase = async (hId: string): Promise<boolean> => {
+    const client = getSupabaseClient();
+    if (!client) return false;
+
+    try {
+      const localCollarStr = localStorage.getItem(`dh_${hId}_collar`);
+      if (!localCollarStr) return true;
+
+      const localCollar = JSON.parse(localCollarStr);
+      const localSurveys = JSON.parse(localStorage.getItem(`dh_${hId}_surveys`) || '[]');
+      const localLitho = JSON.parse(localStorage.getItem(`dh_${hId}_litho`) || '[]');
+      const localGeotech = JSON.parse(localStorage.getItem(`dh_${hId}_geotech`) || '[]');
+      const localAssays = JSON.parse(localStorage.getItem(`dh_${hId}_assays`) || '[]');
+
+      const collarPayload = {
+        hole_id: localCollar.holeId,
+        easting: localCollar.easting,
+        northing: localCollar.northing,
+        elevation: localCollar.elevation,
+        total_depth: localCollar.totalDepth,
+        dip: localCollar.dip,
+        azimuth: localCollar.azimuth,
+        date_started: localCollar.dateStarted,
+        date_completed: localCollar.dateCompleted,
+        logger: localCollar.logger,
+        status: localCollar.status,
+        project: localCollar.project
+      };
+
+      const { error: collarErr } = await client.from('collars').upsert(collarPayload);
+      if (collarErr) {
+        const fallbackPayload = { ...collarPayload };
+        delete fallbackPayload.project;
+        const { error: fallbackErr } = await client.from('collars').upsert(fallbackPayload);
+        if (fallbackErr) throw fallbackErr;
+      }
+
+      await client.from('surveys').delete().eq('hole_id', hId);
+      if (localSurveys.length > 0) {
+        const { error: sErr } = await client.from('surveys').insert(
+          localSurveys.map((s: any) => ({
+            id: s.id.startsWith(hId) ? s.id : `${hId}_${s.id}`,
+            hole_id: hId,
+            depth: s.depth,
+            dip: s.dip,
+            azimuth: s.azimuth
+          }))
+        );
+        if (sErr) throw sErr;
+      }
+
+      await client.from('lithologies').delete().eq('hole_id', hId);
+      if (localLitho.length > 0) {
+        const { error: lErr } = await client.from('lithologies').insert(
+          localLitho.map((l: any) => ({
+            id: l.id.startsWith(hId) ? l.id : `${hId}_${l.id}`,
+            hole_id: hId,
+            from_depth: l.from,
+            to_depth: l.to,
+            rock_code: l.rockCode,
+            alteration: l.alteration,
+            mineralization: l.mineralization,
+            description: serializePhotoIntoDescription(l.description, l.photo)
+          }))
+        );
+        if (lErr) throw lErr;
+      }
+
+      await client.from('geotechs').delete().eq('hole_id', hId);
+      if (localGeotech.length > 0) {
+        const { error: gErr } = await client.from('geotechs').insert(
+          localGeotech.map((g: any) => ({
+            id: g.id.startsWith(hId) ? g.id : `${hId}_${g.id}`,
+            hole_id: hId,
+            from_depth: g.from,
+            to_depth: g.to,
+            drilled_length: g.drilledLength,
+            recovered_length: g.recoveredLength,
+            solid_pieces_over_10cm: g.solidPiecesOver10cm,
+            tcr_percent: g.tcrPercent,
+            rqd_percent: g.rqdPercent
+          }))
+        );
+        if (gErr) throw gErr;
+      }
+
+      await client.from('assays').delete().eq('hole_id', hId);
+      if (localAssays.length > 0) {
+        const { error: aErr } = await client.from('assays').insert(
+          localAssays.map((a: any) => ({
+            id: a.id.startsWith(hId) ? a.id : `${hId}_${a.id}`,
+            hole_id: hId,
+            sample_id: a.sampleId,
+            from_depth: a.from,
+            to_depth: a.to,
+            sample_type: a.sampleType,
+            al2o3: a.al2o3,
+            fe2o3: a.fe2o3,
+            sio2: a.sio2,
+            tio2: a.tio2,
+            na2o_k2o: a.na2o_k2o,
+            loi: a.loi,
+            au_ppb: a.au_ppb,
+            au_ppm: a.au_ppm,
+            ag_ppm: a.ag_ppm,
+            cu_ppm: a.cu_ppm,
+            pb_ppm: a.pb_ppm,
+            zn_ppm: a.zn_ppm,
+            as_ppm: a.as_ppm
+          }))
+        );
+        if (aErr) throw aErr;
+      }
+
+      const dirtyHoles = JSON.parse(localStorage.getItem('sb_dirty_holes') || '[]');
+      const updated = dirtyHoles.filter((id: string) => id !== hId);
+      localStorage.setItem('sb_dirty_holes', JSON.stringify(updated));
+      
+      if (hId === selectedHoleId) {
+        setIsDirty(false);
+      }
+      return true;
+    } catch (err) {
+      console.error(`Failed to background sync kuyu ${hId}:`, err);
+      return false;
+    }
+  };
+
+  // Background auto-sync when online
+  useEffect(() => {
+    if (!isSupabaseConfigured()) return;
+
+    const handleOnline = async () => {
+      console.log('Browser online, starting background auto-sync...');
+      const dirtyHoles = JSON.parse(localStorage.getItem('sb_dirty_holes') || '[]');
+      if (dirtyHoles.length === 0) return;
+
+      for (const hId of dirtyHoles) {
+        await syncHoleToSupabase(hId);
+      }
+    };
+
+    window.addEventListener('online', handleOnline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+    };
+  }, [holeList]);
+
+  // Startup sync if online
+  useEffect(() => {
+    if (isSupabaseConfigured() && navigator.onLine && !isLoading) {
+      const runStartupSync = async () => {
+        const dirtyHoles = JSON.parse(localStorage.getItem('sb_dirty_holes') || '[]');
+        if (dirtyHoles.length === 0) return;
+        console.log(`Startup auto-sync: syncing ${dirtyHoles.length} kuyus...`);
+        for (const hId of dirtyHoles) {
+          await syncHoleToSupabase(hId);
+        }
+      };
+      // Short delay to avoid competing with initial loads
+      const t = setTimeout(runStartupSync, 2000);
+      return () => clearTimeout(t);
+    }
+  }, [isLoading]);
+
   const saveActiveHoleToSupabase = async (): Promise<{ success: boolean; message: string }> => {
     const client = getSupabaseClient();
     if (!client) {
@@ -1015,10 +1216,11 @@ export function useDrillholeData() {
         const fallbackPayload = { ...collarPayload };
         delete fallbackPayload.project;
         const { error: fallbackErr } = await client.from('collars').upsert(fallbackPayload);
-        if (fallbackErr) throw fallbackErr;
+        if (fallbackErr) {
+          throw fallbackErr;
+        }
+        collarErr = null; // Clear the error since the fallback succeeded!
       }
-
-      if (collarErr) throw collarErr;
 
       // 2. Sync Surveys (delete and insert)
       await client.from('surveys').delete().eq('hole_id', collar.holeId);
@@ -1101,10 +1303,24 @@ export function useDrillholeData() {
         if (aErr) throw aErr;
       }
 
+      // Remove from dirty list since we successfully synced
+      const dirtyHoles = JSON.parse(localStorage.getItem('sb_dirty_holes') || '[]');
+      const updated = dirtyHoles.filter((id: string) => id !== collar.holeId);
+      localStorage.setItem('sb_dirty_holes', JSON.stringify(updated));
+      setIsDirty(false);
+
       return { success: true, message: `Successfully saved logs for ${collar.holeId} to Supabase.` };
     } catch (err: any) {
       console.error(err);
-      return { success: false, message: err.message || 'Check database permissions and connection.' };
+      let errMsg = err.message || 'Check database permissions and connection.';
+      if (errMsg.includes('Failed to fetch') || errMsg.includes('fetch')) {
+        errMsg = 'Failed to connect to Supabase API (Network Error / Failed to fetch).\n\n' +
+                 'Olası Nedenler:\n' +
+                 '1. Supabase projeniz inaktif (paused) veya çevrimdışı olabilir.\n' +
+                 '2. İnternet bağlantınız kesilmiş veya VPN/Şirket Güvenlik Duvarınız/Reklam Engelleyiciniz (AdBlocker) supabase.co adresine olan istekleri engelliyor olabilir.\n' +
+                 '3. Ayarlar (dişli ikon) menüsünde girdiğiniz Supabase URL adresi hatalı veya erişilemez durumda.';
+      }
+      return { success: false, message: errMsg };
     }
   };
 
@@ -1134,6 +1350,7 @@ export function useDrillholeData() {
     createNewHole,
     renameDrillhole,
     saveActiveHoleToSupabase,
-    db
+    db,
+    isDirty
   };
 }

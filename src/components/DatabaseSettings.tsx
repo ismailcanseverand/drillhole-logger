@@ -30,7 +30,7 @@ export const DatabaseSettings: React.FC<DatabaseSettingsProps> = ({
     setConnectionStatus('testing');
     setStatusMessage('Testing connection...');
 
-    // Temporarily save to local storage to check connection
+    // Save to local storage to check connection
     localStorage.setItem('sb_url', url.trim());
     localStorage.setItem('sb_key', key.trim());
 
@@ -38,8 +38,7 @@ export const DatabaseSettings: React.FC<DatabaseSettingsProps> = ({
     if (!client) {
       setConnectionStatus('failed');
       setStatusMessage('Invalid credentials format.');
-      localStorage.removeItem('sb_url');
-      localStorage.removeItem('sb_key');
+      localStorage.setItem('sb_verified', 'false');
       return;
     }
 
@@ -48,19 +47,39 @@ export const DatabaseSettings: React.FC<DatabaseSettingsProps> = ({
       const { error } = await client.from('collars').select('hole_id').limit(1);
       
       if (error) {
+        // If error is code '42P01' (relation does not exist), the connection and auth worked but tables are not created.
+        const isTableMissing = error.code === '42P01' || 
+                               (error.message && (
+                                 error.message.includes('relation') && error.message.includes('does not exist') ||
+                                 error.message.includes('table') && error.message.includes('not found')
+                               ));
+                               
+        if (isTableMissing) {
+          setConnectionStatus('success');
+          setStatusMessage('Connected to Supabase! Warning: "collars" table not found. Please run the schema.sql script in your Supabase SQL Editor.');
+          localStorage.setItem('sb_verified', 'true');
+          setTimeout(() => {
+            window.location.reload();
+          }, 3500);
+          return;
+        }
         throw error;
       }
 
       setConnectionStatus('success');
       setStatusMessage('Connection verified. Database connected successfully!');
+      localStorage.setItem('sb_verified', 'true');
       setTimeout(() => {
         window.location.reload(); // Reload to refresh client instances across hooks
       }, 1000);
     } catch (err: any) {
       setConnectionStatus('failed');
-      setStatusMessage(`Connection failed: ${err.message || 'Check URL and Anon key API settings.'}`);
-      localStorage.removeItem('sb_url');
-      localStorage.removeItem('sb_key');
+      let errMsg = err.message || 'Check URL and Anon key API settings.';
+      if (errMsg.includes('Failed to fetch') || errMsg.includes('fetch')) {
+        errMsg = 'Ağ Hatası (Failed to fetch). Lütfen girdiğiniz Supabase URL adresinin doğruluğunu, internet bağlantınızı ve Supabase projenizin aktif olduğunu kontrol edin. Kurumsal VPN veya reklam engelleyiciler (AdBlocker) bağlantıyı engelliyor olabilir.';
+      }
+      setStatusMessage(`Connection failed: ${errMsg}`);
+      localStorage.setItem('sb_verified', 'false');
     }
   };
 
@@ -68,6 +87,7 @@ export const DatabaseSettings: React.FC<DatabaseSettingsProps> = ({
     if (window.confirm('Disconnect from Supabase? Edits will fall back to LocalStorage (Offline Mode).')) {
       localStorage.removeItem('sb_url');
       localStorage.removeItem('sb_key');
+      localStorage.removeItem('sb_verified');
       setUrl('');
       setKey('');
       setConnectionStatus('idle');

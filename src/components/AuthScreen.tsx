@@ -54,7 +54,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess }) => {
           if (data.session) {
             onAuthSuccess(data.user.email || email);
           } else {
-            setMessage('Kayıt başarılı! Giriş yapmak için lütfen e-postanızı doğrulayın veya giriş yapmayı deneyin.');
+            setMessage('Kayıt başarılı! Şimdi belirlediğiniz şifre ile giriş yapabilirsiniz.');
             setIsSignUp(false);
           }
         }

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import type { LithologyState, GeotechState, AssayState } from '../hooks/useDrillholeData';
 import { ChevronLeft, ChevronRight, Eye, EyeOff, SlidersHorizontal, Download } from 'lucide-react';
 
@@ -67,6 +67,10 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
 
   const [hoverInfo, setHoverInfo] = useState<string | null>(null);
   const [selectedAnalytes, setSelectedAnalytes] = useState<string[]>(isMetallic ? ['au_ppm'] : ['al2o3']);
+
+  useEffect(() => {
+    setSelectedAnalytes(isMetallic ? ['au_ppm'] : ['al2o3']);
+  }, [isMetallic]);
   const [visualStyle, setVisualStyle] = useState<'bars' | 'line'>('bars');
   const [showConfig, setShowConfig] = useState<boolean>(false);
 
@@ -99,7 +103,7 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
         }
       });
 
-      const hasAssays = assays && assays.some(a => a.sampleType === 'Core' && a.to > a.from);
+      const hasAssays = assays && assays.some(a => (a.sampleType === 'Core' || !a.sampleType) && a.to > a.from);
 
       // Active Analytes Logic
       let activeKeys: string[] = [];
@@ -1562,7 +1566,7 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                     return (
                       <g key={`bar-group-${key}`}>
                         {assays
-                          .filter(a => a.sampleType === 'Core' && a.to > a.from)
+                          .filter(a => (a.sampleType === 'Core' || !a.sampleType) && a.to > a.from)
                           .map(a => {
                             const y = a.from * scaleY + bodyPaddingTop;
                             const h = (a.to - a.from) * scaleY;
@@ -1604,7 +1608,7 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                     const maxValForAnalyte = Math.max(0.1, ...assays.map(item => Number(item[key as keyof AssayState]) || 0));
 
                     const points = assays
-                      .filter(a => a.sampleType === 'Core' && a.to > a.from)
+                      .filter(a => (a.sampleType === 'Core' || !a.sampleType) && a.to > a.from)
                       .sort((a, b) => a.from - b.from)
                       .map(a => {
                         const midDepth = (a.from + a.to) / 2;

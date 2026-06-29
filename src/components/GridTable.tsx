@@ -807,14 +807,16 @@ export const GridTable: React.FC<GridTableProps> = ({
 
           const val = csvHeaderKey !== undefined ? record[csvHeaderKey] : undefined;
 
-          if (col.type === 'number') {
+          if (val === undefined || val === '') {
+            row[col.key] = col.defaultValue !== undefined ? col.defaultValue : (col.type === 'number' ? 0 : '');
+          } else if (col.type === 'number') {
             const parsed = parseFloatsRobust(val);
             const isAssayGrade = tabName === 'Assay' && col.key !== 'from' && col.key !== 'to';
             row[col.key] = isAssayGrade ? parsed : Math.round(parsed * 100) / 100;
           } else if (col.type === 'select') {
-            row[col.key] = getSelectValue(val ?? '', col.options);
+            row[col.key] = getSelectValue(val, col.options);
           } else {
-            row[col.key] = val ?? '';
+            row[col.key] = val;
           }
         });
 

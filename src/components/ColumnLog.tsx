@@ -808,6 +808,23 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
       case 'TO':
       case 'TOPRAK':
         return '#ADA699'; // Düzeltilmiş Toprak
+      case 'BAZALT':
+      case 'BSL':
+        return '#737373'; // Bazalt (Koyu Kül Gri)
+      case 'DIYABAZ':
+      case 'DB':
+      case 'GABRO':
+      case 'GB':
+        return '#F24073'; // Diyabaz/Gabro (Koyu Pembe-Mor)
+      case 'DIYORIT':
+      case 'DYR':
+        return '#E673A6'; // Diyorit (Koyu Pembe)
+      case 'PEGMATIT':
+      case 'PEG':
+        return '#FFB219'; // Pegmatit (Turuncu-Sarı)
+      case 'KUVARS':
+      case 'QVN':
+        return '#E6F259'; // Kuvars (Açık Sarı-Yeşil)
       case 'ALBIT':
         return '#E0F3FE'; // Felsik Gnays (Albit için en yakın temiz açık renk)
       case 'GNAYS':

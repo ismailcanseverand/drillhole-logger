@@ -109,6 +109,23 @@ const getRockColorName = (code: string): string => {
     case 'TO':
     case 'TOPRAK':
       return 'Gri-Kahve';
+    case 'BAZALT':
+    case 'BSL':
+      return 'Koyu Kül Gri';
+    case 'DIYABAZ':
+    case 'DB':
+    case 'GABRO':
+    case 'GB':
+      return 'Koyu Pembe-Mor';
+    case 'DIYORIT':
+    case 'DYR':
+      return 'Koyu Pembe';
+    case 'PEGMATIT':
+    case 'PEG':
+      return 'Turuncu-Sarı';
+    case 'KUVARS':
+    case 'QVN':
+      return 'Açık Sarı-Yeşil';
     case 'ALBIT':
       return 'Felsik Mavi';
     case 'GNAYS':

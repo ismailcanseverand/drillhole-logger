@@ -245,7 +245,23 @@ export function useDrillholeData() {
 
       // Read locally created holes from registry
       const localCreatedHoles = JSON.parse(localStorage.getItem('local_holes_list') || '[]');
-      const allLocalKeys = Array.from(new Set([...localKeys, ...localCreatedHoles])).sort();
+      
+      // Auto-reconstruct registry from any legacy localStorage keys (safety fallback)
+      const reconstructedHoles = [...localCreatedHoles];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('dh_') && key.endsWith('_collar')) {
+          const extractedHoleId = key.substring(3, key.length - 7);
+          if (extractedHoleId && !reconstructedHoles.includes(extractedHoleId)) {
+            reconstructedHoles.push(extractedHoleId);
+          }
+        }
+      }
+      if (reconstructedHoles.length > localCreatedHoles.length) {
+        localStorage.setItem('local_holes_list', JSON.stringify(reconstructedHoles));
+      }
+
+      const allLocalKeys = Array.from(new Set([...localKeys, ...reconstructedHoles])).sort();
 
       // 1. Instantly populate dropdown with local keys & select default
       const initialHole = allLocalKeys.includes('CYHN-33') ? 'CYHN-33' : (allLocalKeys[0] || '');

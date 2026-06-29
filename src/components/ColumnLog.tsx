@@ -183,7 +183,9 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
         { key: 'scr', width: 9 }, // Col I
         { key: 'rqd', width: 9 }, // Col J
         { key: 'lithology', width: 15 }, // Col K
-        { key: 'description', width: 38 } // Col L
+        { key: 'alteration', width: 15 }, // Col L
+        { key: 'redox', width: 15 }, // Col M
+        { key: 'description', width: 38 } // Col N
       ];
 
       // Enable grid lines
@@ -215,34 +217,34 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
       worksheet.getCell('B1').font = { name: 'Segoe UI', size: 8, bold: true };
 
       // Title Card
-      worksheet.mergeCells('B2:J3');
+      worksheet.mergeCells('B2:L3');
       const titleCell = worksheet.getCell('B2');
       titleCell.value = 'SONDAJ LOGU';
       titleCell.font = { name: 'Segoe UI', size: 16, bold: true };
       titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
       titleCell.border = thickBorder;
 
-      const snoLbl = worksheet.getCell('K2');
+      const snoLbl = worksheet.getCell('M2');
       snoLbl.value = 'Sondaj No';
       snoLbl.font = { name: 'Segoe UI', size: 8, bold: true };
       snoLbl.alignment = { horizontal: 'center', vertical: 'middle' };
       snoLbl.border = thinBorder;
       snoLbl.fill = grayFill;
 
-      const snoVal = worksheet.getCell('L2');
+      const snoVal = worksheet.getCell('N2');
       snoVal.value = holeIdVal;
       snoVal.font = { name: 'Segoe UI', size: 9, bold: true };
       snoVal.alignment = { horizontal: 'center', vertical: 'middle' };
       snoVal.border = thinBorder;
 
-      const pnoLbl = worksheet.getCell('K3');
+      const pnoLbl = worksheet.getCell('M3');
       pnoLbl.value = 'Sayfa No';
       pnoLbl.font = { name: 'Segoe UI', size: 8, bold: true };
       pnoLbl.alignment = { horizontal: 'center', vertical: 'middle' };
       pnoLbl.border = thinBorder;
       pnoLbl.fill = grayFill;
 
-      const pnoVal = worksheet.getCell('L3');
+      const pnoVal = worksheet.getCell('N3');
       pnoVal.value = 1;
       pnoVal.font = { name: 'Segoe UI', size: 9 };
       pnoVal.alignment = { horizontal: 'center', vertical: 'middle' };
@@ -328,7 +330,7 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
         v2.border = thinBorder;
 
         // c3
-        worksheet.mergeCells(`I${rowNum}:J${rowNum}`);
+        worksheet.mergeCells(`I${rowNum}:K${rowNum}`);
         const l3 = worksheet.getCell(`I${rowNum}`);
         l3.value = label3;
         l3.font = { name: 'Segoe UI', size: 9, bold: true };
@@ -336,8 +338,8 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
         l3.border = thinBorder;
         l3.fill = grayFill;
         
-        worksheet.mergeCells(`K${rowNum}:L${rowNum}`);
-        const v3 = worksheet.getCell(`K${rowNum}`);
+        worksheet.mergeCells(`L${rowNum}:N${rowNum}`);
+        const v3 = worksheet.getCell(`L${rowNum}`);
         v3.value = val3;
         v3.font = { name: 'Segoe UI', size: 9 };
         v3.alignment = { horizontal: 'left', vertical: 'middle' };
@@ -363,7 +365,9 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
           { cell: 'E13', val: 'KAYA ÖZELLİKLERİ', merge: 'E13:J13' }
         ]),
         { cell: 'K13', val: 'LİTOLOJİ', merge: 'K13:K14' },
-        { cell: 'L13', val: 'AÇIKLAMALAR', merge: 'L13:L14' }
+        { cell: 'L13', val: 'ALTERASYON', merge: 'L13:L14' },
+        { cell: 'M13', val: 'REDOKS/OKSİT', merge: 'M13:M14' },
+        { cell: 'N13', val: 'AÇIKLAMALAR', merge: 'N13:N14' }
       ];
 
       headerCells.forEach(hc => {
@@ -435,6 +439,10 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
         depths.add(cleanDepth(a.from));
         depths.add(cleanDepth(a.to));
       });
+      alterations.forEach(alt => {
+        depths.add(cleanDepth(alt.from));
+        depths.add(cleanDepth(alt.to));
+      });
 
       // Filter and sort the boundaries
       const sortedDepths = Array.from(depths)
@@ -473,8 +481,8 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
         depthCell.alignment = { horizontal: 'center', vertical: 'middle' };
         depthCell.border = thinBorder;
 
-        // Default style & thin border for columns C to L
-        const cols = ['C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
+        // Default style & thin border for columns C to N
+        const cols = ['C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N'];
         cols.forEach(col => {
           const cell = worksheet.getCell(`${col}${rowNum}`);
           cell.border = thinBorder;
@@ -531,16 +539,60 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
             fgColor: { argb: hexColor }
           };
 
-          const descCell = worksheet.getCell(`L${rowNum}`);
+          const descCell = worksheet.getCell(`N${rowNum}`);
           descCell.value = l.description || '';
           descCell.alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
+        }
+
+        // 4. Alteration & Redox matching
+        const alt = alterations.find(a => a.from <= fromDepth + 0.001 && a.to >= toDepth - 0.001);
+        if (alt) {
+          // Alteration Type & Intensity Col L
+          const altCell = worksheet.getCell(`L${rowNum}`);
+          if (alt.alterationType !== 'YOK') {
+            altCell.value = `${alt.alterationType} (${alt.alterationIntensity})`;
+            altCell.font = { name: 'Segoe UI', size: 8.5, bold: true };
+            
+            let altHex = 'FFFFFF';
+            if (alt.alterationType === 'Arjilik') altHex = 'F5EBE6';
+            else if (alt.alterationType === 'Silisleşme') altHex = 'E0F2FE';
+            
+            if (altHex !== 'FFFFFF') {
+              altCell.fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: altHex }
+              };
+            }
+          } else {
+            altCell.value = 'YOK';
+          }
+
+          // Redox / Oxide Col M
+          const redoxCell = worksheet.getCell(`M${rowNum}`);
+          redoxCell.value = alt.oxideIntensity !== 'YOK' 
+            ? `${alt.redoxType} (${alt.oxideIntensity})` 
+            : alt.redoxType;
+          
+          let redoxHex = '94A3B8';
+          if (alt.redoxType === 'OX') redoxHex = 'D97706';
+          else if (alt.redoxType === 'SUL') redoxHex = '475569';
+          else if (alt.redoxType === 'OX/SUL' || alt.redoxType === 'Transition') redoxHex = 'B45309';
+
+          redoxCell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: redoxHex }
+          };
+          redoxCell.font = { name: 'Segoe UI', size: 8.5, bold: true, color: { argb: 'FFFFFF' } };
         }
       }
 
       // Safe merge tracker to prevent ExcelJS crashes
       const mergedRanges: Record<string, Set<number>> = {
         C: new Set(), D: new Set(), E: new Set(), F: new Set(), G: new Set(),
-        H: new Set(), I: new Set(), J: new Set(), K: new Set(), L: new Set()
+        H: new Set(), I: new Set(), J: new Set(), K: new Set(), L: new Set(),
+        M: new Set(), N: new Set()
       };
 
       const safeMerge = (col: string, startRow: number, endRow: number) => {
@@ -597,7 +649,21 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
           const endR = bodyStartRow + endRIdx;
           
           safeMerge('K', startR, endR);
+          safeMerge('N', startR, endR);
+        }
+      });
+
+      // 4. Alteration & Redox merges
+      alterations.forEach(alt => {
+        if (alt.to <= alt.from) return;
+        const startRIdx = rowIntervals.findIndex(r => Math.abs(r.from - alt.from) < 0.01);
+        const endRIdx = rowIntervals.findIndex(r => Math.abs(r.to - alt.to) < 0.01);
+        if (startRIdx !== -1 && endRIdx !== -1 && endRIdx > startRIdx) {
+          const startR = bodyStartRow + startRIdx;
+          const endR = bodyStartRow + endRIdx;
+          
           safeMerge('L', startR, endR);
+          safeMerge('M', startR, endR);
         }
       });
 

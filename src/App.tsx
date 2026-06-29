@@ -156,6 +156,14 @@ function App() {
   const [selectorSearch, setSelectorSearch] = useState<string>('');
   const [selectorCategory, setSelectorCategory] = useState<'industrial' | 'metallic'>('industrial');
   const selectorRef = useRef<HTMLDivElement>(null);
+  const userPanelRef = useRef<HTMLDivElement>(null);
+  
+  const [isUserPanelOpen, setIsUserPanelOpen] = useState<boolean>(false);
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState<boolean>(false);
+  const [newPassword, setNewPassword] = useState<string>('');
+  const [changePasswordError, setChangePasswordError] = useState<string | null>(null);
+  const [changePasswordSuccess, setChangePasswordSuccess] = useState<string | null>(null);
+  const [isChangingPassword, setIsChangingPassword] = useState<boolean>(false);
 
   // Helper to determine the project name for a drillhole ID
   const getHoleProjectName = (hId: string): string => {
@@ -247,6 +255,9 @@ function App() {
     const handleClickOutside = (event: MouseEvent) => {
       if (selectorRef.current && !selectorRef.current.contains(event.target as Node)) {
         setIsSelectorOpen(false);
+      }
+      if (userPanelRef.current && !userPanelRef.current.contains(event.target as Node)) {
+        setIsUserPanelOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -702,6 +713,272 @@ function App() {
     return '';
   };
 
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setChangePasswordError(null);
+    setChangePasswordSuccess(null);
+    setIsChangingPassword(true);
+
+    if (newPassword.length < 6) {
+      setChangePasswordError('Şifre en az 6 karakter olmalıdır.');
+      setIsChangingPassword(false);
+      return;
+    }
+
+    if (isSupabaseConfigured()) {
+      const client = getSupabaseClient();
+      if (client) {
+        try {
+          const { error } = await client.auth.updateUser({ password: newPassword });
+          if (error) throw error;
+          setChangePasswordSuccess('Şifreniz başarıyla güncellendi.');
+          setNewPassword('');
+          setTimeout(() => {
+            setIsChangePasswordOpen(false);
+            setChangePasswordSuccess(null);
+          }, 2000);
+        } catch (err: any) {
+          setChangePasswordError(err.message || 'Şifre güncellenirken bir hata oluştu.');
+        }
+      }
+    }
+    setIsChangingPassword(false);
+  };
+
+  const renderUserPanel = () => {
+    if (!isSupabaseConfigured() || !userEmail) return null;
+
+    const initials = userEmail.split('@')[0].substring(0, 2).toUpperCase();
+    const roleText = isAdmin ? 'Yönetici (Admin)' : 'Jeolog (Yazar)';
+
+    return (
+      <div className="user-profile-menu-container" ref={userPanelRef} style={{ position: 'relative', zIndex: 1000 }}>
+        <button 
+          onClick={() => setIsUserPanelOpen(!isUserPanelOpen)}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            background: 'rgba(255, 255, 255, 0.08)',
+            border: '1px solid rgba(255, 255, 255, 0.12)',
+            borderRadius: '12px',
+            padding: '6px 12px',
+            color: '#ffffff',
+            cursor: 'pointer',
+            fontWeight: 600,
+            fontSize: '13px',
+            transition: 'all 0.2s',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
+          }}
+        >
+          <div style={{
+            width: '24px',
+            height: '24px',
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '10px',
+            fontWeight: 'bold',
+            color: '#ffffff'
+          }}>
+            {initials}
+          </div>
+          <span>{userEmail}</span>
+          <ChevronDown size={14} style={{ opacity: 0.7 }} />
+        </button>
+
+        {isUserPanelOpen && (
+          <div 
+            style={{
+              position: 'absolute',
+              top: 'scale(100% + 8px)',
+              marginTop: '8px',
+              right: 0,
+              width: '240px',
+              background: 'rgba(15, 23, 42, 0.95)',
+              backdropFilter: 'blur(16px)',
+              WebkitBackdropFilter: 'blur(16px)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              borderRadius: '16px',
+              padding: '16px',
+              boxShadow: '0 10px 25px rgba(0, 0, 0, 0.4)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px'
+            }}
+          >
+            <div style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '10px' }}>
+              <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#ffffff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'left' }}>
+                {userEmail}
+              </div>
+              <div style={{ fontSize: '11px', color: '#a5b4fc', marginTop: '2px', fontWeight: 600, textAlign: 'left' }}>
+                {roleText}
+              </div>
+            </div>
+
+            <button 
+              onClick={() => {
+                setIsChangePasswordOpen(true);
+                setIsUserPanelOpen(false);
+              }}
+              style={{
+                width: '100%',
+                padding: '8px 10px',
+                borderRadius: '8px',
+                background: 'rgba(255, 255, 255, 0.05)',
+                color: '#cbd5e1',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                fontSize: '12px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                textAlign: 'left'
+              }}
+            >
+              🔑 Şifre Değiştir
+            </button>
+
+            <button 
+              onClick={() => {
+                handleLogout();
+                setIsUserPanelOpen(false);
+              }}
+              style={{
+                width: '100%',
+                padding: '8px 10px',
+                borderRadius: '8px',
+                background: 'rgba(239, 68, 68, 0.1)',
+                color: '#f87171',
+                border: '1px solid rgba(239, 68, 68, 0.2)',
+                fontSize: '12px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                textAlign: 'left'
+              }}
+            >
+              🚪 Çıkış Yap
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderChangePasswordModal = () => {
+    if (!isChangePasswordOpen) return null;
+    return (
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0, 0, 0, 0.75)',
+        backdropFilter: 'blur(8px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 99999,
+        padding: '20px'
+      }}>
+        <div style={{
+          background: '#1e293b',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          borderRadius: '20px',
+          padding: '30px',
+          width: '100%',
+          maxWidth: '400px',
+          boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
+          position: 'relative'
+        }}>
+          <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#ffffff', marginBottom: '16px', fontFamily: 'Outfit, sans-serif' }}>
+            🔑 Şifre Değiştir
+          </h3>
+          
+          {changePasswordError && (
+            <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '10px', padding: '10px 14px', color: '#f87171', fontSize: '12px', marginBottom: '14px', textAlign: 'left' }}>
+              {changePasswordError}
+            </div>
+          )}
+          
+          {changePasswordSuccess && (
+            <div style={{ background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '10px', padding: '10px 14px', color: '#34d399', fontSize: '12px', marginBottom: '14px', textAlign: 'left' }}>
+              {changePasswordSuccess}
+            </div>
+          )}
+
+          <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '11px', fontWeight: 'bold', color: '#e2e8f0', textTransform: 'uppercase', textAlign: 'left' }}>
+                Yeni Şifre
+              </label>
+              <input 
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  borderRadius: '8px',
+                  background: 'rgba(15, 23, 42, 0.6)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  color: '#ffffff',
+                  fontSize: '14px',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+              <button 
+                type="button" 
+                onClick={() => {
+                  setIsChangePasswordOpen(false);
+                  setChangePasswordError(null);
+                  setChangePasswordSuccess(null);
+                  setNewPassword('');
+                }}
+                style={{
+                  flex: 1,
+                  padding: '10px',
+                  borderRadius: '8px',
+                  background: 'transparent',
+                  color: '#cbd5e1',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                İptal
+              </button>
+              <button 
+                type="submit" 
+                disabled={isChangingPassword}
+                style={{
+                  flex: 1,
+                  padding: '10px',
+                  borderRadius: '8px',
+                  background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                  color: '#ffffff',
+                  border: 'none',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  cursor: isChangingPassword ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {isChangingPassword ? 'Güncelleniyor...' : 'Kaydet'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  };
+
   // 1. Auth check loading screen
   if (isSupabaseConfigured() && !authChecked) {
     return (
@@ -742,7 +1019,11 @@ function App() {
 
   if (appMode === 'landing') {
     return (
-      <div className="portal-container" style={{ backgroundImage: "url('/geology_bg.png')" }}>
+      <div className="portal-container" style={{ backgroundImage: "url('/geology_bg.png')", position: 'relative' }}>
+        <div style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 1001 }}>
+          {renderUserPanel()}
+        </div>
+        {renderChangePasswordModal()}
         <div className="portal-overlay" />
         <div className="portal-content">
           <header className="portal-header">
@@ -799,7 +1080,11 @@ function App() {
 
   if (appMode === 'sondaj_menu') {
     return (
-      <div className="portal-container" style={{ backgroundImage: "url('/geology_bg.png')" }}>
+      <div className="portal-container" style={{ backgroundImage: "url('/geology_bg.png')", position: 'relative' }}>
+        <div style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 1001 }}>
+          {renderUserPanel()}
+        </div>
+        {renderChangePasswordModal()}
         <div className="portal-overlay" />
         <div className="portal-content">
           <button className="btn btn-secondary back-to-portal-btn" onClick={() => setAppMode('landing')}>
@@ -860,7 +1145,11 @@ function App() {
 
   if (appMode === 'yuzey_menu') {
     return (
-      <div className="portal-container" style={{ backgroundImage: "url('/geology_bg.png')" }}>
+      <div className="portal-container" style={{ backgroundImage: "url('/geology_bg.png')", position: 'relative' }}>
+        <div style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 1001 }}>
+          {renderUserPanel()}
+        </div>
+        {renderChangePasswordModal()}
         <div className="portal-overlay" />
         <div className="portal-content">
           <button className="btn btn-secondary back-to-portal-btn" onClick={() => setAppMode('landing')}>
@@ -921,7 +1210,11 @@ function App() {
 
   if (appMode === 'sondaj_search') {
     return (
-      <div className="portal-container" style={{ backgroundImage: "url('/geology_bg.png')" }}>
+      <div className="portal-container" style={{ backgroundImage: "url('/geology_bg.png')", position: 'relative' }}>
+        <div style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 1001 }}>
+          {renderUserPanel()}
+        </div>
+        {renderChangePasswordModal()}
         <div className="portal-overlay" />
         <div className="portal-content search-mode-content">
           <button className="btn btn-secondary back-to-portal-btn" onClick={() => setAppMode('sondaj_menu')}>
@@ -1022,7 +1315,11 @@ function App() {
 
   if (appMode === 'yuzey_search') {
     return (
-      <div className="portal-container surface-mode" style={{ backgroundImage: "url('/geology_bg.png')" }}>
+      <div className="portal-container surface-mode" style={{ backgroundImage: "url('/geology_bg.png')", position: 'relative' }}>
+        <div style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 1001 }}>
+          {renderUserPanel()}
+        </div>
+        {renderChangePasswordModal()}
         <div className="portal-overlay" />
         <div className="portal-content">
           <button className="btn btn-secondary back-to-portal-btn" onClick={() => setAppMode('yuzey_menu')}>
@@ -1067,7 +1364,11 @@ function App() {
 
   if (appMode === 'yuzey_browse') {
     return (
-      <div className="portal-container surface-mode" style={{ backgroundImage: "url('/geology_bg.png')" }}>
+      <div className="portal-container surface-mode" style={{ backgroundImage: "url('/geology_bg.png')", position: 'relative' }}>
+        <div style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 1001 }}>
+          {renderUserPanel()}
+        </div>
+        {renderChangePasswordModal()}
         <div className="portal-overlay" />
         <div className="portal-content">
           <button className="btn btn-secondary back-to-portal-btn" onClick={() => setAppMode('yuzey_menu')}>
@@ -1275,28 +1576,7 @@ function App() {
               <Trash2 size={14} /> Reset / Clear
             </button>
           )}
-          {isSupabaseConfigured() && userEmail && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', borderRadius: '8px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', marginRight: '6px' }}>
-              <span style={{ fontSize: '11px', fontWeight: 600, color: '#e2e8f0' }}>
-                {userEmail}
-              </span>
-              <button 
-                onClick={handleLogout} 
-                style={{ 
-                  background: 'transparent', 
-                  border: 'none', 
-                  color: '#f87171', 
-                  fontSize: '11px', 
-                  fontWeight: 700, 
-                  cursor: 'pointer',
-                  padding: '2px 4px',
-                  textDecoration: 'underline'
-                }}
-              >
-                Çıkış Yap
-              </button>
-            </div>
-          )}
+          {renderUserPanel()}
           {isAdmin && (
             <button 
               className="btn btn-secondary" 
@@ -1489,6 +1769,7 @@ function App() {
           </div>
         </section>
       </main>
+      {renderChangePasswordModal()}
       {isSettingsOpen && (
         <DatabaseSettings
           onClose={() => setIsSettingsOpen(false)}

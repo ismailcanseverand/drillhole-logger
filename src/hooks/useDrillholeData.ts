@@ -862,6 +862,19 @@ export function useDrillholeData() {
       return;
     }
 
+    let defaultLogger = '';
+    const client = getSupabaseClient();
+    if (client) {
+      try {
+        const { data } = await client.auth.getSession();
+        if (data?.session?.user?.email) {
+          defaultLogger = data.session.user.email.split('@')[0];
+        }
+      } catch (err) {
+        console.error('Error fetching session in createNewHole:', err);
+      }
+    }
+
     const defaultCollar: CollarState = {
       holeId: cleaned,
       easting: 0.0,
@@ -872,7 +885,7 @@ export function useDrillholeData() {
       azimuth: 0.0,
       dateStarted: '',
       dateCompleted: '',
-      logger: '',
+      logger: defaultLogger,
       status: 'Planned',
       project: ''
     };
@@ -900,7 +913,6 @@ export function useDrillholeData() {
     }
 
     // If Supabase is connected, insert new collar record directly
-    const client = getSupabaseClient();
     if (client) {
       try {
         const { error } = await client.from('collars').insert({
@@ -908,7 +920,7 @@ export function useDrillholeData() {
           total_depth: 100.0,
           dip: -90.0,
           azimuth: 0.0,
-          logger: '',
+          logger: defaultLogger,
           status: 'Planned',
           project: ''
         });

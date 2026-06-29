@@ -31,7 +31,7 @@ export function getSupabaseClient(): any {
   try {
     cachedClient = createClient(savedUrl, savedKey, {
       auth: {
-        persistSession: false // Disable session persistence to keep it simple
+        persistSession: true // Enable session persistence for authentication
       }
     });
     lastUrl = savedUrl;

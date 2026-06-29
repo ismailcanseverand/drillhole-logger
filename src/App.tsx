@@ -25,7 +25,8 @@ import {
   Home
 } from 'lucide-react';
 import { DatabaseSettings } from './components/DatabaseSettings';
-import { isSupabaseConfigured } from './utils/supabaseClient';
+import { isSupabaseConfigured, getSupabaseClient } from './utils/supabaseClient';
+import { AuthScreen } from './components/AuthScreen';
 import './App.css';
 
 
@@ -78,6 +79,41 @@ function App() {
       window.removeEventListener('offline', handleOffline);
     };
   }, []);
+
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [guestMode, setGuestMode] = useState<boolean>(false);
+  const [authChecked, setAuthChecked] = useState<boolean>(false);
+
+  useEffect(() => {
+    const checkUser = async () => {
+      if (isSupabaseConfigured()) {
+        const client = getSupabaseClient();
+        if (client) {
+          try {
+            const { data } = await client.auth.getSession();
+            if (data?.session?.user) {
+              setUserEmail(data.session.user.email || null);
+            }
+          } catch (err) {
+            console.error('Session retrieval error:', err);
+          }
+        }
+      }
+      setAuthChecked(true);
+    };
+    checkUser();
+  }, []);
+
+  const handleLogout = async () => {
+    if (isSupabaseConfigured()) {
+      const client = getSupabaseClient();
+      if (client) {
+        await client.auth.signOut();
+      }
+    }
+    setUserEmail(null);
+    setGuestMode(false);
+  };
 
   const [leftWidth, setLeftWidth] = useState<number>(50); // initial 50% split width
 
@@ -660,6 +696,32 @@ function App() {
     return '';
   };
 
+  // 1. Auth check loading screen
+  if (isSupabaseConfigured() && !authChecked) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: '16px', backgroundColor: '#0f172a' }}>
+        <RefreshCw style={{ animation: 'spin 1s linear infinite', color: '#6366f1' }} size={48} />
+        <h2 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, color: '#ffffff' }}>Giriş Kontrol Ediliyor...</h2>
+      </div>
+    );
+  }
+
+  // 2. Auth Screen redirect
+  if (isSupabaseConfigured() && !userEmail && !guestMode) {
+    return (
+      <AuthScreen 
+        onAuthSuccess={(email) => {
+          setUserEmail(email);
+          // Set logger name to user name part automatically if empty
+          if (!collar.logger) {
+            setCollar(prev => ({ ...prev, logger: email.split('@')[0] }));
+          }
+        }}
+        onContinueOffline={() => setGuestMode(true)}
+      />
+    );
+  }
+
   if (isLoading) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: '16px', backgroundColor: '#f8fafc' }}>
@@ -1203,6 +1265,28 @@ function App() {
           <button className="btn btn-danger" onClick={clearAllData}>
             <Trash2 size={14} /> Reset / Clear
           </button>
+          {isSupabaseConfigured() && (userEmail || guestMode) && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', borderRadius: '8px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', marginRight: '6px' }}>
+              <span style={{ fontSize: '11px', fontWeight: 600, color: '#e2e8f0' }}>
+                {guestMode ? 'Misafir Modu' : userEmail}
+              </span>
+              <button 
+                onClick={handleLogout} 
+                style={{ 
+                  background: 'transparent', 
+                  border: 'none', 
+                  color: '#f87171', 
+                  fontSize: '11px', 
+                  fontWeight: 700, 
+                  cursor: 'pointer',
+                  padding: '2px 4px',
+                  textDecoration: 'underline'
+                }}
+              >
+                Çıkış Yap
+              </button>
+            </div>
+          )}
           <button 
             className="btn btn-secondary" 
             onClick={() => setIsSettingsOpen(true)}

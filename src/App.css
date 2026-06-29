@@ -300,10 +300,11 @@
 }
 
 .grid-table {
-  width: 100%;
+  width: max-content;
+  min-width: 100%;
   border-collapse: collapse;
   font-size: 13px;
-  table-layout: auto;
+  table-layout: fixed;
 }
 
 .grid-table th, .grid-table td {
@@ -331,13 +332,42 @@
   background-color: var(--bg-sidebar);
 }
 
+/* Spreadsheets Row/Column Selection Styles */
+.grid-table tr.row-selected {
+  background-color: rgba(59, 130, 246, 0.12) !important;
+}
+
+.grid-table tr.row-selected td.cell-row-num {
+  background-color: var(--primary) !important;
+  color: #ffffff !important;
+}
+
+.grid-table tr.row-selected input,
+.grid-table tr.row-selected select {
+  background-color: rgba(59, 130, 246, 0.05) !important;
+}
+
+.grid-table td.column-selected {
+  background-color: rgba(59, 130, 246, 0.05) !important;
+}
+
+.grid-table th.column-selected {
+  background-color: rgba(59, 130, 246, 0.18) !important;
+  color: var(--primary-light, #60a5fa) !important;
+}
+
+.grid-table td.column-selected input,
+.grid-table td.column-selected select {
+  background-color: rgba(59, 130, 246, 0.03) !important;
+}
+
 .cell-row-num {
   text-align: center;
   background-color: var(--bg-sidebar);
   color: var(--text-muted);
   font-weight: 600;
   font-size: 11px;
-  width: 32px;
+  width: 48px;
   padding: 8px 0;
   user-select: none;
 }

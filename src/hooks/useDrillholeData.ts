@@ -89,6 +89,13 @@ export interface AssayState {
   tio2: number;  // TiO2 (%)
   na2o_k2o: number; // Na2O + K2O (%)
   loi: number;   // Loss on ignition (%)
+  cao?: number;
+  mgo?: number;
+  p2o5?: number;
+  sro?: number;
+  so4?: number;
+  cr2o3?: number;
+  mno?: number;
   au_ppb?: number;
   au_ppm?: number;
   ag_ppm?: number;
@@ -236,9 +243,13 @@ export function useDrillholeData() {
         console.error('Failed to read local drillhole JSON template:', err);
       }
 
+      // Read locally created holes from registry
+      const localCreatedHoles = JSON.parse(localStorage.getItem('local_holes_list') || '[]');
+      const allLocalKeys = Array.from(new Set([...localKeys, ...localCreatedHoles])).sort();
+
       // 1. Instantly populate dropdown with local keys & select default
-      const initialHole = localKeys.includes('CYHN-33') ? 'CYHN-33' : (localKeys[0] || '');
-      setHoleList(localKeys);
+      const initialHole = allLocalKeys.includes('CYHN-33') ? 'CYHN-33' : (allLocalKeys[0] || '');
+      setHoleList(allLocalKeys);
       setSelectedHoleId(initialHole);
 
       // 2. Disable loading screen immediately so the UI is active and responsive!
@@ -253,7 +264,7 @@ export function useDrillholeData() {
           
           if (data) {
             const dbKeys = data.map((d: any) => d.hole_id);
-            const mergedKeys = Array.from(new Set([...dbKeys, ...localKeys])).sort();
+            const mergedKeys = Array.from(new Set([...dbKeys, ...localKeys, ...localCreatedHoles])).sort();
             setHoleList(mergedKeys);
           }
         } catch (dbErr) {
@@ -326,6 +337,13 @@ export function useDrillholeData() {
               tio2: a.tio2,
               na2o_k2o: a.na2o_k2o,
               loi: a.loi,
+              cao: a.cao,
+              mgo: a.mgo,
+              p2o5: a.p2o5,
+              sro: a.sro,
+              so4: a.so4,
+              cr2o3: a.cr2o3,
+              mno: a.mno,
               au_ppb: a.au_ppb,
               au_ppm: a.au_ppm,
               ag_ppm: a.ag_ppm,
@@ -718,6 +736,13 @@ export function useDrillholeData() {
     localStorage.setItem(`dh_${cleaned}_sampleprep`, JSON.stringify([]));
     localStorage.setItem(`dh_${cleaned}_sampleprep_metallic`, JSON.stringify([]));
 
+    // Register in local holes registry
+    const localHoles = JSON.parse(localStorage.getItem('local_holes_list') || '[]');
+    if (!localHoles.includes(cleaned)) {
+      localHoles.push(cleaned);
+      localStorage.setItem('local_holes_list', JSON.stringify(localHoles));
+    }
+
     // If Supabase is connected, insert new collar record directly
     const client = getSupabaseClient();
     if (client) {
@@ -815,6 +840,11 @@ export function useDrillholeData() {
     localStorage.removeItem(assaysKeyOld);
     localStorage.removeItem(samplePrepKeyOld);
     localStorage.removeItem(samplePrepMetallicKeyOld);
+
+    // Update local holes registry
+    const localHoles = JSON.parse(localStorage.getItem('local_holes_list') || '[]');
+    const updatedLocalHoles = localHoles.map((id: string) => id === cleanedOld ? cleanedNew : id);
+    localStorage.setItem('local_holes_list', JSON.stringify(updatedLocalHoles));
     
     // 2. Update database (Supabase) if connected
     const client = getSupabaseClient();
@@ -1029,6 +1059,13 @@ export function useDrillholeData() {
             tio2: a.tio2,
             na2o_k2o: a.na2o_k2o,
             loi: a.loi,
+            cao: a.cao,
+            mgo: a.mgo,
+            p2o5: a.p2o5,
+            sro: a.sro,
+            so4: a.so4,
+            cr2o3: a.cr2o3,
+            mno: a.mno,
             au_ppb: a.au_ppb,
             au_ppm: a.au_ppm,
             ag_ppm: a.ag_ppm,
@@ -1169,8 +1206,8 @@ export function useDrillholeData() {
                               JSON.stringify(cleanLocalGeotech.sort((a: any, b: any) => a.from - b.from));
 
         // 5. Compare Assays
-        const cleanDbAssays = (dbAssays || []).map((a: any) => ({ sampleId: a.sample_id, from: a.from_depth, to: a.to_depth, sampleType: a.sample_type || 'Core', al2o3: a.al2o3 || 0, fe2o3: a.fe2o3 || 0, sio2: a.sio2 || 0, tio2: a.tio2 || 0, na2o_k2o: a.na2o_k2o || 0, loi: a.loi || 0 }));
-        const cleanLocalAssays = assays.map((a: AssayState) => ({ sampleId: a.sampleId, from: a.from, to: a.to, sampleType: a.sampleType || 'Core', al2o3: a.al2o3 || 0, fe2o3: a.fe2o3 || 0, sio2: a.sio2 || 0, tio2: a.tio2 || 0, na2o_k2o: a.na2o_k2o || 0, loi: a.loi || 0 }));
+        const cleanDbAssays = (dbAssays || []).map((a: any) => ({ sampleId: a.sample_id, from: a.from_depth, to: a.to_depth, sampleType: a.sample_type || 'Core', al2o3: a.al2o3 || 0, fe2o3: a.fe2o3 || 0, sio2: a.sio2 || 0, tio2: a.tio2 || 0, na2o_k2o: a.na2o_k2o || 0, loi: a.loi || 0, cao: a.cao || 0, mgo: a.mgo || 0, p2o5: a.p2o5 || 0, sro: a.sro || 0, so4: a.so4 || 0, cr2o3: a.cr2o3 || 0, mno: a.mno || 0 }));
+        const cleanLocalAssays = assays.map((a: AssayState) => ({ sampleId: a.sampleId, from: a.from, to: a.to, sampleType: a.sampleType || 'Core', al2o3: a.al2o3 || 0, fe2o3: a.fe2o3 || 0, sio2: a.sio2 || 0, tio2: a.tio2 || 0, na2o_k2o: a.na2o_k2o || 0, loi: a.loi || 0, cao: a.cao || 0, mgo: a.mgo || 0, p2o5: a.p2o5 || 0, sro: a.sro || 0, so4: a.so4 || 0, cr2o3: a.cr2o3 || 0, mno: a.mno || 0 }));
         const assaysMatches = JSON.stringify(cleanDbAssays.sort((a: any, b: any) => a.from - b.from)) === 
                              JSON.stringify(cleanLocalAssays.sort((a: any, b: any) => a.from - b.from));
 
@@ -1291,6 +1328,13 @@ export function useDrillholeData() {
             tio2: a.tio2,
             na2o_k2o: a.na2o_k2o,
             loi: a.loi,
+            cao: a.cao,
+            mgo: a.mgo,
+            p2o5: a.p2o5,
+            sro: a.sro,
+            so4: a.so4,
+            cr2o3: a.cr2o3,
+            mno: a.mno,
             au_ppb: a.au_ppb,
             au_ppm: a.au_ppm,
             ag_ppm: a.ag_ppm,

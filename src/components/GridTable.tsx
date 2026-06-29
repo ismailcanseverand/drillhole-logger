@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { Plus, Trash2, Download, Upload, AlertCircle, Camera } from 'lucide-react';
 import { exportToCSV, parseCSV } from '../utils/csv';
 import type { ValidationError } from '../utils/validation';
@@ -361,10 +361,110 @@ export const GridTable: React.FC<GridTableProps> = ({
   const capturingRowIndexRef = useRef<number | null>(null);
   const [ruhsatAdi, setRuhsatAdi] = useState(() => localStorage.getItem('ruhsat_adi') || 'ÇAMLICA');
   const [colWidths, setColWidths] = useState<Record<string, number>>({});
+  const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
+  const [selectedCols, setSelectedCols] = useState<Set<string>>(new Set());
+  const [lastSelectedRowIdx, setLastSelectedRowIdx] = useState<number | null>(null);
 
   useEffect(() => {
     localStorage.setItem('ruhsat_adi', ruhsatAdi);
   }, [ruhsatAdi]);
+
+  const getColWidth = (col: GridColumn) => {
+    if (colWidths[col.key]) return `${colWidths[col.key]}px`;
+    if (col.width) {
+      if (typeof col.width === 'number') return `${col.width}px`;
+      if (col.width.endsWith('px')) return col.width;
+      const pct = parseFloat(col.width);
+      if (!isNaN(pct)) {
+        return `${Math.max(80, pct * 10)}px`;
+      }
+      return col.width;
+    }
+    return '100px';
+  };
+
+  const handleRowHeaderClick = (e: React.MouseEvent, index: number) => {
+    e.stopPropagation();
+    const newSelected = new Set(selectedRows);
+    
+    if (e.shiftKey && lastSelectedRowIdx !== null) {
+      const start = Math.min(lastSelectedRowIdx, index);
+      const end = Math.max(lastSelectedRowIdx, index);
+      for (let i = start; i <= end; i++) {
+        newSelected.add(i);
+      }
+    } else if (e.ctrlKey || e.metaKey) {
+      if (newSelected.has(index)) {
+        newSelected.delete(index);
+      } else {
+        newSelected.add(index);
+      }
+      setLastSelectedRowIdx(index);
+    } else {
+      newSelected.clear();
+      newSelected.add(index);
+      setLastSelectedRowIdx(index);
+    }
+    
+    setSelectedRows(newSelected);
+    setSelectedCols(new Set());
+  };
+
+  const handleToggleSelectAllRows = () => {
+    if (selectedRows.size === data.length) {
+      setSelectedRows(new Set());
+    } else {
+      const all = new Set<number>();
+      for (let i = 0; i < data.length; i++) {
+        all.add(i);
+      }
+      setSelectedRows(all);
+      setSelectedCols(new Set());
+    }
+  };
+
+  const handleColHeaderClick = (e: React.MouseEvent, colKey: string) => {
+    if ((e.target as HTMLElement).classList.contains('col-resizer')) return;
+
+    const newSelected = new Set(selectedCols);
+    if (e.ctrlKey || e.metaKey) {
+      if (newSelected.has(colKey)) {
+        newSelected.delete(colKey);
+      } else {
+        newSelected.add(colKey);
+      }
+    } else {
+      newSelected.clear();
+      newSelected.add(colKey);
+    }
+    
+    setSelectedCols(newSelected);
+    setSelectedRows(new Set());
+  };
+
+  const handleDeleteSelectedRows = useCallback(() => {
+    if (selectedRows.size === 0) return;
+    if (window.confirm(`${selectedRows.size} satırı silmek istediğinize emin misiniz?`)) {
+      const remainingRows = data.filter((_, idx) => !selectedRows.has(idx));
+      onChange(remainingRows);
+      setSelectedRows(new Set());
+      setLastSelectedRowIdx(null);
+    }
+  }, [selectedRows, data, onChange]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Delete' && selectedRows.size > 0) {
+        const activeTag = document.activeElement?.tagName.toLowerCase();
+        if (activeTag === 'input' || activeTag === 'select') return;
+        
+        e.preventDefault();
+        handleDeleteSelectedRows();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedRows, handleDeleteSelectedRows]);
 
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>, colKey: string) => {
     e.preventDefault();
@@ -556,33 +656,163 @@ export const GridTable: React.FC<GridTableProps> = ({
     }
   };
 
-  // CSV Import
-  const handleCSVImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // File Import (CSV or Excel)
+  const handleCSVImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const text = event.target?.result as string;
-      const parsedData = parseCSV(text);
+    const synonymMap: Record<string, string[]> = {
+      from: ['from', 'bas', 'baslangic', 'm_den', 'mden', 'girismetraji', 'giris', 'depthfrom', 'runfrom', 'fromdepth'],
+      to: ['to', 'bit', 'bitis', 'm_ye', 'mye', 'cikismetraji', 'cikis', 'depthto', 'runto', 'todepth'],
+      rockCode: ['rockcode', 'geologycode', 'litocode', 'lito_code', 'lito', 'litho', 'kod', 'code', 'rock', 'kaya'],
+      description: ['description', 'desc', 'litoloji', 'lithology', 'aciklama', 'tanimlama', 'tanim', 'aciklamalar', 'comment'],
+      drilledLength: ['drilledlength', 'drilled', 'aralik', 'boy', 'metre', 'length'],
+      recoveredLength: ['recoveredlength', 'recovered', 'manevraicikarotuzunlugu', 'manevraicikarotuzunlugum', 'man_karot', 'mankarot', 'recovery'],
+      solidPiecesOver10cm: ['solidpiecesover10cm', 'solids10cm', '10cmdenuzunkarot', '10cmdenuzunkarotm', 'cm_karot', 'cmkarot', 'solids'],
+      sampleId: ['sampleid', 'numune_no', 'numuneno', 'numune', 'sample', 'tag'],
+      sampleTag: ['sampletag', 'sampleid', 'numune_no', 'numuneno', 'numune', 'sample', 'tag'],
+      sampleType: ['sampletype', 'type', 'tur', 'numuneturu', 'tip'],
+      loi: ['loi', '% a.z.', 'az', 'loiaz', 'loi/az', 'ateszayiati', 'ates_zayiati']
+    };
 
+    const normalizeKey = (str: string): string => {
+      if (!str) return '';
+      return str
+        .toLowerCase()
+        .replace(/ı/g, 'i')
+        .replace(/ğ/g, 'g')
+        .replace(/ü/g, 'u')
+        .replace(/ö/g, 'o')
+        .replace(/ş/g, 's')
+        .replace(/ç/g, 'c')
+        .replace(/[^a-z0-9]/g, '');
+    };
+
+    const parseFloatsRobust = (val: any): number => {
+      if (val === undefined || val === null || val === '') return 0;
+      let str = String(val).trim();
+      if (str.includes(',') && !str.includes('.')) {
+        str = str.replace(',', '.');
+      } else if (str.includes(',') && str.includes('.')) {
+        if (str.indexOf('.') < str.indexOf(',')) {
+          str = str.replace(/\./g, '').replace(',', '.');
+        } else {
+          str = str.replace(/,/g, '');
+        }
+      }
+      const parsed = parseFloat(str);
+      return isNaN(parsed) ? 0 : parsed;
+    };
+
+    const getSelectValue = (val: string, options?: Array<{ value: string; label: string }>): string => {
+      if (!val || !options) return val || '';
+      const trimmedVal = val.trim().toUpperCase();
+      const normVal = normalizeKey(trimmedVal);
+      
+      // 1. Direct match with option value
+      const directMatch = options.find(opt => opt.value.toUpperCase() === trimmedVal || normalizeKey(opt.value) === normVal);
+      if (directMatch) return directMatch.value;
+      
+      // 2. Fuzzy match in label (e.g. check if option label contains "(DST)" or matches in parentheses)
+      const fuzzyMatch = options.find(opt => {
+        const labelUpper = opt.label.toUpperCase();
+        const normLabel = normalizeKey(opt.label);
+        return labelUpper.includes(`(${trimmedVal})`) || 
+               labelUpper.includes(` ${trimmedVal} `) ||
+               normLabel.includes(normVal) ||
+               labelUpper.split(' - ')[0].trim() === trimmedVal;
+      });
+      if (fuzzyMatch) return fuzzyMatch.value;
+      
+      return val;
+    };
+
+    const isUTF8 = (bytes: Uint8Array): boolean => {
+      let i = 0;
+      while (i < bytes.length) {
+        const byte = bytes[i];
+        if (byte <= 0x7f) {
+          i += 1;
+        } else if (byte >= 0xc2 && byte <= 0xdf) {
+          if (i + 1 >= bytes.length) return false;
+          if ((bytes[i + 1] & 0xc0) !== 0x80) return false;
+          i += 2;
+        } else if (byte >= 0xe0 && byte <= 0xef) {
+          if (i + 2 >= bytes.length) return false;
+          if ((bytes[i + 1] & 0xc0) !== 0x80) return false;
+          if ((bytes[i + 2] & 0xc0) !== 0x80) return false;
+          i += 3;
+        } else if (byte >= 0xf0 && byte <= 0xf4) {
+          if (i + 3 >= bytes.length) return false;
+          if ((bytes[i + 1] & 0xc0) !== 0x80) return false;
+          if ((bytes[i + 2] & 0xc0) !== 0x80) return false;
+          if ((bytes[i + 3] & 0xc0) !== 0x80) return false;
+          i += 4;
+        } else {
+          return false;
+        }
+      }
+      return true;
+    };
+
+    const processRecords = (parsedData: Array<Record<string, string>>) => {
       if (parsedData.length === 0) {
-        alert('Empty CSV or invalid format.');
+        alert('Empty data or invalid format.');
         return;
       }
 
-      // Map CSV records back to expected schemas
+      // Map CSV/Excel records back to expected schemas
       const mappedRows = parsedData.map(record => {
         const row: Record<string, any> = {
           id: Math.random().toString(36).substr(2, 9),
         };
 
+        // Build a lookup map of normalized CSV headers to their original casing in the parsed record
+        const recordKeys = Object.keys(record);
+        const normalizedKeysMap: Record<string, string> = {};
+        recordKeys.forEach(k => {
+          normalizedKeysMap[normalizeKey(k)] = k;
+        });
+
         columns.forEach(col => {
-          const val = record[col.label] ?? record[col.key];
+          // Special case: Sum Na2O and K2O if separate columns exist in Assay tab
+          if (col.key === 'na2o_k2o' && tabName === 'Assay') {
+            const na2oHeader = normalizedKeysMap[normalizeKey('% na2o')] ?? normalizedKeysMap[normalizeKey('na2o')];
+            const k2oHeader = normalizedKeysMap[normalizeKey('% k2o')] ?? normalizedKeysMap[normalizeKey('k2o')];
+            if (na2oHeader !== undefined || k2oHeader !== undefined) {
+              const na2oVal = na2oHeader !== undefined ? parseFloatsRobust(record[na2oHeader]) : 0;
+              const k2oVal = k2oHeader !== undefined ? parseFloatsRobust(record[k2oHeader]) : 0;
+              row[col.key] = Math.round((na2oVal + k2oVal) * 100) / 100;
+              return;
+            }
+          }
+
+          const normLabel = normalizeKey(col.label);
+          const normKey = normalizeKey(col.key);
+          
+          // 1. Try exact/normalized match first
+          let csvHeaderKey = normalizedKeysMap[normLabel] ?? normalizedKeysMap[normKey];
+          
+          // 2. Fall back to synonym matching
+          if (csvHeaderKey === undefined) {
+            const synonyms = synonymMap[col.key] || [];
+            for (const synonym of synonyms) {
+              const normalizedSynonym = normalizeKey(synonym);
+              if (normalizedKeysMap[normalizedSynonym] !== undefined) {
+                csvHeaderKey = normalizedKeysMap[normalizedSynonym];
+                break;
+              }
+            }
+          }
+
+          const val = csvHeaderKey !== undefined ? record[csvHeaderKey] : undefined;
+
           if (col.type === 'number') {
-            const parsed = val !== undefined && val !== '' ? parseFloat(val) : 0;
+            const parsed = parseFloatsRobust(val);
             const isAssayGrade = tabName === 'Assay' && col.key !== 'from' && col.key !== 'to';
             row[col.key] = isAssayGrade ? parsed : Math.round(parsed * 100) / 100;
+          } else if (col.type === 'select') {
+            row[col.key] = getSelectValue(val ?? '', col.options);
           } else {
             row[col.key] = val ?? '';
           }
@@ -590,9 +820,9 @@ export const GridTable: React.FC<GridTableProps> = ({
 
         // Compute RQD / TCR on import
         if (tabName === 'Geotech') {
-          const drilled = parseFloat(row.drilledLength) || 0;
-          const recovered = parseFloat(row.recoveredLength) || 0;
-          const solids = parseFloat(row.solidPiecesOver10cm) || 0;
+          const drilled = parseFloatsRobust(row.drilledLength);
+          const recovered = parseFloatsRobust(row.recoveredLength);
+          const solids = parseFloatsRobust(row.solidPiecesOver10cm);
           row.tcrPercent = drilled > 0 ? parseFloat(((recovered / drilled) * 100).toFixed(2)) : 0;
           row.rqdPercent = drilled > 0 ? parseFloat(((solids / drilled) * 100).toFixed(2)) : 0;
         }
@@ -603,7 +833,115 @@ export const GridTable: React.FC<GridTableProps> = ({
       onChange(mappedRows);
     };
 
-    reader.readAsText(file);
+    const isXlsx = file.name.toLowerCase().endsWith('.xlsx');
+    const reader = new FileReader();
+
+    if (isXlsx) {
+      reader.onload = async (event) => {
+        try {
+          const arrayBuffer = event.target?.result as ArrayBuffer;
+          const ExcelJSModule = await import('exceljs');
+          const ExcelJS = (ExcelJSModule.default || ExcelJSModule) as any;
+          const workbook = new ExcelJS.Workbook();
+          await workbook.xlsx.load(arrayBuffer);
+          
+          const worksheet = workbook.worksheets[0]; // first worksheet
+          if (!worksheet) {
+            alert('Excel file has no sheets.');
+            return;
+          }
+
+          let headerRowIndex = -1;
+          const tempHeaders: Record<number, string> = {};
+
+          // 1. Scan rows to find headers (row with at least 2 keyword matching columns)
+          worksheet.eachRow({ includeEmpty: false }, (row: any, rowNumber: number) => {
+            if (headerRowIndex !== -1) return;
+
+            let matchCount = 0;
+            row.eachCell((cell: any) => {
+              const text = cell.text ? cell.text.toLowerCase().trim() : '';
+              if (
+                text.includes('numune') || text.includes('metraj') || text.includes('sondaj') || 
+                text.includes('from') || text.includes('depth') || text.includes('sio2') || 
+                text.includes('al2o3') || text.includes('loi') || text.includes('a.z.')
+              ) {
+                matchCount++;
+              }
+            });
+
+            if (matchCount >= 2) {
+              headerRowIndex = rowNumber;
+              row.eachCell((cell: any, colNumber: number) => {
+                tempHeaders[colNumber] = cell.text ? cell.text.trim() : '';
+              });
+            }
+          });
+
+          if (headerRowIndex === -1) {
+            // Fallback: assume first row with values is header
+            worksheet.eachRow({ includeEmpty: false }, (row: any, rowNumber: number) => {
+              if (headerRowIndex !== -1) return;
+              headerRowIndex = rowNumber;
+              row.eachCell((cell: any, colNumber: number) => {
+                tempHeaders[colNumber] = cell.text ? cell.text.trim() : '';
+              });
+            });
+          }
+
+          // 2. Parse data rows
+          const parsedData: Array<Record<string, string>> = [];
+          worksheet.eachRow({ includeEmpty: false }, (row: any, rowNumber: number) => {
+            if (rowNumber <= headerRowIndex) return;
+
+            const record: Record<string, string> = {};
+            row.eachCell({ includeEmpty: true }, (cell: any, colNumber: number) => {
+              const header = tempHeaders[colNumber];
+              if (header) {
+                let valStr = '';
+                if (cell.value !== null && cell.value !== undefined) {
+                  if (typeof cell.value === 'object' && 'result' in cell.value) {
+                    valStr = String(cell.value.result).trim();
+                  } else {
+                    valStr = String(cell.value).trim();
+                  }
+                } else {
+                  valStr = cell.text !== undefined && cell.text !== null ? cell.text.trim() : '';
+                }
+                record[header] = valStr;
+              }
+            });
+
+            // Only add if it has some content
+            if (Object.keys(record).filter(k => record[k]).length >= 2) {
+              parsedData.push(record);
+            }
+          });
+
+          processRecords(parsedData);
+        } catch (excelErr: any) {
+          console.error(excelErr);
+          alert(`Excel okuma hatası: ${excelErr.message || excelErr}`);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    } else {
+      // Handle CSV
+      reader.onload = (event) => {
+        const arrayBuffer = event.target?.result as ArrayBuffer;
+        const bytes = new Uint8Array(arrayBuffer);
+        
+        // Auto detect UTF-8 vs Windows-1254 (Turkish ANSI)
+        const encoding = isUTF8(bytes) ? 'utf-8' : 'windows-1254';
+        const decoder = new TextDecoder(encoding);
+        const text = decoder.decode(bytes);
+
+        const parsedData = parseCSV(text);
+        processRecords(parsedData);
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
     // Reset file input value so same file can be loaded again
     e.target.value = '';
   };
@@ -1007,15 +1345,21 @@ export const GridTable: React.FC<GridTableProps> = ({
           </button>
           
           <button className="btn btn-secondary btn-sm" onClick={() => fileInputRef.current?.click()}>
-            <Upload size={14} /> Import CSV
+            <Upload size={14} /> Import CSV / Excel
           </button>
           <input
             type="file"
             ref={fileInputRef}
             onChange={handleCSVImport}
-            accept=".csv"
+            accept=".csv, .xlsx"
             style={{ display: 'none' }}
           />
+
+          {selectedRows.size > 0 && (
+            <button className="btn btn-danger btn-sm" onClick={handleDeleteSelectedRows} style={{ background: 'var(--danger)', borderColor: 'var(--danger)', color: '#fff' }}>
+              <Trash2 size={14} /> Delete Selected ({selectedRows.size})
+            </button>
+          )}
 
           <button className="btn btn-primary btn-sm" onClick={addRow}>
             <Plus size={14} /> Add Row
@@ -1027,19 +1371,40 @@ export const GridTable: React.FC<GridTableProps> = ({
         <table className="grid-table">
           <thead>
             <tr>
-              <th className="cell-action-header">#</th>
-              {columns.map(col => (
-                <th key={col.key} style={{ width: colWidths[col.key] || col.width || 'auto', position: 'relative', userSelect: 'none' }}>
-                  <span style={{ display: 'block', paddingRight: col.readOnly ? '0' : '6px' }}>{col.label}</span>
-                  {!col.readOnly && (
-                    <div
-                      className="col-resizer"
-                      onMouseDown={(e) => handleMouseDown(e, col.key)}
-                    />
-                  )}
-                </th>
-              ))}
-              <th className="cell-action-header">Actions</th>
+              <th className="cell-row-header-action" onClick={handleToggleSelectAllRows} style={{ cursor: 'pointer', textAlign: 'center', width: '48px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <input
+                    type="checkbox"
+                    checked={data.length > 0 && selectedRows.size === data.length}
+                    onChange={handleToggleSelectAllRows}
+                    onClick={(e) => e.stopPropagation()}
+                    style={{ cursor: 'pointer', margin: 0 }}
+                  />
+                </div>
+              </th>
+              {columns.map(col => {
+                const isColSelected = selectedCols.has(col.key);
+                const thClass = isColSelected ? 'column-selected' : '';
+                const colWidth = getColWidth(col);
+                
+                return (
+                  <th
+                    key={col.key}
+                    onClick={(e) => handleColHeaderClick(e, col.key)}
+                    className={thClass}
+                    style={{ width: colWidth, position: 'relative', userSelect: 'none', cursor: 'pointer' }}
+                  >
+                    <span style={{ display: 'block', paddingRight: col.readOnly ? '0' : '6px' }}>{col.label}</span>
+                    {!col.readOnly && (
+                      <div
+                        className="col-resizer"
+                        onMouseDown={(e) => handleMouseDown(e, col.key)}
+                      />
+                    )}
+                  </th>
+                );
+              })}
+              <th className="cell-action-header" style={{ width: '80px' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -1052,20 +1417,42 @@ export const GridTable: React.FC<GridTableProps> = ({
             ) : (
               data.map((row, rowIndex) => {
                 const isHighlighted = row.id === highlightedRowId;
+                const isRowSelected = selectedRows.has(rowIndex);
+                
+                let rowClass = '';
+                if (isHighlighted) rowClass += ' row-highlight-flash';
+                if (isRowSelected) rowClass += ' row-selected';
+                
                 return (
-                  <tr key={row.id} ref={isHighlighted ? highlightedRowRef : null} className={isHighlighted ? 'row-highlight-flash' : ''}>
-                    <td className="cell-row-num">{rowIndex + 1}</td>
+                  <tr key={row.id} ref={isHighlighted ? highlightedRowRef : null} className={rowClass.trim()}>
+                    <td className="cell-row-num" onClick={(e) => handleRowHeaderClick(e, rowIndex)} style={{ cursor: 'pointer' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', width: '100%', height: '100%', padding: '0 4px' }}>
+                        <input
+                          type="checkbox"
+                          checked={isRowSelected}
+                          onChange={(e) => handleRowHeaderClick(e as any, rowIndex)}
+                          onClick={(e) => e.stopPropagation()}
+                          style={{ cursor: 'pointer', margin: 0 }}
+                        />
+                        <span>{rowIndex + 1}</span>
+                      </div>
+                    </td>
                     {columns.map((col) => {
                       const validationErr = getCellValidationError(row.id, col.key);
-                    const cellClass = `grid-cell ${col.readOnly ? 'cell-readonly' : ''} ${
-                      validationErr ? (validationErr.type === 'error' ? 'cell-error' : 'cell-warning') : ''
-                    }`;
+                      const isColSelected = selectedCols.has(col.key);
+                      
+                      let cellClass = `grid-cell`;
+                      if (col.readOnly) cellClass += ' cell-readonly';
+                      if (validationErr) {
+                        cellClass += validationErr.type === 'error' ? ' cell-error' : ' cell-warning';
+                      }
+                      if (isColSelected) cellClass += ' column-selected';
 
-                    return (
-                      <td key={col.key} className={cellClass} title={validationErr?.message}>
-                        {tabName === 'Lithology' && col.key === 'photo' ? (
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '4px' }}>
-                            {row.photo ? (
+                      return (
+                        <td key={col.key} className={cellClass} title={validationErr?.message}>
+                          {tabName === 'Lithology' && col.key === 'photo' ? (
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '4px' }}>
+                              {row.photo ? (
                               <div style={{ position: 'relative', display: 'inline-block' }}>
                                 <img
                                   src={row.photo}

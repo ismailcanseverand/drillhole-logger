@@ -81,12 +81,25 @@ export function parseCSV(text: string): Array<Record<string, string>> {
 
   if (lines.length === 0) return [];
 
+  // Detect delimiter based on first line character frequency
+  let delimiter = ',';
+  const firstLine = lines[0];
+  const commaCount = (firstLine.match(/,/g) || []).length;
+  const semicolonCount = (firstLine.match(/;/g) || []).length;
+  const tabCount = (firstLine.match(/\t/g) || []).length;
+
+  if (semicolonCount > commaCount && semicolonCount > tabCount) {
+    delimiter = ';';
+  } else if (tabCount > commaCount && tabCount > semicolonCount) {
+    delimiter = '\t';
+  }
+
   // Parse headers
-  const headers = parseCSVLine(lines[0]);
+  const headers = parseCSVLine(lines[0], delimiter);
   const result: Array<Record<string, string>> = [];
 
   for (let i = 1; i < lines.length; i++) {
-    const values = parseCSVLine(lines[i]);
+    const values = parseCSVLine(lines[i], delimiter);
     const obj: Record<string, string> = {};
     
     headers.forEach((header, index) => {
@@ -100,9 +113,9 @@ export function parseCSV(text: string): Array<Record<string, string>> {
 }
 
 /**
- * Helper to split a CSV line into its token fields
+ * Helper to split a CSV line into its token fields, using the specified delimiter
  */
-function parseCSVLine(line: string): string[] {
+function parseCSVLine(line: string, delimiter: string = ','): string[] {
   const result: string[] = [];
   let currentVal = '';
   let insideQuote = false;
@@ -118,7 +131,7 @@ function parseCSVLine(line: string): string[] {
       } else {
         insideQuote = !insideQuote;
       }
-    } else if (char === ',' && !insideQuote) {
+    } else if (char === delimiter && !insideQuote) {
       result.push(currentVal.trim());
       currentVal = '';
     } else {

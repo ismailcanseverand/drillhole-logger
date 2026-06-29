@@ -363,12 +363,19 @@ function App() {
         { value: 'Duplicate', label: 'Field Duplicate' }
       ]
     },
-    { key: 'al2o3', label: 'Al2O3 (%)', type: 'number', width: '10%', defaultValue: 0 },
-    { key: 'fe2o3', label: 'Fe2O3 (%)', type: 'number', width: '10%', defaultValue: 0 },
-    { key: 'sio2', label: 'SiO2 (%)', type: 'number', width: '10%', defaultValue: 0 },
-    { key: 'tio2', label: 'TiO2 (%)', type: 'number', width: '10%', defaultValue: 0 },
-    { key: 'na2o_k2o', label: 'Na2O+K2O (%)', type: 'number', width: '10%', defaultValue: 0 },
-    { key: 'loi', label: 'LOI/AZ (%)', type: 'number', width: '10%', defaultValue: 0 }
+    { key: 'al2o3', label: 'Al2O3 (%)', type: 'number', width: '8%', defaultValue: 0 },
+    { key: 'fe2o3', label: 'Fe2O3 (%)', type: 'number', width: '8%', defaultValue: 0 },
+    { key: 'sio2', label: 'SiO2 (%)', type: 'number', width: '8%', defaultValue: 0 },
+    { key: 'tio2', label: 'TiO2 (%)', type: 'number', width: '8%', defaultValue: 0 },
+    { key: 'na2o_k2o', label: 'Na2O+K2O (%)', type: 'number', width: '8%', defaultValue: 0 },
+    { key: 'loi', label: 'LOI/AZ (%)', type: 'number', width: '8%', defaultValue: 0 },
+    { key: 'cao', label: 'CaO (%)', type: 'number', width: '8%', defaultValue: 0 },
+    { key: 'mgo', label: 'MgO (%)', type: 'number', width: '8%', defaultValue: 0 },
+    { key: 'p2o5', label: 'P2O5 (%)', type: 'number', width: '8%', defaultValue: 0 },
+    { key: 'sro', label: 'SrO (%)', type: 'number', width: '8%', defaultValue: 0 },
+    { key: 'so4', label: 'SO4 (%)', type: 'number', width: '8%', defaultValue: 0 },
+    { key: 'cr2o3', label: 'Cr2O3 (%)', type: 'number', width: '8%', defaultValue: 0 },
+    { key: 'mno', label: 'MnO (%)', type: 'number', width: '8%', defaultValue: 0 }
   ], []);
 
   // Define Columns for Metallic Assay Tab

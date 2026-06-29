@@ -586,8 +586,8 @@ export function useDrillholeData() {
           project: ''
         });
         setSurveys([
-          { id: 's1', depth: 0, dip: -90, azimuth: 0 },
-          { id: 's2', depth: 100, dip: -90, azimuth: 0 }
+          { id: Math.random().toString(36).substr(2, 9), depth: 0, dip: -90, azimuth: 0 },
+          { id: Math.random().toString(36).substr(2, 9), depth: 100, dip: -90, azimuth: 0 }
         ]);
         setLithology([]);
         setGeotech([]);
@@ -739,8 +739,8 @@ export function useDrillholeData() {
     };
 
     const defaultSurveys: SurveyState[] = [
-      { id: 's1', depth: 0.0, dip: -90.0, azimuth: 0.0 },
-      { id: 's2', depth: 100.0, dip: -90.0, azimuth: 0.0 }
+      { id: Math.random().toString(36).substr(2, 9), depth: 0.0, dip: -90.0, azimuth: 0.0 },
+      { id: Math.random().toString(36).substr(2, 9), depth: 100.0, dip: -90.0, azimuth: 0.0 }
     ];
 
     // Store in localStorage immediately

@@ -372,6 +372,42 @@ export function useDrillholeData() {
     loadHoles();
   }, []);
 
+  // 1b. Subscribe to Realtime collars updates for simultaneous collaboration list sync
+  useEffect(() => {
+    const client = getSupabaseClient();
+    if (!client) return;
+
+    const channel = client
+      .channel('realtime-collars-list')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'collars'
+        },
+        (payload: any) => {
+          if (payload.eventType === 'INSERT') {
+            const newHole = payload.new.hole_id;
+            setHoleList(prev => {
+              if (!prev.includes(newHole)) {
+                return [...prev, newHole].sort();
+              }
+              return prev;
+            });
+          } else if (payload.eventType === 'DELETE') {
+            const deletedHole = payload.old.hole_id;
+            setHoleList(prev => prev.filter(h => h !== deletedHole));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      client.removeChannel(channel);
+    };
+  }, []);
+
   // 2. Load selected hole logs (checks Supabase first, falls back to LocalStorage, then to local JSON)
   useEffect(() => {
     if (!selectedHoleId || Object.keys(db).length === 0) return;

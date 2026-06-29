@@ -45,6 +45,8 @@ function App() {
     setSamplePrep,
     samplePrepMetallic,
     setSamplePrepMetallic,
+    alterations,
+    setAlterations,
     errors,
     resetToDefault,
     clearAllData,
@@ -501,11 +503,148 @@ function App() {
     }
   ], []);
 
+  // Define Columns for Alteration Tab
+  const alterationColumns = useMemo<GridColumn[]>(() => [
+    { key: 'from', label: 'From (m)', type: 'number', width: '8%', defaultValue: 0 },
+    { key: 'to', label: 'To (m)', type: 'number', width: '8%', defaultValue: 0 },
+    { key: 'color', label: 'Color', type: 'text', width: '10%', defaultValue: '' },
+    {
+      key: 'lithology',
+      label: 'Lithology',
+      type: 'select',
+      width: '12%',
+      defaultValue: 'GNS',
+      options: [
+        { value: 'ALN', label: 'Alunit Alterasyonu (ALN)' },
+        { value: 'AND', label: 'Andezit (AND)' },
+        { value: 'AP', label: 'Aplit (AP)' },
+        { value: 'BAZ', label: 'Bazalt (BAZ)' },
+        { value: 'BNT', label: 'Bentonit (BNT)' },
+        { value: 'BRS', label: 'Breş (BRS)' },
+        { value: 'BU', label: 'Boş Karot (BU)' },
+        { value: 'CRT', label: 'Çört (CRT)' },
+        { value: 'DST', label: 'Dasit (DST)' },
+        { value: 'DYK', label: 'Dayk (DYK)' },
+        { value: 'DB', label: 'Diyabaz (DB)' },
+        { value: 'DYR', label: 'Diyorit (DYR)' },
+        { value: 'ALV', label: 'Alüvyon / Dolgu / Toprak (ALV)' },
+        { value: 'FGNS', label: 'Felsik Gnays (FGNS)' },
+        { value: 'FLL', label: 'Fillit (FLL)' },
+        { value: 'GB', label: 'Gabro (GB)' },
+        { value: 'GNS', label: 'Gnays (GNS)' },
+        { value: 'GRD', label: 'Granodiyorit (GRD)' },
+        { value: 'GRND', label: 'Granitoid / Felsik Damar (GRND)' },
+        { value: 'GRT', label: 'Granit (GRT)' },
+        { value: 'HAL', label: 'Halloysit (HAL)' },
+        { value: 'HRF', label: 'Hornfels (HRF)' },
+        { value: 'IGB', label: 'İgnimbirit (IGB)' },
+        { value: 'KÇT', label: 'Kireçtaşı / Kalsit (KÇT)' },
+        { value: 'KL', label: 'Kil / Kaolen (KL)' },
+        { value: 'KONG', label: 'Konglomera (KONG)' },
+        { value: 'KMR', label: 'Kömür (KMR)' },
+        { value: 'KMT', label: 'Kumtaşı (KMT)' },
+        { value: 'QVN', label: 'Kuvars Damarı (QVN)' },
+        { value: 'KVS', label: 'Kuvarsit (KVS)' },
+        { value: 'MER', label: 'Mermer (MER)' },
+        { value: 'MLK', label: 'Fay Zonu / Milonitik Kayaç (MLK)' },
+        { value: 'NONE', label: 'Belirsiz (NONE)' },
+        { value: 'OFM', label: 'Ofiyolitik Melanj (OFM)' },
+        { value: 'DSED', label: 'Oksit Zonu / Demirce Zengin (DSED)' },
+        { value: 'PEG', label: 'Pegmatit (PEG)' },
+        { value: 'OBS', label: 'Perlit / Obsidiyen (OBS)' },
+        { value: 'RYL', label: 'Riyolit (RYL)' },
+        { value: 'SRP', label: 'Serpantinit (SRP)' },
+        { value: 'SST', label: 'Şist (SST)' },
+        { value: 'SY', label: 'Siyenit (SY)' },
+        { value: 'TF', label: 'Tüf (TF)' },
+        { value: 'UNC', label: 'Uyumsuzluk Zonu (UNC)' },
+        { value: 'VKT', label: 'Volkanosedimanter (VKT)' },
+        { value: 'UNKNOWN', label: 'Belirsiz (UNKNOWN)' }
+      ]
+    },
+    {
+      key: 'structuralAlteration',
+      label: 'Structural Alteration',
+      type: 'select',
+      width: '10%',
+      defaultValue: 'Fresh',
+      options: [
+        { value: 'Fresh', label: 'Fresh' },
+        { value: 'Geçiş zonu', label: 'Geçiş zonu' },
+        { value: 'Geçişli', label: 'Geçişli' },
+        { value: 'Yayılımlı', label: 'Yayılımlı' },
+        { value: 'Yayılımlı-geçişli', label: 'Yayılımlı-geçişli' },
+        { value: 'Yayımlı', label: 'Yayımlı' }
+      ]
+    },
+    {
+      key: 'alterationIntensity',
+      label: 'Intensity',
+      type: 'select',
+      width: '9%',
+      defaultValue: 'YOK',
+      options: [
+        { value: 'YOK', label: 'YOK' },
+        { value: 'Düşük', label: 'Düşük' },
+        { value: 'Orta', label: 'Orta' },
+        { value: 'Yoğun', label: 'Yoğun' },
+        { value: 'Düşük-Orta', label: 'Düşük-Orta' },
+        { value: 'Orta-Düşük', label: 'Orta-Düşük' },
+        { value: 'Orta-Yoğun', label: 'Orta-Yoğun' }
+      ]
+    },
+    {
+      key: 'alterationType',
+      label: 'Alteration Type',
+      type: 'select',
+      width: '10%',
+      defaultValue: 'YOK',
+      options: [
+        { value: 'YOK', label: 'YOK' },
+        { value: 'Arjilik', label: 'Arjilik' },
+        { value: 'Silisleşme', label: 'Silisleşme' }
+      ]
+    },
+    { key: 'structuralOxide', label: 'Structural Oxide', type: 'text', width: '10%', defaultValue: '' },
+    {
+      key: 'oxideIntensity',
+      label: 'Oxide Intensity',
+      type: 'select',
+      width: '9%',
+      defaultValue: 'YOK',
+      options: [
+        { value: 'YOK', label: 'YOK' },
+        { value: 'Düşük', label: 'Düşük' },
+        { value: 'Orta', label: 'Orta' },
+        { value: 'Yoğun', label: 'Yoğun' },
+        { value: 'Düşük-Orta', label: 'Düşük-Orta' },
+        { value: 'Orta-Düşük', label: 'Orta-Düşük' },
+        { value: 'Orta-Yoğun', label: 'Orta-Yoğun' }
+      ]
+    },
+    {
+      key: 'redoxType',
+      label: 'Redox Type',
+      type: 'select',
+      width: '8%',
+      defaultValue: 'OX',
+      options: [
+        { value: 'OX', label: 'OX (Oksit)' },
+        { value: 'SUL', label: 'SUL (Sülfid)' },
+        { value: 'OX/SUL', label: 'OX/SUL (Geçiş)' },
+        { value: 'Transition', label: 'Transition' }
+      ]
+    },
+    { key: 'description', label: 'Description', type: 'text', width: '12%', defaultValue: '' }
+  ], []);
+
   // Count errors by tab for rendering notification badges in headers
   const getTabErrorCount = (tabName: string) => {
     let mapping = tabName;
     if (tabName === 'TCR / RQD') mapping = 'Geotech';
     if (tabName === 'Sample Prep Metallic') mapping = 'SamplePrepMetallic';
+    if (tabName === 'Sample Preparation') mapping = 'SamplePrep';
+    if (tabName === 'Alteration') mapping = 'Alteration';
     return errors.filter(e => e.tab === mapping).length;
   };
 
@@ -513,6 +652,8 @@ function App() {
     let mapping = tabName;
     if (tabName === 'TCR / RQD') mapping = 'Geotech';
     if (tabName === 'Sample Prep Metallic') mapping = 'SamplePrepMetallic';
+    if (tabName === 'Sample Preparation') mapping = 'SamplePrep';
+    if (tabName === 'Alteration') mapping = 'Alteration';
     const errList = errors.filter(e => e.tab === mapping);
     if (errList.some(e => e.type === 'error')) return 'badge badge-danger';
     if (errList.some(e => e.type === 'warning')) return 'badge badge-warning';
@@ -1082,7 +1223,7 @@ function App() {
       <main className="app-main">
         <section className="data-entry-panel" style={{ width: `${leftWidth}%` }}>
           <nav className="tab-navigation" onWheel={(e) => { e.currentTarget.scrollLeft += e.deltaY; }}>
-            {['Collar', 'Survey', 'Lithology', 'TCR / RQD', 'Assay', 'Sample Preparation', 'Sample Prep Metallic', 'QA/QC Dashboard'].map(tab => {
+            {['Collar', 'Survey', 'Lithology', 'Alteration', 'TCR / RQD', 'Assay', 'Sample Preparation', 'Sample Prep Metallic', 'QA/QC Dashboard'].map(tab => {
               const errCount = getTabErrorCount(tab);
               return (
                 <button
@@ -1126,6 +1267,20 @@ function App() {
                 onChange={setLithology}
                 errors={errors}
                 tabName="Lithology"
+                autoFillNextFrom={true}
+                highlightedRowId={highlightedRowId}
+                holeId={selectedHoleId}
+              />
+            )}
+
+            {activeTab === 'Alteration' && (
+              <GridTable
+                title="Alteration & Redox Mineralization Logging"
+                columns={alterationColumns}
+                data={alterations}
+                onChange={setAlterations}
+                errors={errors}
+                tabName="Alteration"
                 autoFillNextFrom={true}
                 highlightedRowId={highlightedRowId}
                 holeId={selectedHoleId}
@@ -1226,6 +1381,7 @@ function App() {
                 lithology={lithology}
                 geotech={geotech}
                 assays={assays}
+                alterations={alterations}
                 onItemClick={handleItemClick}
               />
             ) : (

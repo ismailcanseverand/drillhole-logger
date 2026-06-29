@@ -101,3 +101,23 @@ ALTER TABLE surveys DISABLE ROW LEVEL SECURITY;
 ALTER TABLE lithologies DISABLE ROW LEVEL SECURITY;
 ALTER TABLE geotechs DISABLE ROW LEVEL SECURITY;
 ALTER TABLE assays DISABLE ROW LEVEL SECURITY;
+
+-- 6. ALTERATIONS TABLE (Alteration & Redox log)
+CREATE TABLE IF NOT EXISTS alterations (
+  id TEXT PRIMARY KEY,
+  hole_id TEXT REFERENCES collars(hole_id) ON DELETE CASCADE,
+  from_depth DOUBLE PRECISION NOT NULL DEFAULT 0.0,
+  to_depth DOUBLE PRECISION NOT NULL DEFAULT 0.0,
+  color TEXT DEFAULT '',
+  lithology TEXT DEFAULT '',
+  structural_alteration TEXT DEFAULT '',
+  alteration_intensity TEXT DEFAULT '',
+  alteration_type TEXT DEFAULT '',
+  structural_oxide TEXT DEFAULT '',
+  oxide_intensity TEXT DEFAULT '',
+  redox_type TEXT DEFAULT '',
+  description TEXT DEFAULT ''
+);
+
+CREATE INDEX IF NOT EXISTS idx_alterations_hole_id ON alterations(hole_id);
+ALTER TABLE alterations DISABLE ROW LEVEL SECURITY;

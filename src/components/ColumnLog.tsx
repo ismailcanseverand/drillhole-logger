@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import type { LithologyState, GeotechState, AssayState } from '../hooks/useDrillholeData';
+import type { LithologyState, GeotechState, AssayState, AlterationState } from '../hooks/useDrillholeData';
 import { ChevronLeft, ChevronRight, Eye, EyeOff, SlidersHorizontal, Download, X } from 'lucide-react';
 
 interface ColumnLogProps {
@@ -7,6 +7,7 @@ interface ColumnLogProps {
   lithology: LithologyState[];
   geotech: GeotechState[];
   assays: AssayState[];
+  alterations?: AlterationState[];
   onItemClick?: (tab: string, itemId: string) => void;
   holeId?: string;
   collar?: any;
@@ -58,6 +59,7 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
   lithology,
   geotech,
   assays,
+  alterations = [],
   onItemClick,
   holeId,
   collar,
@@ -769,10 +771,11 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
     }
   };
 
-  // Column Configuration state: order, visibility, and width
   const [columns, setColumns] = useState<ColumnConfig[]>([
     { id: 'scale', label: 'Scale Ruler', width: 70, visible: true, color: 'black' },
     { id: 'lithology', label: 'Lithology', width: 130, visible: true, color: 'black' },
+    { id: 'alteration', label: 'Alteration', width: 65, visible: true, color: 'black' },
+    { id: 'redox', label: 'Redox/Oxide', width: 65, visible: true, color: 'black' },
     { id: 'geotech', label: 'TCR / RQD', width: 140, visible: true, color: 'black' },
     { id: 'assays', label: 'Geochem', width: 180, visible: true, color: 'black' },
   ]);
@@ -1638,6 +1641,184 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
               </g>
             )}
 
+            {/* NEW: ALTERATION COLUMN */}
+            {colPositions['alteration']?.visible && alterations && (
+              <g>
+                {alterations
+                  .filter(alt => alt.to > alt.from)
+                  .map(alt => {
+                    const pos = colPositions['alteration'];
+                    const y = alt.from * scaleY + bodyPaddingTop;
+                    const h = (alt.to - alt.from) * scaleY;
+                    
+                    // Determine fill color based on Alteration Type
+                    let fillColor = '#f8fafc'; // light gray/white for YOK
+                    let strokeColor = 'var(--border-light)';
+                    if (alt.alterationType === 'Arjilik') {
+                      fillColor = '#F5EBE6'; // Kil/Arjilik bej/pembe
+                    } else if (alt.alterationType === 'Silisleşme') {
+                      fillColor = '#E0F2FE'; // Silisleşme soft blue
+                    }
+                    
+                    // Opacity based on Intensity
+                    let opacity = 0.8;
+                    const intensity = (alt.alterationIntensity || '').toLowerCase();
+                    if (intensity.includes('yoğun') || intensity.includes('yogun')) {
+                      opacity = 1.0;
+                    } else if (intensity.includes('orta')) {
+                      opacity = 0.7;
+                    } else if (intensity.includes('düşük') || intensity.includes('dusuk')) {
+                      opacity = 0.4;
+                    } else if (intensity.includes('yok')) {
+                      opacity = 0.15;
+                    }
+
+                    // Formulate label text
+                    const labelText = alt.alterationType !== 'YOK' 
+                      ? `${alt.alterationType.substring(0, 5)}. (${alt.alterationIntensity.substring(0, 3)}.)` 
+                      : 'YOK';
+
+                    return (
+                      <g key={`alt-col-block-${alt.id}`}>
+                        <rect
+                          x={pos.startX + 2}
+                          y={y}
+                          width={pos.width - 4}
+                          height={h}
+                          fill={fillColor}
+                          fillOpacity={opacity}
+                          stroke={strokeColor}
+                          strokeWidth="0.5"
+                          style={{ cursor: 'pointer' }}
+                          onClick={() => onItemClick?.('Alteration', alt.id)}
+                          onMouseEnter={() =>
+                            setHoverInfo(
+                              `Alteration: ${alt.alterationType || 'YOK'} (${alt.alterationIntensity || 'YOK'}) | Depth: ${alt.from}m - ${alt.to}m`
+                            )
+                          }
+                          onMouseLeave={() => setHoverInfo(null)}
+                        />
+                        {/* Patterns overlay */}
+                        {alt.alterationType === 'Silisleşme' && h > 6 && (
+                          <line
+                            x1={pos.startX + 2}
+                            y1={y}
+                            x2={pos.startX + pos.width - 2}
+                            y2={y + h}
+                            stroke="#ffffff"
+                            strokeWidth="1"
+                            strokeDasharray="2,2"
+                            style={{ pointerEvents: 'none' }}
+                          />
+                        )}
+                        {alt.alterationType === 'Arjilik' && h > 6 && (
+                          <circle
+                            cx={pos.startX + pos.width / 2}
+                            cy={y + h / 2}
+                            r="2"
+                            fill="#94a3b8"
+                            fillOpacity="0.5"
+                            style={{ pointerEvents: 'none' }}
+                          />
+                        )}
+                        {/* Text Label */}
+                        {h > 12 && (
+                          <text
+                            x={pos.startX + pos.width / 2}
+                            y={y + h / 2 + 3}
+                            textAnchor="middle"
+                            fill="var(--text-main)"
+                            fontSize="8"
+                            fontWeight="bold"
+                            style={{ pointerEvents: 'none', fontFamily: 'var(--font-display)' }}
+                          >
+                            {labelText}
+                          </text>
+                        )}
+                      </g>
+                    );
+                  })}
+              </g>
+            )}
+
+            {/* NEW: REDOX / OXIDE COLUMN */}
+            {colPositions['redox']?.visible && alterations && (
+              <g>
+                {alterations
+                  .filter(alt => alt.to > alt.from)
+                  .map(alt => {
+                    const pos = colPositions['redox'];
+                    const y = alt.from * scaleY + bodyPaddingTop;
+                    const h = (alt.to - alt.from) * scaleY;
+                    
+                    // Determine fill color based on Redox Type
+                    let fillColor = '#94a3b8'; // Slate grey fallback
+                    if (alt.redoxType === 'OX') {
+                      fillColor = '#D97706'; // Lemonite / Hematite Amber
+                    } else if (alt.redoxType === 'SUL') {
+                      fillColor = '#475569'; // Pyrite Slate Grey
+                    } else if (alt.redoxType === 'OX/SUL' || alt.redoxType === 'Transition') {
+                      fillColor = '#B45309'; // Transition Ochre/Brown
+                    }
+                    
+                    // Opacity based on oxide intensity
+                    let opacity = 0.8;
+                    const intensity = (alt.oxideIntensity || '').toLowerCase();
+                    if (intensity.includes('yoğun') || intensity.includes('yogun')) {
+                      opacity = 1.0;
+                    } else if (intensity.includes('orta')) {
+                      opacity = 0.7;
+                    } else if (intensity.includes('düşük') || intensity.includes('dusuk')) {
+                      opacity = 0.45;
+                    } else if (intensity.includes('yok')) {
+                      opacity = 0.2;
+                    }
+
+                    // Formulate label text
+                    const labelText = alt.oxideIntensity !== 'YOK' 
+                      ? `${alt.redoxType} (${alt.oxideIntensity.substring(0, 3)}.)` 
+                      : alt.redoxType;
+
+                    return (
+                      <g key={`redox-col-block-${alt.id}`}>
+                        <rect
+                          x={pos.startX + 2}
+                          y={y}
+                          width={pos.width - 4}
+                          height={h}
+                          fill={fillColor}
+                          fillOpacity={opacity}
+                          stroke="var(--border-light)"
+                          strokeWidth="0.5"
+                          style={{ cursor: 'pointer' }}
+                          onClick={() => onItemClick?.('Alteration', alt.id)}
+                          onMouseEnter={() =>
+                            setHoverInfo(
+                              `Redox: ${alt.redoxType} | Oxide Intensity: ${alt.oxideIntensity || 'YOK'} | Depth: ${alt.from}m - ${alt.to}m`
+                            )
+                          }
+                          onMouseLeave={() => setHoverInfo(null)}
+                        />
+                        {/* Text Label */}
+                        {h > 12 && (
+                          <text
+                            x={pos.startX + pos.width / 2}
+                            y={y + h / 2 + 3}
+                            textAnchor="middle"
+                            fill="#ffffff"
+                            fontSize="8"
+                            fontWeight="bold"
+                            style={{ pointerEvents: 'none', fontFamily: 'var(--font-display)' }}
+                          >
+                            {labelText}
+                          </text>
+                        )}
+                      </g>
+                    );
+                  })}
+              </g>
+            )}
+
             {/* 3. GEOTECH TCR & RQD Line Plot */}
             {colPositions['geotech']?.visible && (() => {
               const pos = colPositions['geotech'];
@@ -1922,6 +2103,19 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                   );
                 })
               )}
+            </div>
+          )}
+          {colPositions['alteration']?.visible && (
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', borderLeft: '1px solid var(--border-light)', paddingLeft: '10px' }}>
+              <div className="legend-item"><span className="legend-color" style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#F5EBE6', display: 'inline-block', border: '1px solid var(--border-medium)' }}></span><span>Arjilik</span></div>
+              <div className="legend-item"><span className="legend-color" style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#E0F2FE', display: 'inline-block', border: '1px solid var(--border-medium)' }}></span><span>Silisleşme</span></div>
+            </div>
+          )}
+          {colPositions['redox']?.visible && (
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', borderLeft: '1px solid var(--border-light)', paddingLeft: '10px' }}>
+              <div className="legend-item"><span className="legend-color" style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#D97706', display: 'inline-block' }}></span><span>OX (Oksit)</span></div>
+              <div className="legend-item"><span className="legend-color" style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#475569', display: 'inline-block' }}></span><span>SUL (Sülfid)</span></div>
+              <div className="legend-item"><span className="legend-color" style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#B45309', display: 'inline-block' }}></span><span>OX/SUL</span></div>
             </div>
           )}
         </div>

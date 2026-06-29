@@ -22,7 +22,7 @@ interface GridTableProps {
   data: Array<any>;
   onChange: (newData: Array<any>) => void;
   errors: ValidationError[];
-  tabName: 'Survey' | 'Lithology' | 'Geotech' | 'Assay' | 'SamplePrep' | 'SamplePrepMetallic';
+  tabName: 'Survey' | 'Lithology' | 'Geotech' | 'Assay' | 'SamplePrep' | 'SamplePrepMetallic' | 'Alteration';
   autoFillNextFrom?: boolean; // automatically prefill 'from' of new row with 'to' of last row
   highlightedRowId?: string | null;
   holeId?: string;
@@ -827,7 +827,15 @@ export const GridTable: React.FC<GridTableProps> = ({
       sampleId: ['sampleid', 'numune_no', 'numuneno', 'numune', 'sample', 'tag'],
       sampleTag: ['sampletag', 'sampleid', 'numune_no', 'numuneno', 'numune', 'sample', 'tag'],
       sampleType: ['sampletype', 'type', 'tur', 'numuneturu', 'tip'],
-      loi: ['loi', '% a.z.', 'az', 'loiaz', 'loi/az', 'ateszayiati', 'ates_zayiati']
+      loi: ['loi', '% a.z.', 'az', 'loiaz', 'loi/az', 'ateszayiati', 'ates_zayiati'],
+      color: ['color', 'renk'],
+      lithology: ['lithology', 'litoloji', 'kayac', 'rock', 'rockcode'],
+      structuralAlteration: ['structuralalteration', 'yapisalalterasyon', 'yapisal'],
+      alterationIntensity: ['alterationintensity', 'miktari', 'alterasyonmiktari', 'miktar'],
+      alterationType: ['alterationtype', 'alterasyon', 'alterasyontipi', 'tipi'],
+      structuralOxide: ['structuraloxide', 'yapisaloksit', 'oksit'],
+      oxideIntensity: ['oxideintensity', 'oksitmiktari', 'oksitderecesi'],
+      redoxType: ['redoxtype', 'oksitsulfid', 'redoks', 'redox', 'oxsul']
     };
 
     const normalizeKey = (str: string): string => {

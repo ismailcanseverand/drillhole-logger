@@ -4,7 +4,7 @@
 
 export interface ValidationError {
   id: string;      // Identifies the row or context
-  tab: 'Collar' | 'Survey' | 'Lithology' | 'Geotech' | 'Assay';
+  tab: 'Collar' | 'Survey' | 'Lithology' | 'Geotech' | 'Assay' | 'SamplePrep' | 'SamplePrepMetallic' | 'Alteration';
   type: 'error' | 'warning';
   message: string;
   field?: string;  // The invalid field, if applicable
@@ -128,7 +128,7 @@ export function validateSurveys(
  */
 export function validateIntervals(
   intervals: Array<{ id: string; from: number; to: number }>,
-  tab: 'Lithology' | 'Geotech' | 'Assay',
+  tab: 'Lithology' | 'Geotech' | 'Assay' | 'SamplePrep' | 'SamplePrepMetallic' | 'Alteration',
   totalDepth: number
 ): ValidationError[] {
   const errors: ValidationError[] = [];

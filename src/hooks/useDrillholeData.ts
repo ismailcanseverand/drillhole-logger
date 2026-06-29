@@ -190,6 +190,21 @@ export interface SamplePreparationMetallicState {
   description: string;
   analysisCode: string;
 }
+export interface AlterationState {
+  id: string;
+  from: number;
+  to: number;
+  color: string;
+  lithology: string;
+  structuralAlteration: string;
+  alterationIntensity: string;
+  alterationType: string;
+  structuralOxide: string;
+  oxideIntensity: string;
+  redoxType: string;
+  description: string;
+}
+
 export const METALLIC_HOLES = [
   'BCK-01', 'BCK-01A', 'BCK-02', 'BCK-03', 'BCK-04', 'BCK-05',
   'BDK-01', 'BDK-02', 'BDK-03', 'BDK-04', 'BDK-05', 'BDK-06', 'BDK-07', 'BDK-08', 'BDK-09', 'BDK-10',
@@ -288,6 +303,7 @@ export function useDrillholeData() {
   const [assays, setAssays] = useState<AssayState[]>([]);
   const [samplePrep, setSamplePrep] = useState<SamplePreparationState[]>([]);
   const [samplePrepMetallic, setSamplePrepMetallic] = useState<SamplePreparationMetallicState[]>([]);
+  const [alterations, setAlterations] = useState<AlterationState[]>([]);
 
   const [errors, setErrors] = useState<ValidationError[]>([]);
   const [trace, setTrace] = useState<Coordinates3D[]>([]);
@@ -375,6 +391,14 @@ export function useDrillholeData() {
             const { data: lData } = await client.from('lithologies').select('*').eq('hole_id', selectedHoleId);
             const { data: gData } = await client.from('geotechs').select('*').eq('hole_id', selectedHoleId);
             const { data: aData } = await client.from('assays').select('*').eq('hole_id', selectedHoleId);
+            
+            let altData = [];
+            try {
+              const { data, error } = await client.from('alterations').select('*').eq('hole_id', selectedHoleId);
+              if (!error) altData = data || [];
+            } catch (err) {
+              console.warn('Alterations table might not exist in Supabase yet. Please run schema.sql to create it.', err);
+            }
 
             setCollar(sanitizeCollar(collarData));
 
@@ -401,6 +425,21 @@ export function useDrillholeData() {
 
             setGeotech((gData || []).map((g: any) => cleanGeotechRow(g))
               .sort((a: GeotechState, b: GeotechState) => a.from - b.from));
+
+            setAlterations((altData || []).map((alt: any) => ({
+              id: alt.id,
+              from: cleanNum(alt.from_depth),
+              to: cleanNum(alt.to_depth),
+              color: alt.color || '',
+              lithology: mapOldRockCode(alt.lithology || ''),
+              structuralAlteration: alt.structural_alteration || '',
+              alterationIntensity: alt.alteration_intensity || '',
+              alterationType: alt.alteration_type || '',
+              structuralOxide: alt.structural_oxide || '',
+              oxideIntensity: alt.oxide_intensity || '',
+              redoxType: alt.redox_type || 'OX',
+              description: alt.description || ''
+            })).sort((a: AlterationState, b: AlterationState) => a.from - b.from));
 
             const dbHole = db[selectedHoleId];
             const isHoleMetallic = METALLIC_HOLES.includes(selectedHoleId.trim().toUpperCase());
@@ -481,6 +520,7 @@ export function useDrillholeData() {
       const localAssays = localStorage.getItem(`dh_${selectedHoleId}_assays`);
       const localSamplePrep = localStorage.getItem(`dh_${selectedHoleId}_sampleprep`);
       const localSamplePrepMetallic = localStorage.getItem(`dh_${selectedHoleId}_sampleprep_metallic`);
+      const localAlterations = localStorage.getItem(`dh_${selectedHoleId}_alterations`);
 
       if (localCollar) {
         const parsedCollar = JSON.parse(localCollar);
@@ -501,6 +541,7 @@ export function useDrillholeData() {
           localStorage.removeItem(`dh_${selectedHoleId}_assays`);
           localStorage.removeItem(`dh_${selectedHoleId}_sampleprep`);
           localStorage.removeItem(`dh_${selectedHoleId}_sampleprep_metallic`);
+          localStorage.removeItem(`dh_${selectedHoleId}_alterations`);
 
           setCollar(sanitizeCollar(dbHole.collar));
           
@@ -528,6 +569,12 @@ export function useDrillholeData() {
 
           setSamplePrep([]);
           setSamplePrepMetallic([]);
+          setAlterations((dbHole.alterations || []).map((alt: any) => ({
+            ...alt,
+            from: cleanNum(alt.from),
+            to: cleanNum(alt.to),
+            lithology: mapOldRockCode(alt.lithology || '')
+          })));
         } else {
           // Self-healing merge algorithm for LocalStorage assay geochem values
           let mergedAssays = parsedAssays;
@@ -601,6 +648,12 @@ export function useDrillholeData() {
             from: cleanNum(spm.from),
             to: cleanNum(spm.to)
           })));
+          setAlterations((localAlterations ? JSON.parse(localAlterations) : []).map((alt: any) => ({
+            ...alt,
+            from: cleanNum(alt.from),
+            to: cleanNum(alt.to),
+            lithology: mapOldRockCode(alt.lithology || '')
+          })));
         }
       } else if (db[selectedHoleId]) {
         // Fallback: Read from the read-only JSON database templates
@@ -636,6 +689,12 @@ export function useDrillholeData() {
 
         setSamplePrep([]);
         setSamplePrepMetallic([]);
+        setAlterations((holeData.alterations || []).map((alt: any) => ({
+          ...alt,
+          from: cleanNum(alt.from),
+          to: cleanNum(alt.to),
+          lithology: mapOldRockCode(alt.lithology || '')
+        })));
       } else {
         // Initialize an empty template for newly created holes
         setCollar({
@@ -661,6 +720,7 @@ export function useDrillholeData() {
         setAssays([]);
         setSamplePrep([]);
         setSamplePrepMetallic([]);
+        setAlterations([]);
       }
     };
 
@@ -702,6 +762,11 @@ export function useDrillholeData() {
     if (!selectedHoleId || collar.holeId !== selectedHoleId) return;
     localStorage.setItem(`dh_${selectedHoleId}_sampleprep_metallic`, JSON.stringify(samplePrepMetallic));
   }, [samplePrepMetallic, selectedHoleId, collar.holeId]);
+
+  useEffect(() => {
+    if (!selectedHoleId || collar.holeId !== selectedHoleId) return;
+    localStorage.setItem(`dh_${selectedHoleId}_alterations`, JSON.stringify(alterations));
+  }, [alterations, selectedHoleId, collar.holeId]);
 
   const loadedRef = useRef<boolean>(false);
   const [isDirty, setIsDirty] = useState<boolean>(false);
@@ -771,12 +836,19 @@ export function useDrillholeData() {
       ...validateAssays(assays)
     ];
 
+    const samplePrepErrors = validateIntervals(samplePrep, 'SamplePrep', collar.totalDepth);
+    const samplePrepMetallicErrors = validateIntervals(samplePrepMetallic, 'SamplePrepMetallic', collar.totalDepth);
+    const alterationErrors = validateIntervals(alterations, 'Alteration', collar.totalDepth);
+
     setErrors([
       ...collarErrors,
       ...surveyErrors,
       ...lithologyErrors,
       ...geotechErrors,
-      ...assayErrors
+      ...assayErrors,
+      ...samplePrepErrors,
+      ...samplePrepMetallicErrors,
+      ...alterationErrors
     ]);
   }, [collar, surveys, lithology, geotech, assays, selectedHoleId]);
 
@@ -818,6 +890,7 @@ export function useDrillholeData() {
     localStorage.setItem(`dh_${cleaned}_assays`, JSON.stringify([]));
     localStorage.setItem(`dh_${cleaned}_sampleprep`, JSON.stringify([]));
     localStorage.setItem(`dh_${cleaned}_sampleprep_metallic`, JSON.stringify([]));
+    localStorage.setItem(`dh_${cleaned}_alterations`, JSON.stringify([]));
 
     // Register in local holes registry
     const localHoles = JSON.parse(localStorage.getItem('local_holes_list') || '[]');
@@ -908,6 +981,10 @@ export function useDrillholeData() {
     const samplePrepMetallicKeyNew = `dh_${cleanedNew}_sampleprep_metallic`;
     const localSamplePrepMetallicStr = localStorage.getItem(samplePrepMetallicKeyOld);
 
+    const alterationsKeyOld = `dh_${cleanedOld}_alterations`;
+    const alterationsKeyNew = `dh_${cleanedNew}_alterations`;
+    const localAlterationsStr = localStorage.getItem(alterationsKeyOld);
+
     localStorage.setItem(collarKeyNew, JSON.stringify(updatedCollar));
     if (localSurveysStr) localStorage.setItem(surveysKeyNew, localSurveysStr);
     if (localLithoStr) localStorage.setItem(lithoKeyNew, localLithoStr);
@@ -915,6 +992,7 @@ export function useDrillholeData() {
     if (localAssaysStr) localStorage.setItem(assaysKeyNew, localAssaysStr);
     if (localSamplePrepStr) localStorage.setItem(samplePrepKeyNew, localSamplePrepStr);
     if (localSamplePrepMetallicStr) localStorage.setItem(samplePrepMetallicKeyNew, localSamplePrepMetallicStr);
+    if (localAlterationsStr) localStorage.setItem(alterationsKeyNew, localAlterationsStr);
     
     localStorage.removeItem(collarKeyOld);
     localStorage.removeItem(surveysKeyOld);
@@ -923,6 +1001,7 @@ export function useDrillholeData() {
     localStorage.removeItem(assaysKeyOld);
     localStorage.removeItem(samplePrepKeyOld);
     localStorage.removeItem(samplePrepMetallicKeyOld);
+    localStorage.removeItem(alterationsKeyOld);
 
     // Update local holes registry
     const localHoles = JSON.parse(localStorage.getItem('local_holes_list') || '[]');
@@ -964,6 +1043,7 @@ export function useDrillholeData() {
           await client.from('lithologies').update({ hole_id: cleanedNew }).eq('hole_id', cleanedOld);
           await client.from('geotechs').update({ hole_id: cleanedNew }).eq('hole_id', cleanedOld);
           await client.from('assays').update({ hole_id: cleanedNew }).eq('hole_id', cleanedOld);
+          await client.from('alterations').update({ hole_id: cleanedNew }).eq('hole_id', cleanedOld);
           
           // C. Delete old collar
           const { error: deleteErr } = await client.from('collars').delete().eq('hole_id', cleanedOld);
@@ -1003,6 +1083,7 @@ export function useDrillholeData() {
         localStorage.removeItem(`dh_${selectedHoleId}_assays`);
         localStorage.removeItem(`dh_${selectedHoleId}_sampleprep`);
         localStorage.removeItem(`dh_${selectedHoleId}_sampleprep_metallic`);
+        localStorage.removeItem(`dh_${selectedHoleId}_alterations`);
         
         setCollar(holeData.collar);
         setSurveys(holeData.surveys);
@@ -1014,6 +1095,12 @@ export function useDrillholeData() {
         setAssays(holeData.assays);
         setSamplePrep([]);
         setSamplePrepMetallic([]);
+        setAlterations((holeData.alterations || []).map((alt: any) => ({
+          ...alt,
+          from: cleanNum(alt.from),
+          to: cleanNum(alt.to),
+          lithology: mapOldRockCode(alt.lithology || '')
+        })));
       }
     }
   };
@@ -1040,6 +1127,7 @@ export function useDrillholeData() {
       setAssays([]);
       setSamplePrep([]);
       setSamplePrepMetallic([]);
+      setAlterations([]);
     }
   };
 
@@ -1052,10 +1140,28 @@ export function useDrillholeData() {
       if (!localCollarStr) return true;
 
       const localCollar = JSON.parse(localCollarStr);
+
+      // Protect other users' data during background sync
+      const { data: dbCollar } = await client
+        .from('collars')
+        .select('logger')
+        .eq('hole_id', hId)
+        .maybeSingle();
+
+      if (dbCollar && dbCollar.logger) {
+        const dbLogger = dbCollar.logger.trim().toLowerCase();
+        const localLogger = (localCollar.logger || '').trim().toLowerCase();
+        if (dbLogger && dbLogger !== localLogger) {
+          console.warn(`Background sync blocked for ${hId}: DB logger is '${dbCollar.logger}', local is '${localCollar.logger}'`);
+          return false;
+        }
+      }
+
       const localSurveys = JSON.parse(localStorage.getItem(`dh_${hId}_surveys`) || '[]');
       const localLitho = JSON.parse(localStorage.getItem(`dh_${hId}_litho`) || '[]');
       const localGeotech = JSON.parse(localStorage.getItem(`dh_${hId}_geotech`) || '[]');
       const localAssays = JSON.parse(localStorage.getItem(`dh_${hId}_assays`) || '[]');
+      const localAlterations = JSON.parse(localStorage.getItem(`dh_${hId}_alterations`) || '[]');
 
       const collarPayload = {
         hole_id: localCollar.holeId,
@@ -1164,6 +1270,28 @@ export function useDrillholeData() {
         if (aErr) throw aErr;
       }
 
+      await client.from('alterations').delete().eq('hole_id', hId);
+      if (localAlterations.length > 0) {
+        const { error: altErr } = await client.from('alterations').insert(
+          localAlterations.map((alt: any) => ({
+            id: alt.id.startsWith(hId) ? alt.id : `${hId}_${alt.id}`,
+            hole_id: hId,
+            from_depth: alt.from,
+            to_depth: alt.to,
+            color: alt.color || '',
+            lithology: alt.lithology || '',
+            structural_alteration: alt.structuralAlteration || '',
+            alteration_intensity: alt.alterationIntensity || '',
+            alteration_type: alt.alterationType || '',
+            structural_oxide: alt.structuralOxide || '',
+            oxide_intensity: alt.oxideIntensity || '',
+            redox_type: alt.redoxType || 'OX',
+            description: alt.description || ''
+          }))
+        );
+        if (altErr) throw altErr;
+      }
+
       const dirtyHoles = JSON.parse(localStorage.getItem('sb_dirty_holes') || '[]');
       const updated = dirtyHoles.filter((id: string) => id !== hId);
       localStorage.setItem('sb_dirty_holes', JSON.stringify(updated));
@@ -1234,11 +1362,32 @@ export function useDrillholeData() {
       if (checkErr) throw checkErr;
 
       if (dbCollar) {
+        const dbLogger = (dbCollar.logger || '').trim().toLowerCase();
+        const localLogger = (collar.logger || '').trim().toLowerCase();
+        
+        // Prevent overwriting if database has a logger and it doesn't match the current user
+        if (dbLogger && dbLogger !== localLogger) {
+          return {
+            success: false,
+            message: `Bu kuyu (${collar.holeId}) başka bir kullanıcı (${dbCollar.logger}) tarafından kaydedilmiş. Veri kaybını önlemek için üzerine yazma işlemi engellendi.`
+          };
+        }
+      }
+
+      if (dbCollar) {
         // Fetch all child tables to check for changes
         const { data: dbSurveys } = await client.from('surveys').select('*').eq('hole_id', collar.holeId);
         const { data: dbLithology } = await client.from('lithologies').select('*').eq('hole_id', collar.holeId);
         const { data: dbGeotech } = await client.from('geotechs').select('*').eq('hole_id', collar.holeId);
         const { data: dbAssays } = await client.from('assays').select('*').eq('hole_id', collar.holeId);
+        
+        let dbAlterations: any[] = [];
+        try {
+          const { data, error } = await client.from('alterations').select('*').eq('hole_id', collar.holeId);
+          if (!error) dbAlterations = data || [];
+        } catch (e) {
+          console.warn('Alterations table might not exist in Supabase yet.', e);
+        }
 
         // 1. Compare Collar
         const collarMatches =
@@ -1297,7 +1446,36 @@ export function useDrillholeData() {
         const assaysMatches = JSON.stringify(cleanDbAssays.sort((a: any, b: any) => a.from - b.from)) === 
                              JSON.stringify(cleanLocalAssays.sort((a: any, b: any) => a.from - b.from));
 
-        const isIdentical = collarMatches && surveysMatches && lithoMatches && geotechMatches && assaysMatches;
+        const cleanDbAlterations = dbAlterations.map((alt: any) => ({
+          from: alt.from_depth,
+          to: alt.to_depth,
+          color: alt.color || '',
+          lithology: alt.lithology || '',
+          structuralAlteration: alt.structural_alteration || '',
+          alterationIntensity: alt.alteration_intensity || '',
+          alterationType: alt.alteration_type || '',
+          structuralOxide: alt.structural_oxide || '',
+          oxideIntensity: alt.oxide_intensity || '',
+          redoxType: alt.redox_type || 'OX',
+          description: alt.description || ''
+        }));
+        const cleanLocalAlterations = alterations.map((alt: AlterationState) => ({
+          from: alt.from,
+          to: alt.to,
+          color: alt.color || '',
+          lithology: alt.lithology || '',
+          structuralAlteration: alt.structuralAlteration || '',
+          alterationIntensity: alt.alterationIntensity || '',
+          alterationType: alt.alterationType || '',
+          structuralOxide: alt.structuralOxide || '',
+          oxideIntensity: alt.oxideIntensity || '',
+          redoxType: alt.redoxType || 'OX',
+          description: alt.description || ''
+        }));
+        const alterationsMatches = JSON.stringify(cleanDbAlterations.sort((a: any, b: any) => a.from - b.from)) === 
+                                  JSON.stringify(cleanLocalAlterations.sort((a: any, b: any) => a.from - b.from));
+
+        const isIdentical = collarMatches && surveysMatches && lithoMatches && geotechMatches && assaysMatches && alterationsMatches;
 
         if (isIdentical) {
           return {
@@ -1433,6 +1611,28 @@ export function useDrillholeData() {
         if (aErr) throw aErr;
       }
 
+      await client.from('alterations').delete().eq('hole_id', collar.holeId);
+      if (alterations.length > 0) {
+        const { error: altErr } = await client.from('alterations').insert(
+          alterations.map((alt: AlterationState) => ({
+            id: alt.id.startsWith(collar.holeId) ? alt.id : `${collar.holeId}_${alt.id}`,
+            hole_id: collar.holeId,
+            from_depth: alt.from,
+            to_depth: alt.to,
+            color: alt.color || '',
+            lithology: alt.lithology || '',
+            structural_alteration: alt.structuralAlteration || '',
+            alteration_intensity: alt.alterationIntensity || '',
+            alteration_type: alt.alterationType || '',
+            structural_oxide: alt.structuralOxide || '',
+            oxide_intensity: alt.oxideIntensity || '',
+            redox_type: alt.redoxType || 'OX',
+            description: alt.description || ''
+          }))
+        );
+        if (altErr) throw altErr;
+      }
+
       // Remove from dirty list since we successfully synced
       const dirtyHoles = JSON.parse(localStorage.getItem('sb_dirty_holes') || '[]');
       const updated = dirtyHoles.filter((id: string) => id !== collar.holeId);
@@ -1469,6 +1669,8 @@ export function useDrillholeData() {
     setSamplePrep,
     samplePrepMetallic,
     setSamplePrepMetallic,
+    alterations,
+    setAlterations,
     errors,
     trace,
     resetToDefault,

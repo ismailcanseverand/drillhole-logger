@@ -1573,7 +1573,9 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                             const val = Number(a[key as keyof AssayState]) || 0;
                             const valRatio = Math.min(1, val / maxValForAnalyte);
                             const barWidth = Math.max(2, valRatio * (subColWidth - 6));
-                            const showLabel = h >= 14 && barWidth > 22 && val > 0;
+                            const isInside = barWidth > 24;
+                            const textX = isInside ? subColX + 6 : subColX + 3 + barWidth + 3;
+                            const showLabel = h >= 11 && val > 0;
                             const formattedVal = isMetallic ? val.toFixed(2) : `%${val.toFixed(1)}`;
 
                             return (
@@ -1597,7 +1599,7 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                                 />
                                 {showLabel && (
                                   <text
-                                    x={subColX + 6}
+                                    x={textX}
                                     y={y + h / 2 + 3}
                                     fill={analyteDetails.color}
                                     fontSize="8px"

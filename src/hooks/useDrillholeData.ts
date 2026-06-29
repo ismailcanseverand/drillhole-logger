@@ -33,6 +33,70 @@ export function serializePhotoIntoDescription(desc: string, photo?: string): str
   return cleanDesc;
 }
 
+export function mapOldRockCode(code: string): string {
+  if (!code) return '';
+  const clean = code.trim().toUpperCase();
+  
+  const mapping: Record<string, string> = {
+    'ALBIT': 'FGNS',
+    'ALUNIT': 'ALN',
+    'ANDEZIT': 'AND',
+    'BAZALT': 'BAZ',
+    'BRES': 'BRS',
+    'DASIT': 'DST',
+    'DAYK': 'DYK',
+    'DIYABAZ': 'DB',
+    'DIYORIT': 'DYR',
+    'DOLGU': 'ALV',
+    'FLT': 'MLK',
+    'GABRO': 'GB',
+    'GNAYS': 'GNS',
+    'GNYS': 'GNS',
+    'GRA': 'GRT',
+    'GRANIT': 'GRT',
+    'GRANODIYORIT': 'GRD',
+    'HALLOYSIT': 'HAL',
+    'IGNIMBIRIT': 'IGB',
+    'INTRUZIF': 'GRND',
+    'KALSIT': 'KÇT',
+    'KAOLEN': 'KL',
+    'KIL': 'KL',
+    'KOMUR': 'KMR',
+    'KUM': 'KMT',
+    'KUVARSIT': 'KVS',
+    'KUVARS': 'QVN',
+    'SILIS': 'QVN',
+    'MRB': 'MER',
+    'MTSH': 'SST',
+    'MTSL': 'SST',
+    'MTSS': 'SST',
+    'SIST': 'SST',
+    'OFY': 'OFM',
+    'OKSIT': 'DSED',
+    'SULFIT': 'DSED',
+    'PEGMATIT': 'PEG',
+    'PERLIT': 'OBS',
+    'RIYOLIT': 'RYL',
+    'SERP': 'SRP',
+    'SIYENIT': 'SY',
+    'SUBVOLKANIK': 'GRND',
+    'TO': 'ALV',
+    'TOPRAK': 'ALV',
+    'VFD': 'GRND',
+    'VIA': 'TF',
+    'VIA.A': 'AND',
+    'VIA.P': 'BRS',
+    'VIA.T': 'TF',
+    'VIA:T': 'TF',
+    'VOLKANOSEDIMANTER': 'VKT',
+    'VSM': 'VKT',
+    'XBH': 'BRS',
+    'YANAL': 'MLK'
+  };
+
+  return mapping[clean] || code;
+}
+
 export interface CollarState {
   holeId: string;
   easting: number;
@@ -327,7 +391,7 @@ export function useDrillholeData() {
                 id: l.id,
                 from: cleanNum(l.from_depth),
                 to: cleanNum(l.to_depth),
-                rockCode: l.rock_code,
+                rockCode: mapOldRockCode(l.rock_code || ''),
                 alteration: l.alteration || '',
                 mineralization: l.mineralization || '',
                 description,
@@ -450,7 +514,8 @@ export function useDrillholeData() {
           setLithology((dbHole.lithology || []).map((l: any) => ({
             ...l,
             from: cleanNum(l.from),
-            to: cleanNum(l.to)
+            to: cleanNum(l.to),
+            rockCode: mapOldRockCode(l.rockCode || l.rock_code || '')
           })));
 
           setGeotech((dbHole.geotech || []).map((g: any) => cleanGeotechRow(g)));
@@ -513,7 +578,8 @@ export function useDrillholeData() {
           setLithology((localLitho ? JSON.parse(localLitho) : []).map((l: any) => ({
             ...l,
             from: cleanNum(l.from),
-            to: cleanNum(l.to)
+            to: cleanNum(l.to),
+            rockCode: mapOldRockCode(l.rockCode || l.rock_code || '')
           })));
 
           setGeotech((localGeotech ? JSON.parse(localGeotech) : []).map((g: any) => cleanGeotechRow(g)));
@@ -554,6 +620,7 @@ export function useDrillholeData() {
             ...l,
             from: cleanNum(l.from),
             to: cleanNum(l.to),
+            rockCode: mapOldRockCode(l.rockCode || l.rock_code || ''),
             description,
             photo
           };
@@ -939,7 +1006,10 @@ export function useDrillholeData() {
         
         setCollar(holeData.collar);
         setSurveys(holeData.surveys);
-        setLithology(holeData.lithology);
+        setLithology((holeData.lithology || []).map((l: any) => ({
+          ...l,
+          rockCode: mapOldRockCode(l.rockCode || l.rock_code || '')
+        })));
         setGeotech(holeData.geotech);
         setAssays(holeData.assays);
         setSamplePrep([]);

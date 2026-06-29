@@ -3,6 +3,7 @@ import { Plus, Trash2, Download, Upload, AlertCircle, Camera } from 'lucide-reac
 import { exportToCSV, parseCSV } from '../utils/csv';
 import type { ValidationError } from '../utils/validation';
 import { getSupabaseClient } from '../utils/supabaseClient';
+import { mapOldRockCode } from '../hooks/useDrillholeData';
 
 export interface GridColumn {
   key: string;
@@ -913,14 +914,17 @@ export const GridTable: React.FC<GridTableProps> = ({
 
     const getSelectValue = (val: string, options?: Array<{ value: string; label: string }>): string => {
       if (!val || !options) return val || '';
-      const trimmedVal = val.trim().toUpperCase();
+      
+      // Map legacy rock codes to new MAPEG abbreviations on import
+      const mappedVal = mapOldRockCode(val);
+      const trimmedVal = mappedVal.trim().toUpperCase();
       const normVal = normalizeKey(trimmedVal);
       
       // 1. Direct match with option value
       const directMatch = options.find(opt => opt.value.toUpperCase() === trimmedVal || normalizeKey(opt.value) === normVal);
       if (directMatch) return directMatch.value;
       
-      // 2. Fuzzy match in label (e.g. check if option label contains "(DST)" or matches in parentheses)
+      // 2. Fuzzy match in label
       const fuzzyMatch = options.find(opt => {
         const labelUpper = opt.label.toUpperCase();
         const normLabel = normalizeKey(opt.label);
@@ -931,7 +935,7 @@ export const GridTable: React.FC<GridTableProps> = ({
       });
       if (fuzzyMatch) return fuzzyMatch.value;
       
-      return val;
+      return mappedVal;
     };
 
     const isUTF8 = (bytes: Uint8Array): boolean => {

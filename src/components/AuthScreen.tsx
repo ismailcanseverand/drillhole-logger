@@ -29,6 +29,12 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess, onContinu
       return;
     }
 
+    if (!email.toLowerCase().endsWith('@kale.com.tr')) {
+      setError('Sadece @kale.com.tr uzantılı e-posta adresleri ile kayıt olunabilir veya giriş yapılabilir.');
+      setLoading(false);
+      return;
+    }
+
     try {
       if (isSignUp) {
         // Sign Up

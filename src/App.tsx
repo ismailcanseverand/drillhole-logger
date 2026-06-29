@@ -93,7 +93,14 @@ function App() {
           try {
             const { data } = await client.auth.getSession();
             if (data?.session?.user) {
-              setUserEmail(data.session.user.email || null);
+              const email = data.session.user.email || '';
+              if (email.toLowerCase().endsWith('@kale.com.tr')) {
+                setUserEmail(email);
+              } else {
+                await client.auth.signOut();
+                setUserEmail(null);
+                alert('Sadece @kale.com.tr uzantılı e-posta adreslerine izin verilir.');
+              }
             }
           } catch (err) {
             console.error('Session retrieval error:', err);

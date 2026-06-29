@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import { getSupabaseClient } from '../utils/supabaseClient';
-import { Lock, Mail, User, Database, ArrowRight, ShieldCheck, HelpCircle } from 'lucide-react';
+import { Lock, Mail, User, Database, ArrowRight, ShieldCheck } from 'lucide-react';
 
 interface AuthScreenProps {
   onAuthSuccess: (userEmail: string) => void;
-  onContinueOffline: () => void;
 }
 
-export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess, onContinueOffline }) => {
+export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess }) => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -390,45 +389,6 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess, onContinu
             {isSignUp ? 'Zaten bir hesabınız var mı? Giriş Yapın' : 'Yeni hesap oluşturmak için tıklayın'}
           </button>
         </div>
-
-        {/* Separator line */}
-        <div style={{ display: 'flex', alignItems: 'center', margin: '24px 0', opacity: 0.15 }}>
-          <div style={{ flex: 1, height: '1px', background: '#ffffff' }} />
-          <span style={{ padding: '0 10px', fontSize: '11px', color: '#ffffff' }}>VEYA</span>
-          <div style={{ flex: 1, height: '1px', background: '#ffffff' }} />
-        </div>
-
-        {/* Offline Guest Option */}
-        <button
-          onClick={onContinueOffline}
-          style={{
-            width: '100%',
-            padding: '12px',
-            borderRadius: '12px',
-            background: 'transparent',
-            color: '#cbd5e1',
-            border: '1px solid rgba(255, 255, 255, 0.15)',
-            fontSize: '13px',
-            fontWeight: '600',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-            transition: 'all 0.2s'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
-            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'transparent';
-            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
-          }}
-        >
-          <HelpCircle size={16} />
-          <span>Çevrimdışı (Önizleme) Modda Devam Et</span>
-        </button>
       </div>
     </div>
   );

@@ -81,7 +81,6 @@ function App() {
   }, []);
 
   const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [guestMode, setGuestMode] = useState<boolean>(false);
   const [authChecked, setAuthChecked] = useState<boolean>(false);
   const isAdmin = userEmail?.trim().toLowerCase() === 'ismailcansever@kale.com.tr';
 
@@ -120,7 +119,6 @@ function App() {
       }
     }
     setUserEmail(null);
-    setGuestMode(false);
   };
 
   const [leftWidth, setLeftWidth] = useState<number>(50); // initial 50% split width
@@ -715,7 +713,7 @@ function App() {
   }
 
   // 2. Auth Screen redirect
-  if (isSupabaseConfigured() && !userEmail && !guestMode) {
+  if (isSupabaseConfigured() && !userEmail) {
     return (
       <AuthScreen 
         onAuthSuccess={(email) => {
@@ -728,7 +726,6 @@ function App() {
             setCollar(prev => ({ ...prev, logger: name }));
           }
         }}
-        onContinueOffline={() => setGuestMode(true)}
       />
     );
   }
@@ -1278,10 +1275,10 @@ function App() {
               <Trash2 size={14} /> Reset / Clear
             </button>
           )}
-          {isSupabaseConfigured() && (userEmail || guestMode) && (
+          {isSupabaseConfigured() && userEmail && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', borderRadius: '8px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', marginRight: '6px' }}>
               <span style={{ fontSize: '11px', fontWeight: 600, color: '#e2e8f0' }}>
-                {guestMode ? 'Misafir Modu' : userEmail}
+                {userEmail}
               </span>
               <button 
                 onClick={handleLogout} 

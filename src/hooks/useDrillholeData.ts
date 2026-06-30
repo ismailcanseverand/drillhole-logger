@@ -344,7 +344,9 @@ export function useDrillholeData() {
       const allLocalKeys = Array.from(new Set([...localKeys, ...reconstructedHoles])).sort();
 
       // 1. Instantly populate dropdown with local keys & select default
-      const initialHole = allLocalKeys.includes('CYHN-33') ? 'CYHN-33' : (allLocalKeys[0] || '');
+      const initialHole = allLocalKeys.find(k => k.toUpperCase() === 'BCS-D01-2026') || 
+                          allLocalKeys.find(k => k.toUpperCase() === 'CYHN-33') || 
+                          allLocalKeys[0] || '';
       setHoleList(allLocalKeys);
       setSelectedHoleId(initialHole);
 
@@ -362,6 +364,14 @@ export function useDrillholeData() {
             const dbKeys = data.map((d: any) => d.hole_id);
             const mergedKeys = Array.from(new Set([...dbKeys, ...localKeys, ...localCreatedHoles])).sort();
             setHoleList(mergedKeys);
+            setSelectedHoleId(prev => {
+              if (prev && mergedKeys.includes(prev)) return prev;
+              const target = mergedKeys.find(k => k.toUpperCase() === 'BCS-D01-2026');
+              if (target) return target;
+              const cyhn = mergedKeys.find(k => k.toUpperCase() === 'CYHN-33');
+              if (cyhn) return cyhn;
+              return mergedKeys[0] || '';
+            });
           }
         } catch (dbErr) {
           console.error('Failed to retrieve holes list from Supabase in the background:', dbErr);

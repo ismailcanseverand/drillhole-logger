@@ -424,7 +424,11 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
             if (!dCol.isGeotech) {
               const cell = worksheet.getCell(`${getColLetter(5 + i)}${rowNum}`);
               cell.value = getAnalyteVal(a, dCol.key);
-              cell.numFmt = '0.00';
+              if (dCol.key === 'mno' || dCol.key === 'cr2o3') {
+                cell.numFmt = '0.000';
+              } else {
+                cell.numFmt = '0.00';
+              }
             }
           });
         }
@@ -1825,7 +1829,8 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                             const isInside = barWidth > 24;
                             const textX = isInside ? subColX + 6 : subColX + 3 + barWidth + 3;
                             const showLabel = h >= 11 && val > 0;
-                            const formattedVal = isMetallic ? val.toFixed(2) : `%${val.toFixed(1)}`;
+                            const isThreeDec = key === 'mno' || key === 'cr2o3';
+                            const formattedVal = isMetallic ? val.toFixed(isThreeDec ? 3 : 2) : `%${val.toFixed(isThreeDec ? 3 : 1)}`;
 
                             return (
                               <g key={`${key}-${a.id}`}>
@@ -1842,7 +1847,8 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                                   style={{ cursor: 'pointer', transition: 'fill-opacity 0.2s' }}
                                   onClick={() => handleBlockClick('Assay', a.id)}
                                   onMouseEnter={() => {
-                                    setHoverInfo(`Assay Sample [${a.sampleId}] ${a.from}m-${a.to}m | ${analyteDetails.label}: ${val.toFixed(2)}`);
+                                    const isThreeDec = key === 'mno' || key === 'cr2o3';
+                                    setHoverInfo(`Assay Sample [${a.sampleId}] ${a.from}m-${a.to}m | ${analyteDetails.label}: ${val.toFixed(isThreeDec ? 3 : 2)}`);
                                   }}
                                   onMouseLeave={() => setHoverInfo(null)}
                                 />
@@ -1906,9 +1912,10 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                             strokeWidth="1"
                             style={{ cursor: 'pointer' }}
                             onClick={() => handleBlockClick('Assay', p.id)}
-                            onMouseEnter={() =>
-                              setHoverInfo(`Assay Sample [${p.sampleId}] at ${p.depth} | ${analyteDetails.label}: ${p.value.toFixed(2)}`)
-                            }
+                            onMouseEnter={() => {
+                              const isThreeDec = key === 'mno' || key === 'cr2o3';
+                              setHoverInfo(`Assay Sample [${p.sampleId}] at ${p.depth} | ${analyteDetails.label}: ${p.value.toFixed(isThreeDec ? 3 : 2)}`);
+                            }}
                             onMouseLeave={() => setHoverInfo(null)}
                           />
                         ))}

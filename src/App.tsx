@@ -9,7 +9,6 @@ import { ValidationAuditor } from './components/ValidationAuditor';
 import {
   Database,
   RefreshCw,
-  Trash2,
   Layout,
   ClipboardList,
   Settings,
@@ -49,8 +48,6 @@ function App() {
     alterations,
     setAlterations,
     errors,
-    resetToDefault,
-    clearAllData,
     holeList,
     selectedHoleId,
     setSelectedHoleId,
@@ -1569,14 +1566,7 @@ function App() {
             )}
             Save Drillhole to Database
           </button>
-          <button className="btn btn-secondary" onClick={resetToDefault}>
-            <RefreshCw size={14} /> Load Demo Project
-          </button>
-          {isAdmin && (
-            <button className="btn btn-danger" onClick={clearAllData}>
-              <Trash2 size={14} /> Reset / Clear
-            </button>
-          )}
+
           {renderUserPanel()}
           {isAdmin && (
             <button 

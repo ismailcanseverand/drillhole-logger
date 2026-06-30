@@ -1715,7 +1715,7 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
             {colPositions['geotech']?.visible && (() => {
               const pos = colPositions['geotech'];
               const ticks = [0, 25, 50, 75, 100];
-              const sortedGeotech = [...geotech]
+              const sortedGeotech = [...(geotech || [])]
                 .filter(g => g.to > g.from)
                 .sort((a, b) => a.from - b.from);
 
@@ -1810,11 +1810,11 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                     const pos = colPositions['assays'];
                     const subColWidth = pos.width / selectedAnalytes.length;
                     const subColX = pos.startX + i * subColWidth;
-                    const maxValForAnalyte = Math.max(0.1, ...assays.map(item => Number(item[key as keyof AssayState]) || 0));
+                    const maxValForAnalyte = Math.max(0.1, ...(assays || []).map(item => Number(item[key as keyof AssayState]) || 0));
 
                     return (
                       <g key={`bar-group-${key}`}>
-                        {assays
+                        {(assays || [])
                           .filter(a => (a.sampleType === 'Core' || !a.sampleType) && a.to > a.from)
                           .map(a => {
                             const y = a.from * scaleY + bodyPaddingTop;
@@ -1871,9 +1871,9 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                     const analyteDetails = analytesList.find(an => an.key === key);
                     if (!analyteDetails) return null;
                     const pos = colPositions['assays'];
-                    const maxValForAnalyte = Math.max(0.1, ...assays.map(item => Number(item[key as keyof AssayState]) || 0));
+                    const maxValForAnalyte = Math.max(0.1, ...(assays || []).map(item => Number(item[key as keyof AssayState]) || 0));
 
-                    const points = assays
+                    const points = (assays || [])
                       .filter(a => (a.sampleType === 'Core' || !a.sampleType) && a.to > a.from)
                       .sort((a, b) => a.from - b.from)
                       .map(a => {
@@ -1967,7 +1967,7 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
 
           {colPositions['lithology']?.visible && (
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', maxWidth: '500px' }}>
-              {Array.from(new Set(lithology.map(l => l.rockCode).filter(Boolean))).map(code => (
+              {Array.from(new Set((lithology || []).map(l => l.rockCode).filter(Boolean))).map(code => (
                 <div key={code} className="legend-item">
                   <span className="legend-color" style={{ width: '10px', height: '10px', borderRadius: '2px', background: getRockColor(code), display: 'inline-block', border: '1px solid var(--border-medium)' }}></span>
                   <span>{getRockLabel(code)}</span>

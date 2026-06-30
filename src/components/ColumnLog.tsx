@@ -27,7 +27,13 @@ const INDUSTRIAL_ANALYTES = [
   { key: 'sio2', label: 'SiO2 (%)', color: '#10b981' },    // Emerald Green
   { key: 'tio2', label: 'TiO2 (%)', color: '#eab308' },    // Amber Yellow
   { key: 'na2o_k2o', label: 'Na2O+K2O (%)', color: '#ec4899' }, // Hot Pink
-  { key: 'loi', label: 'LOI / AZ (%)', color: '#a855f7' }  // Purple
+  { key: 'loi', label: 'LOI / AZ (%)', color: '#a855f7' },  // Purple
+  { key: 'cao', label: 'CaO (%)', color: '#0ea5e9' },       // Sky Blue
+  { key: 'mgo', label: 'MgO (%)', color: '#f97316' },       // Orange
+  { key: 'so4', label: 'SO4 (%)', color: '#84cc16' },       // Lime
+  { key: 'mno', label: 'MnO (%)', color: '#64748b' },       // Slate
+  { key: 'cr2o3', label: 'Cr2O3 (%)', color: '#10b981' },   // Emerald Green
+  { key: 'p2o5', label: 'P2O5 (%)', color: '#8b5cf6' }      // Violet
 ];
 
 const METALLIC_ANALYTES = [
@@ -54,6 +60,17 @@ const METALLIC_HOLES = [
   'KRK-S1', 'KRK-S2'
 ];
 
+const getColLetter = (colIndex: number): string => {
+  let temp = colIndex;
+  let letter = '';
+  while (temp > 0) {
+    let modulo = (temp - 1) % 26;
+    letter = String.fromCharCode(65 + modulo) + letter;
+    temp = Math.floor((temp - modulo) / 26);
+  }
+  return letter;
+};
+
 export const ColumnLog: React.FC<ColumnLogProps> = ({
   totalDepth,
   lithology,
@@ -65,18 +82,74 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
   collar,
 }) => {
   const isMetallic = holeId ? METALLIC_HOLES.includes(holeId.trim().toUpperCase()) : false;
-  const analytesList = isMetallic ? METALLIC_ANALYTES : INDUSTRIAL_ANALYTES;
 
-  const [hoverInfo, setHoverInfo] = useState<string | null>(null);
-  const [selectedAnalytes, setSelectedAnalytes] = useState<string[]>(isMetallic ? ['au_ppm'] : ['al2o3']);
+  const ALL_FEATURES = isMetallic ? [
+    { key: 'tcrPercent', label: 'TCR (%)', color: '#3b82f6', isGeotech: true },
+    { key: 'rqdPercent', label: 'RQD (%)', color: '#ff9800', isGeotech: true },
+    { key: 'au_ppm', label: 'Au (ppm)', color: '#ffd700' },
+    { key: 'au_ppb', label: 'Au (ppb)', color: '#f59e0b' },
+    { key: 'ag_ppm', label: 'Ag (ppm)', color: '#94a3b8' },
+    { key: 'cu_ppm', label: 'Cu (ppm)', color: '#ec4899' },
+    { key: 'pb_ppm', label: 'Pb (ppm)', color: '#a855f7' },
+    { key: 'zn_ppm', label: 'Zn (ppm)', color: '#3b82f6' },
+    { key: 'as_ppm', label: 'As (ppm)', color: '#ef4444' }
+  ] : [
+    { key: 'tcrPercent', label: 'TCR (%)', color: '#3b82f6', isGeotech: true },
+    { key: 'rqdPercent', label: 'RQD (%)', color: '#ff9800', isGeotech: true },
+    { key: 'al2o3', label: 'Al2O3 (%)', color: '#3b82f6' },
+    { key: 'fe2o3', label: 'Fe2O3 (%)', color: '#f43f5e' },
+    { key: 'sio2', label: 'SiO2 (%)', color: '#10b981' },
+    { key: 'tio2', label: 'TiO2 (%)', color: '#eab308' },
+    { key: 'na2o_k2o', label: 'Na2O+K2O (%)', color: '#ec4899' },
+    { key: 'loi', label: 'LOI / AZ (%)', color: '#a855f7' },
+    { key: 'cao', label: 'CaO (%)', color: '#0ea5e9' },
+    { key: 'mgo', label: 'MgO (%)', color: '#f97316' },
+    { key: 'so4', label: 'SO4 (%)', color: '#84cc16' },
+    { key: 'mno', label: 'MnO (%)', color: '#64748b' },
+    { key: 'cr2o3', label: 'Cr2O3 (%)', color: '#10b981' },
+    { key: 'p2o5', label: 'P2O5 (%)', color: '#8b5cf6' }
+  ];
+
+  const [selectedFeatures, setSelectedFeatures] = useState<string[]>(
+    isMetallic 
+      ? ['tcrPercent', 'rqdPercent', 'au_ppm'] 
+      : ['tcrPercent', 'rqdPercent', 'al2o3']
+  );
 
   useEffect(() => {
-    setSelectedAnalytes(isMetallic ? ['au_ppm'] : ['al2o3']);
+    setSelectedFeatures(
+      isMetallic 
+        ? ['tcrPercent', 'rqdPercent', 'au_ppm'] 
+        : ['tcrPercent', 'rqdPercent', 'al2o3']
+    );
   }, [isMetallic]);
+
+  const analytesList = isMetallic ? METALLIC_ANALYTES : INDUSTRIAL_ANALYTES;
+
+  const selectedAnalytes = selectedFeatures.filter(key => {
+    const feat = ALL_FEATURES.find(f => f.key === key);
+    return feat && !feat.isGeotech;
+  });
+
+  const getAnalyteVal = (assay: AssayState, key: string): number => {
+    if (key === 'fe_ti') {
+      const fe = Number(assay.fe2o3) || 0;
+      const ti = Number(assay.tio2) || 0;
+      return fe + ti;
+    }
+    if (key === 'na2o_k2o') {
+      return Number(assay.na2o_k2o) || 0;
+    }
+    return Number(assay[key as keyof AssayState]) || 0;
+  };
+
+  const headerSvgRef = useRef<SVGSVGElement>(null);
+  const bodySvgRef = useRef<SVGSVGElement>(null);
+
+  const [hoverInfo, setHoverInfo] = useState<string | null>(null);
   const [visualStyle, setVisualStyle] = useState<'bars' | 'line'>('bars');
   const [showConfig, setShowConfig] = useState<boolean>(false);
 
-  // Custom metadata states for Excel export
   const [showExportModal, setShowExportModal] = useState<boolean>(false);
   const [metaCompany, setMetaCompany] = useState<string>('MCB SONDAJ');
   const [metaProject, setMetaProject] = useState<string>(collar?.project || '');
@@ -94,9 +167,6 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
     }
   }, [collar?.project]);
 
-  const headerSvgRef = useRef<SVGSVGElement>(null);
-  const bodySvgRef = useRef<SVGSVGElement>(null);
-
   const handleExportExcel = async () => {
     const project = metaProject || collar?.project || '-';
     const holeIdVal = holeId || collar?.holeId || '-';
@@ -109,317 +179,164 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
     try {
       const ExcelJSModule = await import('exceljs');
       const ExcelJS = (ExcelJSModule.default || ExcelJSModule) as any;
-      if (!ExcelJS || typeof ExcelJS.Workbook !== 'function') {
-        throw new Error('Workbook constructor not found in loaded exceljs module.');
-      }
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet('Sondaj Logu', {
-        pageSetup: {
-          paperSize: 9, // A4
-          orientation: 'portrait',
-          fitToPage: true,
-          fitToWidth: 1,
-          fitToHeight: 0
-        }
+        pageSetup: { orientation: 'portrait', fitToPage: true, fitToWidth: 1, fitToHeight: 0 }
       });
 
-      const hasAssays = assays && assays.some(a => (a.sampleType === 'Core' || !a.sampleType) && a.to > a.from);
+      const dynamicCols = selectedFeatures.map(key => {
+        const feat = ALL_FEATURES.find(f => f.key === key);
+        return { key, width: 12, label: feat ? feat.label : key, isGeotech: feat?.isGeotech };
+      });
 
-      // Active Analytes Logic
-      let activeKeys: string[] = [];
-      if (selectedAnalytes && selectedAnalytes.length > 0) {
-        activeKeys = [...selectedAnalytes];
-      }
-      const defaultList = isMetallic
-        ? ['au_ppm', 'ag_ppm', 'cu_ppm']
-        : ['al2o3', 'fe_ti', 'na2o_k2o'];
 
-      while (activeKeys.length < 3) {
-        const nextDefault = defaultList.find(k => !activeKeys.includes(k));
-        if (nextDefault) {
-          activeKeys.push(nextDefault);
-        } else {
-          break;
-        }
-      }
-      activeKeys = activeKeys.slice(0, 3);
-
-      const getAnalyteLabel = (key: string): string => {
-        if (key === 'fe_ti') return 'Fe+Ti (%)';
-        if (key === 'na2o_k2o') return 'Na+K (%)';
-        const match = [...INDUSTRIAL_ANALYTES, ...METALLIC_ANALYTES].find(a => a.key === key);
-        return match ? match.label : key;
-      };
-
-      const getAnalyteColor = (key: string): string => {
-        if (key === 'fe_ti') return '#f43f5e';
-        if (key === 'na2o_k2o') return '#ec4899';
-        const match = [...INDUSTRIAL_ANALYTES, ...METALLIC_ANALYTES].find(a => a.key === key);
-        return match ? match.color : '#3b82f6';
-      };
-
-      const getAnalyteVal = (assay: AssayState, key: string): number => {
-        if (key === 'fe_ti') {
-          const fe = Number(assay.fe2o3) || 0;
-          const ti = Number(assay.tio2) || 0;
-          return fe + ti;
-        }
-        if (key === 'na2o_k2o') {
-          return Number(assay.na2o_k2o) || 0;
-        }
-        return Number(assay[key as keyof AssayState]) || 0;
-      };
-
-      // Set columns
       worksheet.columns = [
         { width: 3 }, // spacer Col A
-        { key: 'depth', width: 11 }, // Col B
-        { key: 'interval', width: 13 }, // Col C
-        { key: 'sampleNo', width: 13 }, // Col D
+        { key: 'depth', width: 11 }, // Col B: Derinlik
+        { key: 'interval', width: 13 }, // Col C: Örnek Derinliği
+        { key: 'sampleNo', width: 13 }, // Col D: Örnek No
         { key: 'colE', width: 12 }, // Col E
         { key: 'colF', width: 12 }, // Col F
         { key: 'colG', width: 12 }, // Col G
-        { key: 'tcr', width: 9 }, // Col H
-        { key: 'scr', width: 9 }, // Col I
-        { key: 'rqd', width: 9 }, // Col J
-        { key: 'lithology', width: 15 }, // Col K
-        { key: 'alteration', width: 15 }, // Col L
-        { key: 'redox', width: 15 }, // Col M
-        { key: 'description', width: 38 } // Col N
+        { key: 'colH', width: 12 }, // Col H
+        { key: 'colI', width: 12 }, // Col I
+        { key: 'colJ', width: 12 }, // Col J
+        { key: 'lithology', width: 15 }, // Col K: Litoloji
+        { key: 'alteration', width: 15 }, // Col L: Alterasyon
+        { key: 'redox', width: 15 }, // Col M: Redoks
+        { key: 'description', width: 38 } // Col N: Açıklamalar
       ];
-
-      // Enable grid lines
       worksheet.views = [{ showGridLines: true }];
 
-      // Borders & Fills
-      const thinBorder = {
-        top: { style: 'thin', color: { argb: '000000' } },
-        left: { style: 'thin', color: { argb: '000000' } },
-        bottom: { style: 'thin', color: { argb: '000000' } },
-        right: { style: 'thin', color: { argb: '000000' } }
-      };
-      
-      const thickBorder = {
-        top: { style: 'medium', color: { argb: '000000' } },
-        left: { style: 'medium', color: { argb: '000000' } },
-        bottom: { style: 'medium', color: { argb: '000000' } },
-        right: { style: 'medium', color: { argb: '000000' } }
-      };
+      const thinBorder = { top: { style: 'thin', color: { argb: '000000' } }, left: { style: 'thin', color: { argb: '000000' } }, bottom: { style: 'thin', color: { argb: '000000' } }, right: { style: 'thin', color: { argb: '000000' } } };
+      const thickBorder = { top: { style: 'medium', color: { argb: '000000' } }, left: { style: 'medium', color: { argb: '000000' } }, bottom: { style: 'medium', color: { argb: '000000' } }, right: { style: 'medium', color: { argb: '000000' } } };
+      const grayFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'F1F5F9' } };
 
-      const grayFill = {
-        type: 'pattern',
-        pattern: 'solid',
-        fgColor: { argb: 'F1F5F9' }
-      };
-
-      // Classification Header
       worksheet.getCell('B1').value = 'Sınıflandırma: HİZMETE ÖZEL (CONFIDENTIAL)';
-      worksheet.getCell('B1').font = { name: 'Segoe UI', size: 8, bold: true };
-
-      // Title Card
+      
+      // Merge Title Card and set borders AFTER merging to prevent distortion
       worksheet.mergeCells('B2:L3');
+      for (let r = 2; r <= 3; r++) {
+        for (let col = 2; col <= 12; col++) {
+          const c = worksheet.getCell(r, col);
+          c.border = thickBorder;
+        }
+      }
       const titleCell = worksheet.getCell('B2');
       titleCell.value = 'SONDAJ LOGU';
       titleCell.font = { name: 'Segoe UI', size: 16, bold: true };
       titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
-      titleCell.border = thickBorder;
 
-      const snoLbl = worksheet.getCell('M2');
-      snoLbl.value = 'Sondaj No';
-      snoLbl.font = { name: 'Segoe UI', size: 8, bold: true };
-      snoLbl.alignment = { horizontal: 'center', vertical: 'middle' };
-      snoLbl.border = thinBorder;
-      snoLbl.fill = grayFill;
+      // Sondaj No / Sayfa No - set borders on M2, N2, M3, N3
+      worksheet.getCell('M2').value = 'Sondaj No';
+      worksheet.getCell('N2').value = holeIdVal;
+      worksheet.getCell('M3').value = 'Sayfa No';
+      worksheet.getCell('N3').value = 1;
 
-      const snoVal = worksheet.getCell('N2');
-      snoVal.value = holeIdVal;
-      snoVal.font = { name: 'Segoe UI', size: 9, bold: true };
-      snoVal.alignment = { horizontal: 'center', vertical: 'middle' };
-      snoVal.border = thinBorder;
-
-      const pnoLbl = worksheet.getCell('M3');
-      pnoLbl.value = 'Sayfa No';
-      pnoLbl.font = { name: 'Segoe UI', size: 8, bold: true };
-      pnoLbl.alignment = { horizontal: 'center', vertical: 'middle' };
-      pnoLbl.border = thinBorder;
-      pnoLbl.fill = grayFill;
-
-      const pnoVal = worksheet.getCell('N3');
-      pnoVal.value = 1;
-      pnoVal.font = { name: 'Segoe UI', size: 9 };
-      pnoVal.alignment = { horizontal: 'center', vertical: 'middle' };
-      pnoVal.border = thinBorder;
-
-      // Metadata Rows
-      const rowData = [
-        {
-          c1Label: 'Yüklenici Firma', c1Val: metaCompany,
-          c2Label: 'Sondaj Derinliği', c2Val: `${collar?.totalDepth !== undefined ? collar.totalDepth : '0'} m`,
-          c3Label: 'Yeraltı Suyu', c3Val: metaWaterTable
-        },
-        {
-          c1Label: 'Proje Adı', c1Val: project,
-          c2Label: 'Başlama Tarihi', c2Val: collar?.dateStarted || '-',
-          c3Label: 'Makine Tipi/Metodu', c3Val: metaDrillMethod
-        },
-        {
-          c1Label: 'İl', c1Val: metaCity,
-          c2Label: 'Bitiş Tarihi', c2Val: collar?.dateCompleted || '-',
-          c3Label: 'SPT Şahmerdan Tipi', c3Val: '-'
-        },
-        {
-          c1Label: 'İlçe', c1Val: metaDistrict,
-          c2Label: 'Sondaj Kotu', c2Val: collar?.elevation !== undefined ? `${collar.elevation} m` : '-',
-          c3Label: 'Delgi Çapı', c3Val: metaDiameter
-        },
-        {
-          c1Label: 'Mahalle/Köy', c1Val: metaVillage,
-          c2Label: 'Koordinat X (N)', c2Val: northing,
-          c3Label: 'Sondör', c3Val: metaDriller
-        },
-        {
-          c1Label: 'Pafta', c1Val: '-',
-          c2Label: 'Koordinat Y (E)', c2Val: easting,
-          c3Label: 'Sondör Belge No', c3Val: '-'
-        },
-        {
-          c1Label: 'Ada', c1Val: '-',
-          c2Label: 'Koordinat Z (RL)', c2Val: elevation,
-          c3Label: 'Yönelim (Dip/Azim)', c3Val: dipAzimuth
-        },
-        {
-          c1Label: 'Parsel', c1Val: '-',
-          c2Label: 'Drill Status', c2Val: collar?.status || '-',
-          c3Label: 'Logger / Geologist', c3Val: logger
+      for (let r = 2; r <= 3; r++) {
+        for (let col = 13; col <= 14; col++) {
+          const cell = worksheet.getCell(r, col);
+          cell.border = thinBorder;
+          cell.font = { name: 'Segoe UI', size: 9, bold: col === 13 };
+          cell.alignment = { horizontal: 'center', vertical: 'middle' };
         }
+      }
+
+      const rowData = [
+        { c1Label: 'Yüklenici Firma', c1Val: metaCompany, c2Label: 'Sondaj Derinliği', c2Val: `${collar?.totalDepth || 0} m`, c3Label: 'Yeraltı Suyu', c3Val: metaWaterTable },
+        { c1Label: 'Proje Adı', c1Val: project, c2Label: 'Başlama Tarihi', c2Val: collar?.dateStarted || '-', c3Label: 'Makine Tipi/Metodu', c3Val: metaDrillMethod },
+        { c1Label: 'İl', c1Val: metaCity, c2Label: 'Bitiş Tarihi', c2Val: collar?.dateCompleted || '-', c3Label: 'SPT Şahmerdan Tipi', c3Val: '-' },
+        { c1Label: 'İlçe', c1Val: metaDistrict, c2Label: 'Sondaj Kotu', c2Val: elevation, c3Label: 'Delgi Çapı', c3Val: metaDiameter },
+        { c1Label: 'Mahalle/Köy', c1Val: metaVillage, c2Label: 'Koordinat X (N)', c2Val: northing, c3Label: 'Sondör', c3Val: metaDriller },
+        { c1Label: 'Pafta', c1Val: '-', c2Label: 'Koordinat Y (E)', c2Val: easting, c3Label: 'Sondör Belge No', c3Val: '-' },
+        { c1Label: 'Ada', c1Val: '-', c2Label: 'Koordinat Z (RL)', c2Val: elevation, c3Label: 'Yönelim (Dip/Azim)', c3Val: dipAzimuth },
+        { c1Label: 'Parsel', c1Val: '-', c2Label: 'Drill Status', c2Val: collar?.status || '-', c3Label: 'Logger / Geologist', c3Val: logger }
       ];
 
-      const startY = 4;
       const writeMetaRow = (rowNum: number, label1: string, val1: any, label2: string, val2: any, label3: string, val3: any) => {
-        worksheet.getRow(rowNum).height = 16;
-        
-        // c1
-        const l1 = worksheet.getCell(`B${rowNum}`);
-        l1.value = label1;
-        l1.font = { name: 'Segoe UI', size: 9, bold: true };
-        l1.alignment = { horizontal: 'left', vertical: 'middle' };
-        l1.border = thinBorder;
-        l1.fill = grayFill;
-        
+        // Merge cells
         worksheet.mergeCells(`C${rowNum}:D${rowNum}`);
-        const v1 = worksheet.getCell(`C${rowNum}`);
-        v1.value = val1;
-        v1.font = { name: 'Segoe UI', size: 9 };
-        v1.alignment = { horizontal: 'left', vertical: 'middle' };
-        v1.border = thinBorder;
-        
-        // c2
-        worksheet.mergeCells(`E${rowNum}:F${rowNum}`);
-        const l2 = worksheet.getCell(`E${rowNum}`);
-        l2.value = label2;
-        l2.font = { name: 'Segoe UI', size: 9, bold: true };
-        l2.alignment = { horizontal: 'left', vertical: 'middle' };
-        l2.border = thinBorder;
-        l2.fill = grayFill;
-        
-        worksheet.mergeCells(`G${rowNum}:H${rowNum}`);
-        const v2 = worksheet.getCell(`G${rowNum}`);
-        v2.value = val2;
-        v2.font = { name: 'Segoe UI', size: 9 };
-        v2.alignment = { horizontal: 'left', vertical: 'middle' };
-        v2.border = thinBorder;
+        worksheet.mergeCells(`E${rowNum}:G${rowNum}`);
+        worksheet.mergeCells(`H${rowNum}:J${rowNum}`);
+        worksheet.mergeCells(`K${rowNum}:L${rowNum}`);
+        worksheet.mergeCells(`M${rowNum}:N${rowNum}`);
 
-        // c3
-        worksheet.mergeCells(`I${rowNum}:K${rowNum}`);
-        const l3 = worksheet.getCell(`I${rowNum}`);
-        l3.value = label3;
-        l3.font = { name: 'Segoe UI', size: 9, bold: true };
-        l3.alignment = { horizontal: 'left', vertical: 'middle' };
-        l3.border = thinBorder;
-        l3.fill = grayFill;
-        
-        worksheet.mergeCells(`L${rowNum}:N${rowNum}`);
-        const v3 = worksheet.getCell(`L${rowNum}`);
-        v3.value = val3;
-        v3.font = { name: 'Segoe UI', size: 9 };
-        v3.alignment = { horizontal: 'left', vertical: 'middle' };
-        v3.border = thinBorder;
+        // Set values on master cells
+        worksheet.getCell(`B${rowNum}`).value = label1;
+        worksheet.getCell(`C${rowNum}`).value = val1;
+        worksheet.getCell(`E${rowNum}`).value = label2;
+        worksheet.getCell(`H${rowNum}`).value = val2;
+        worksheet.getCell(`K${rowNum}`).value = label3;
+        worksheet.getCell(`M${rowNum}`).value = val3;
+
+        // Apply borders and styling to all cells B..N after merging to prevent distortion
+        for (let col = 2; col <= 14; col++) {
+          const cell = worksheet.getCell(rowNum, col);
+          cell.border = thinBorder;
+          cell.font = { name: 'Segoe UI', size: 8.5 };
+          cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        }
       };
 
-      rowData.forEach((row, i) => {
-        writeMetaRow(startY + i, row.c1Label, row.c1Val, row.c2Label, row.c2Val, row.c3Label, row.c3Val);
-      });
+      rowData.forEach((row, i) => writeMetaRow(4 + i, row.c1Label, row.c1Val, row.c2Label, row.c2Val, row.c3Label, row.c3Val));
 
-      // Headers for Columns
-      worksheet.getRow(13).height = 25;
-      worksheet.getRow(14).height = 25;
-
-      const headerCells = [
-        { cell: 'B13', val: 'Derinlik (m)', merge: 'B13:B14' },
-        { cell: 'C13', val: 'Örnek Derinliği (m)', merge: 'C13:C14' },
-        { cell: 'D13', val: 'Örnek (Karot) No', merge: 'D13:D14' },
-        ...(hasAssays ? [
-          { cell: 'E13', val: 'ANALİZ SONUÇLARI', merge: 'E13:G13' },
-          { cell: 'H13', val: 'KAYA ÖZELLİKLERİ', merge: 'H13:J13' }
-        ] : [
-          { cell: 'E13', val: 'KAYA ÖZELLİKLERİ', merge: 'E13:J13' }
-        ]),
-        { cell: 'K13', val: 'LİTOLOJİ', merge: 'K13:K14' },
-        { cell: 'L13', val: 'ALTERASYON', merge: 'L13:L14' },
-        { cell: 'M13', val: 'REDOKS/OKSİT', merge: 'M13:M14' },
-        { cell: 'N13', val: 'AÇIKLAMALAR', merge: 'N13:N14' }
-      ];
-
-      headerCells.forEach(hc => {
-        if (hc.merge) worksheet.mergeCells(hc.merge);
-        const cell = worksheet.getCell(hc.cell);
-        cell.value = hc.val;
-        cell.font = { name: 'Segoe UI', size: 9, bold: true };
-        cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
-        cell.fill = grayFill;
-        cell.border = thinBorder;
-      });
-
-      const subHeaders = [
-        ...(hasAssays ? [
-          { cell: 'E14', val: getAnalyteLabel(activeKeys[0]) },
-          { cell: 'F14', val: getAnalyteLabel(activeKeys[1]) },
-          { cell: 'G14', val: getAnalyteLabel(activeKeys[2]) }
-        ] : [
-          { cell: 'E14', val: 'Dayanım' },
-          { cell: 'F14', val: 'Ayrışma Derecesi' },
-          { cell: 'G14', val: 'Kırık/30cm' }
-        ]),
-        { cell: 'H14', val: 'TCR (%)' },
-        { cell: 'I14', val: 'SCR (%)' },
-        { cell: 'J14', val: 'RQD (%)' }
-      ];
-
-      subHeaders.forEach(sh => {
-        const cell = worksheet.getCell(sh.cell);
-        cell.value = sh.val;
-
-        let textColor = '000000'; // black by default
-        if (hasAssays && ['E14', 'F14', 'G14'].includes(sh.cell)) {
-          const idx = sh.cell === 'E14' ? 0 : sh.cell === 'F14' ? 1 : 2;
-          textColor = getAnalyteColor(activeKeys[idx]).replace('#', '');
+      ['B13', 'C13', 'D13'].forEach((cell, i) => {
+        worksheet.mergeCells(`${cell.slice(0, 1)}13:${cell.slice(0, 1)}14`);
+        const colLetter = cell.slice(0, 1);
+        for (let r = 13; r <= 14; r++) {
+          const c = worksheet.getCell(`${colLetter}${r}`);
+          c.fill = grayFill;
+          c.border = thinBorder;
+          c.alignment = { horizontal: 'center', vertical: 'middle' };
         }
-
-        cell.font = { name: 'Segoe UI', size: 8, bold: true, color: { argb: textColor } };
-        cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
-        cell.fill = grayFill;
-        cell.border = thinBorder;
+        const masterCell = worksheet.getCell(cell);
+        masterCell.value = ['Derinlik (m)', 'Örnek Derinliği (m)', 'Örnek (Karot) No'][i];
+        masterCell.font = { name: 'Segoe UI', size: 9, bold: true };
       });
 
-      // Body initialization
+      for (let i = 0; i < 6; i++) {
+        const colLetter = getColLetter(5 + i);
+        worksheet.mergeCells(`${colLetter}13:${colLetter}14`);
+        for (let r = 13; r <= 14; r++) {
+          const c = worksheet.getCell(`${colLetter}${r}`);
+          c.fill = grayFill;
+          c.border = thinBorder;
+          c.alignment = { horizontal: 'center', vertical: 'middle' };
+        }
+        const cell = worksheet.getCell(`${colLetter}13`);
+        cell.font = { name: 'Segoe UI', size: 9, bold: true };
+        if (i < dynamicCols.length) {
+          cell.value = dynamicCols[i].label;
+        } else {
+          cell.value = '-';
+        }
+      }
+
+      const postHeaders = [
+        { v: 'LİTOLOJİ', col: 'K' },
+        { v: 'ALTERASYON', col: 'L' },
+        { v: 'REDOKS/OKSİT', col: 'M' },
+        { v: 'AÇIKLAMALAR', col: 'N' }
+      ];
+      postHeaders.forEach(ph => {
+        worksheet.mergeCells(`${ph.col}13:${ph.col}14`);
+        for (let r = 13; r <= 14; r++) {
+          const c = worksheet.getCell(`${ph.col}${r}`);
+          c.fill = grayFill;
+          c.border = thinBorder;
+          c.alignment = { horizontal: 'center', vertical: 'middle' };
+        }
+        const cell = worksheet.getCell(`${ph.col}13`);
+        cell.value = ph.v;
+        cell.font = { name: 'Segoe UI', size: 9, bold: true };
+      });
+
+      // Populate Data...
       const bodyStartRow = 15;
-
-      // Precision Boundary Detection
       const cleanDepth = (val: number) => Math.round(val * 100) / 100;
-
       const formatDepth = (d: number) => {
         if (Number.isInteger(d)) return d.toString();
-        return d.toFixed(2).replace(/\.?0+$/, ''); // remove trailing zeros
+        return d.toFixed(2).replace(/\.?0+$/, '');
       };
 
       const depths = new Set<number>();
@@ -427,35 +344,30 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
       for (let m = 1; m <= Math.ceil(totalDepth); m++) {
         depths.add(m);
       }
-      geotech.forEach(g => {
+      (geotech || []).forEach(g => {
         depths.add(cleanDepth(g.from));
         depths.add(cleanDepth(g.to));
       });
-      lithology.forEach(l => {
+      (lithology || []).forEach(l => {
         depths.add(cleanDepth(l.from));
         depths.add(cleanDepth(l.to));
       });
-      assays.forEach(a => {
+      (assays || []).forEach(a => {
         depths.add(cleanDepth(a.from));
         depths.add(cleanDepth(a.to));
       });
-      alterations.forEach(alt => {
+      (alterations || []).forEach(alt => {
         depths.add(cleanDepth(alt.from));
         depths.add(cleanDepth(alt.to));
       });
 
-      // Filter and sort the boundaries
       const sortedDepths = Array.from(depths)
         .filter(d => d <= totalDepth)
         .sort((a, b) => a - b);
 
-      if (sortedDepths.length === 0 || sortedDepths[0] > 0) {
-        sortedDepths.unshift(0);
-      }
+      if (sortedDepths.length === 0 || sortedDepths[0] > 0) sortedDepths.unshift(0);
       const lastDepth = cleanDepth(totalDepth);
-      if (sortedDepths[sortedDepths.length - 1] < lastDepth) {
-        sortedDepths.push(lastDepth);
-      }
+      if (sortedDepths[sortedDepths.length - 1] < lastDepth) sortedDepths.push(lastDepth);
 
       const rowIntervals: { from: number; to: number }[] = [];
       for (let i = 0; i < sortedDepths.length - 1; i++) {
@@ -467,232 +379,188 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
 
       const totalRowsCount = rowIntervals.length;
 
-      // Populate body rows
+      // Fill values
       for (let idx = 0; idx < totalRowsCount; idx++) {
         const { from: fromDepth, to: toDepth } = rowIntervals[idx];
         const rowNum = bodyStartRow + idx;
         const row = worksheet.getRow(rowNum);
         row.height = 20;
 
-        // Depth Column B
         const depthCell = worksheet.getCell(`B${rowNum}`);
         depthCell.value = `${formatDepth(fromDepth)} - ${formatDepth(toDepth)}`;
         depthCell.font = { name: 'Segoe UI', size: 8.5, bold: true };
         depthCell.alignment = { horizontal: 'center', vertical: 'middle' };
         depthCell.border = thinBorder;
 
-        // Default style & thin border for columns C to N
-        const cols = ['C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N'];
-        cols.forEach(col => {
-          const cell = worksheet.getCell(`${col}${rowNum}`);
+        for (let colIndex = 3; colIndex <= 14; colIndex++) {
+          const colLetter = getColLetter(colIndex);
+          const cell = worksheet.getCell(`${colLetter}${rowNum}`);
           cell.border = thinBorder;
           cell.font = { name: 'Segoe UI', size: 8.5 };
           cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
           cell.value = '-';
-        });
+        }
 
-        // 1. Geotech matching
-        const g = geotech.find(run => run.from <= fromDepth + 0.001 && run.to >= toDepth - 0.001);
+        // 1. Geotech
+        const g = (geotech || []).find(run => run.from <= fromDepth + 0.001 && run.to >= toDepth - 0.001);
         if (g) {
           worksheet.getCell(`C${rowNum}`).value = `${formatDepth(g.from)} - ${formatDepth(g.to)}`;
-          worksheet.getCell(`H${rowNum}`).value = g.tcrPercent;
-          worksheet.getCell(`J${rowNum}`).value = g.rqdPercent;
+          dynamicCols.forEach((dCol, i) => {
+            if (dCol.isGeotech) {
+              const cell = worksheet.getCell(`${getColLetter(5 + i)}${rowNum}`);
+              if (dCol.key === 'tcrPercent') cell.value = g.tcrPercent;
+              else if (dCol.key === 'rqdPercent') cell.value = g.rqdPercent;
+            }
+          });
         }
 
-        // 2. Assay matching
-        const a = assays.find(assay => assay.from <= fromDepth + 0.001 && assay.to >= toDepth - 0.001);
+        // 2. Assay
+        const a = (assays || []).find(assay => assay.from <= fromDepth + 0.001 && assay.to >= toDepth - 0.001);
         if (a) {
-          worksheet.getCell(`D${rowNum}`).value = a.sampleId;
-          worksheet.getCell(`D${rowNum}`).font = { name: 'Segoe UI', size: 8.5, bold: true };
-
-          if (hasAssays) {
-            const valE = getAnalyteVal(a, activeKeys[0]);
-            const valF = getAnalyteVal(a, activeKeys[1]);
-            const valG = getAnalyteVal(a, activeKeys[2]);
-
-            const cellE = worksheet.getCell(`E${rowNum}`);
-            const cellF = worksheet.getCell(`F${rowNum}`);
-            const cellG = worksheet.getCell(`G${rowNum}`);
-
-            cellE.value = valE;
-            cellF.value = valF;
-            cellG.value = valG;
-
-            cellE.numFmt = '0.00';
-            cellF.numFmt = '0.00';
-            cellG.numFmt = '0.00';
-          }
+          const sampleCell = worksheet.getCell(`D${rowNum}`);
+          sampleCell.value = a.sampleId;
+          sampleCell.font = { name: 'Segoe UI', size: 8.5, bold: true };
+          dynamicCols.forEach((dCol, i) => {
+            if (!dCol.isGeotech) {
+              const cell = worksheet.getCell(`${getColLetter(5 + i)}${rowNum}`);
+              cell.value = getAnalyteVal(a, dCol.key);
+              cell.numFmt = '0.00';
+            }
+          });
         }
 
-        // 3. Lithology matching
-        const l = lithology.find(lith => lith.from <= fromDepth + 0.001 && lith.to >= toDepth - 0.001);
+        // 3. Lithology
+        const l = (lithology || []).find(lith => lith.from <= fromDepth + 0.001 && lith.to >= toDepth - 0.001);
         if (l) {
           const rockLabel = getRockLabel(l.rockCode);
           const hexColor = getRockColor(l.rockCode).replace('#', '');
-
           const litCell = worksheet.getCell(`K${rowNum}`);
           litCell.value = rockLabel;
           litCell.font = { name: 'Segoe UI', size: 8.5, bold: true };
-          litCell.fill = {
-            type: 'pattern',
-            pattern: 'solid',
-            fgColor: { argb: hexColor }
-          };
-
-          const descCell = worksheet.getCell(`N${rowNum}`);
-          descCell.value = l.description || '';
-          descCell.alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
+          litCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: hexColor } };
+          worksheet.getCell(`N${rowNum}`).value = l.description || '';
+          worksheet.getCell(`N${rowNum}`).alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
         }
 
-        // 4. Alteration & Redox matching
-        const alt = alterations.find(a => a.from <= fromDepth + 0.001 && a.to >= toDepth - 0.001);
+        // 4. Alteration & Redox
+        const alt = (alterations || []).find(altItem => altItem.from <= fromDepth + 0.001 && altItem.to >= toDepth - 0.001);
         if (alt) {
-          // Alteration Type & Intensity Col L
           const altCell = worksheet.getCell(`L${rowNum}`);
           if (alt.alterationType !== 'YOK') {
             altCell.value = `${alt.alterationType} (${alt.alterationIntensity})`;
             altCell.font = { name: 'Segoe UI', size: 8.5, bold: true };
-            
             let altHex = 'FFFFFF';
             if (alt.alterationType === 'Arjilik') altHex = 'F5EBE6';
             else if (alt.alterationType === 'Silisleşme') altHex = 'E0F2FE';
-            
-            if (altHex !== 'FFFFFF') {
-              altCell.fill = {
-                type: 'pattern',
-                pattern: 'solid',
-                fgColor: { argb: altHex }
-              };
-            }
+            if (altHex !== 'FFFFFF') altCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: altHex } };
           } else {
             altCell.value = 'YOK';
           }
 
-          // Redox / Oxide Col M
           const redoxCell = worksheet.getCell(`M${rowNum}`);
-          redoxCell.value = alt.oxideIntensity !== 'YOK' 
-            ? `${alt.redoxType} (${alt.oxideIntensity})` 
-            : alt.redoxType;
-          
+          redoxCell.value = alt.oxideIntensity !== 'YOK' ? `${alt.redoxType} (${alt.oxideIntensity})` : alt.redoxType;
           let redoxHex = '94A3B8';
           if (alt.redoxType === 'OX') redoxHex = 'D97706';
           else if (alt.redoxType === 'SUL') redoxHex = '475569';
           else if (alt.redoxType === 'OX/SUL' || alt.redoxType === 'Transition') redoxHex = 'B45309';
-
-          redoxCell.fill = {
-            type: 'pattern',
-            pattern: 'solid',
-            fgColor: { argb: redoxHex }
-          };
+          redoxCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: redoxHex } };
           redoxCell.font = { name: 'Segoe UI', size: 8.5, bold: true, color: { argb: 'FFFFFF' } };
         }
       }
 
-      // Safe merge tracker to prevent ExcelJS crashes
-      const mergedRanges: Record<string, Set<number>> = {
-        C: new Set(), D: new Set(), E: new Set(), F: new Set(), G: new Set(),
-        H: new Set(), I: new Set(), J: new Set(), K: new Set(), L: new Set(),
-        M: new Set(), N: new Set()
-      };
+      // Merges
+      const mergedRanges: Record<string, Set<number>> = {};
+      for (let colIndex = 3; colIndex <= 14; colIndex++) {
+        mergedRanges[getColLetter(colIndex)] = new Set();
+      }
 
       const safeMerge = (col: string, startRow: number, endRow: number) => {
+        if (!mergedRanges[col]) return;
         for (let r = startRow; r <= endRow; r++) {
-          if (mergedRanges[col].has(r)) return; // skip if any cell in range already merged
+          if (mergedRanges[col].has(r)) return;
         }
         for (let r = startRow; r <= endRow; r++) {
           mergedRanges[col].add(r);
         }
         worksheet.mergeCells(`${col}${startRow}:${col}${endRow}`);
+        
+        // Re-apply border and alignment styling to all cells in the merged range to fix distortion
+        for (let r = startRow; r <= endRow; r++) {
+          const cell = worksheet.getCell(`${col}${r}`);
+          cell.border = thinBorder;
+          cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+        }
       };
 
-      // 1. Geotech merges
-      geotech.forEach(g => {
-        if (g.to <= g.from) return;
-        const startRIdx = rowIntervals.findIndex(r => Math.abs(r.from - g.from) < 0.01);
-        const endRIdx = rowIntervals.findIndex(r => Math.abs(r.to - g.to) < 0.01);
+      (geotech || []).forEach(gItem => {
+        if (gItem.to <= gItem.from) return;
+        const startRIdx = rowIntervals.findIndex(r => Math.abs(r.from - gItem.from) < 0.01);
+        const endRIdx = rowIntervals.findIndex(r => Math.abs(r.to - gItem.to) < 0.01);
         if (startRIdx !== -1 && endRIdx !== -1 && endRIdx > startRIdx) {
           const startR = bodyStartRow + startRIdx;
           const endR = bodyStartRow + endRIdx;
-          
-          const geotechCols = hasAssays ? ['C', 'H', 'I', 'J'] : ['C', 'E', 'F', 'G', 'H', 'I', 'J'];
-          geotechCols.forEach(col => {
-            safeMerge(col, startR, endR);
+          safeMerge('C', startR, endR);
+          dynamicCols.forEach((dCol, i) => {
+            if (dCol.isGeotech) safeMerge(getColLetter(5 + i), startR, endR);
           });
         }
       });
 
-      // 2. Assay merges
-      assays.forEach(a => {
-        if (a.to <= a.from) return;
-        const startRIdx = rowIntervals.findIndex(r => Math.abs(r.from - a.from) < 0.01);
-        const endRIdx = rowIntervals.findIndex(r => Math.abs(r.to - a.to) < 0.01);
+      (assays || []).forEach(aItem => {
+        if (aItem.to <= aItem.from) return;
+        const startRIdx = rowIntervals.findIndex(r => Math.abs(r.from - aItem.from) < 0.01);
+        const endRIdx = rowIntervals.findIndex(r => Math.abs(r.to - aItem.to) < 0.01);
         if (startRIdx !== -1 && endRIdx !== -1 && endRIdx > startRIdx) {
           const startR = bodyStartRow + startRIdx;
           const endR = bodyStartRow + endRIdx;
-          
           safeMerge('D', startR, endR);
-          if (hasAssays) {
-            safeMerge('E', startR, endR);
-            safeMerge('F', startR, endR);
-            safeMerge('G', startR, endR);
-          }
+          dynamicCols.forEach((dCol, i) => {
+            if (!dCol.isGeotech) safeMerge(getColLetter(5 + i), startR, endR);
+          });
         }
       });
 
-      // 3. Lithology merges
-      lithology.forEach(l => {
-        if (l.to <= l.from) return;
-        const startRIdx = rowIntervals.findIndex(r => Math.abs(r.from - l.from) < 0.01);
-        const endRIdx = rowIntervals.findIndex(r => Math.abs(r.to - l.to) < 0.01);
+      (lithology || []).forEach(lItem => {
+        if (lItem.to <= lItem.from) return;
+        const startRIdx = rowIntervals.findIndex(r => Math.abs(r.from - lItem.from) < 0.01);
+        const endRIdx = rowIntervals.findIndex(r => Math.abs(r.to - lItem.to) < 0.01);
         if (startRIdx !== -1 && endRIdx !== -1 && endRIdx > startRIdx) {
           const startR = bodyStartRow + startRIdx;
           const endR = bodyStartRow + endRIdx;
-          
           safeMerge('K', startR, endR);
           safeMerge('N', startR, endR);
         }
       });
 
-      // 4. Alteration & Redox merges
-      alterations.forEach(alt => {
-        if (alt.to <= alt.from) return;
-        const startRIdx = rowIntervals.findIndex(r => Math.abs(r.from - alt.from) < 0.01);
-        const endRIdx = rowIntervals.findIndex(r => Math.abs(r.to - alt.to) < 0.01);
+      (alterations || []).forEach(altItem => {
+        if (altItem.to <= altItem.from) return;
+        const startRIdx = rowIntervals.findIndex(r => Math.abs(r.from - altItem.from) < 0.01);
+        const endRIdx = rowIntervals.findIndex(r => Math.abs(r.to - altItem.to) < 0.01);
         if (startRIdx !== -1 && endRIdx !== -1 && endRIdx > startRIdx) {
           const startR = bodyStartRow + startRIdx;
           const endR = bodyStartRow + endRIdx;
-          
           safeMerge('L', startR, endR);
           safeMerge('M', startR, endR);
         }
       });
 
-      // 4. Conditional formatting for Assay dataBars if active
-      if (hasAssays && totalRowsCount > 0) {
-        const colLetters = ['E', 'F', 'G'];
-        colLetters.forEach((col, idx) => {
-          const key = activeKeys[idx];
-          const colorHex = getAnalyteColor(key).replace('#', '');
-          worksheet.addConditionalFormatting({
-            ref: `${col}${bodyStartRow}:${col}${bodyStartRow + totalRowsCount - 1}`,
-            rules: [
-              {
-                type: 'dataBar',
-                color: { argb: `FF${colorHex}` },
-                cfvo: [
-                  { type: 'min' },
-                  { type: 'max' }
-                ]
-              }
-            ]
-          });
+      // Conditional formatting
+      if (totalRowsCount > 0) {
+        dynamicCols.forEach((dCol, i) => {
+          if (!dCol.isGeotech) {
+            const colLetter = getColLetter(5 + i);
+            const colorHex = (analytesList.find(an => an.key === dCol.key)?.color || '#3b82f6').replace('#', '');
+            worksheet.addConditionalFormatting({
+              ref: `${colLetter}${bodyStartRow}:${colLetter}${bodyStartRow + totalRowsCount - 1}`,
+              rules: [{ type: 'dataBar', color: { argb: `FF${colorHex}` }, cfvo: [{ type: 'min' }, { type: 'max' }] }]
+            });
+          }
         });
       }
 
-      // Footer Legend
+      // Legend
       const footerStartRow = bodyStartRow + totalRowsCount + 2;
-      const fHeaderRow = worksheet.getRow(footerStartRow);
-      fHeaderRow.height = 20;
+      worksheet.getRow(footerStartRow).height = 20;
 
       const fHeaders = [
         { start: 'B', end: 'C', val: 'Kısaltmalar' },
@@ -704,108 +572,73 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
 
       fHeaders.forEach(fh => {
         worksheet.mergeCells(`${fh.start}${footerStartRow}:${fh.end}${footerStartRow}`);
+        // Apply border to all cells in merged range to prevent distortion
+        const colStartNum = fh.start === 'B' ? 2 : (fh.start === 'D' ? 4 : (fh.start === 'F' ? 6 : (fh.start === 'H' ? 8 : 10)));
+        const colEndNum = colStartNum + 1;
+        for (let col = colStartNum; col <= colEndNum; col++) {
+          const cell = worksheet.getCell(footerStartRow, col);
+          cell.border = thinBorder;
+          cell.fill = grayFill;
+        }
         const cell = worksheet.getCell(`${fh.start}${footerStartRow}`);
         cell.value = fh.val;
         cell.font = { name: 'Segoe UI', size: 9, bold: true };
         cell.alignment = { horizontal: 'center', vertical: 'middle' };
-        cell.fill = grayFill;
-        cell.border = thinBorder;
       });
 
+      // Signature Header
+      worksheet.mergeCells(`L${footerStartRow}:N${footerStartRow}`);
+      for (let col = 12; col <= 14; col++) {
+        const cell = worksheet.getCell(footerStartRow, col);
+        cell.border = thinBorder;
+        cell.fill = grayFill;
+      }
       const authCell = worksheet.getCell(`L${footerStartRow}`);
       authCell.value = 'Logu Hazırlayan / Onay';
       authCell.font = { name: 'Segoe UI', size: 9, bold: true };
       authCell.alignment = { horizontal: 'center', vertical: 'middle' };
-      authCell.fill = grayFill;
-      authCell.border = thinBorder;
 
       const legendData = [
-        [
-          'UD: Örselenmemiş Örnek',
-          '0-25% Çok Kötü',
-          '< 1 Seyrek',
-          'W1 Taze kayaç',
-          'I Çok Zayıf'
-        ],
-        [
-          'DS: Örselenmiş Örnek',
-          '25-50% Kötü',
-          '1-2 Orta',
-          'W2 Az ayrışmış',
-          'II Zayıf'
-        ],
-        [
-          'TCR: Toplam Karot Yüzdesi',
-          '50-75% Orta',
-          '2-10 Sık',
-          'W3-W4 Orta-Çok Ayrışmış',
-          'III Orta'
-        ],
-        [
-          'SCR: Silindirik Karot Yüzdesi',
-          '75-90% İyi',
-          '10-20 Çok Sık',
-          'W5 Tümüyle Ayrışmış',
-          'IV Dayanıklı'
-        ],
-        [
-          'RQD: Toplam Kaya Kalitesi',
-          '90-100% Çok İyi',
-          '> 20 Parçalı',
-          'W6 Rezidüel Zemin',
-          'V/VI Çok/Aşırı Dayanıklı'
-        ]
+        ['UD: Örselenmemiş Örnek', '0-25% Çok Kötü', '< 1 Seyrek', 'W1 Taze kayaç', 'I Çok Zayıf'],
+        ['DS: Örselenmiş Örnek', '25-50% Kötü', '1-2 Orta', 'W2 Az ayrışmış', 'II Zayıf'],
+        ['TCR: Toplam Karot Yüzdesi', '50-75% Orta', '2-10 Sık', 'W3-W4 Orta-Çok Ayrışmış', 'III Orta'],
+        ['SCR: Silindirik Karot Yüzdesi', '75-90% İyi', '10-20 Çok Sık', 'W5 Tümüyle Ayrışmış', 'IV Dayanıklı'],
+        ['RQD: Toplam Kaya Kalitesi', '90-100% Çok İyi', '> 20 Parçalı', 'W6 Rezidüel Zemin', 'V/VI Çok/Aşırı Dayanıklı']
       ];
 
-      legendData.forEach((rowData, i) => {
+      legendData.forEach((rowDataArr, i) => {
         const rowNum = footerStartRow + 1 + i;
         worksheet.getRow(rowNum).height = 15;
-        
-        worksheet.mergeCells(`B${rowNum}:C${rowNum}`);
-        const cellB = worksheet.getCell(`B${rowNum}`);
-        cellB.value = rowData[0];
-        cellB.font = { name: 'Segoe UI', size: 7.5 };
-        cellB.alignment = { horizontal: 'left', vertical: 'middle' };
-        cellB.border = thinBorder;
-        
-        worksheet.mergeCells(`D${rowNum}:E${rowNum}`);
-        const cellD = worksheet.getCell(`D${rowNum}`);
-        cellD.value = rowData[1];
-        cellD.font = { name: 'Segoe UI', size: 7.5 };
-        cellD.alignment = { horizontal: 'left', vertical: 'middle' };
-        cellD.border = thinBorder;
-
-        worksheet.mergeCells(`F${rowNum}:G${rowNum}`);
-        const cellF = worksheet.getCell(`F${rowNum}`);
-        cellF.value = rowData[2];
-        cellF.font = { name: 'Segoe UI', size: 7.5 };
-        cellF.alignment = { horizontal: 'left', vertical: 'middle' };
-        cellF.border = thinBorder;
-
-        worksheet.mergeCells(`H${rowNum}:I${rowNum}`);
-        const cellH = worksheet.getCell(`H${rowNum}`);
-        cellH.value = rowData[3];
-        cellH.font = { name: 'Segoe UI', size: 7.5 };
-        cellH.alignment = { horizontal: 'left', vertical: 'middle' };
-        cellH.border = thinBorder;
-
-        worksheet.mergeCells(`J${rowNum}:K${rowNum}`);
-        const cellJ = worksheet.getCell(`J${rowNum}`);
-        cellJ.value = rowData[4];
-        cellJ.font = { name: 'Segoe UI', size: 7.5 };
-        cellJ.alignment = { horizontal: 'left', vertical: 'middle' };
-        cellJ.border = thinBorder;
+        fHeaders.forEach((fh, idx) => {
+          worksheet.mergeCells(`${fh.start}${rowNum}:${fh.end}${rowNum}`);
+          const colStartNum = fh.start === 'B' ? 2 : (fh.start === 'D' ? 4 : (fh.start === 'F' ? 6 : (fh.start === 'H' ? 8 : 10)));
+          const colEndNum = colStartNum + 1;
+          for (let col = colStartNum; col <= colEndNum; col++) {
+            worksheet.getCell(rowNum, col).border = thinBorder;
+          }
+          const cell = worksheet.getCell(`${fh.start}${rowNum}`);
+          cell.value = rowDataArr[idx];
+          cell.font = { name: 'Segoe UI', size: 7.5 };
+          cell.alignment = { horizontal: 'left', vertical: 'middle' };
+        });
       });
 
+      worksheet.mergeCells(`L${footerStartRow + 1}:N${footerStartRow + 5}`);
+      for (let r = footerStartRow + 1; r <= footerStartRow + 5; r++) {
+        for (let col = 12; col <= 14; col++) {
+          worksheet.getCell(r, col).border = thinBorder;
+        }
+      }
       const sigCell = worksheet.getCell(`L${footerStartRow + 1}`);
-      worksheet.mergeCells(`L${footerStartRow + 1}:L${footerStartRow + 5}`);
       sigCell.value = `Hazırlayan:\n${logger}\n\nKontrol Eden:\nİsmailcan SEVER`;
       sigCell.font = { name: 'Segoe UI', size: 8, bold: true };
       sigCell.alignment = { horizontal: 'left', vertical: 'top', wrapText: true };
-      sigCell.border = thinBorder;
 
       const classificationRow = footerStartRow + 7;
-      worksheet.mergeCells(`B${classificationRow}:L${classificationRow}`);
+      worksheet.mergeCells(`B${classificationRow}:N${classificationRow}`);
+      for (let col = 2; col <= 14; col++) {
+        worksheet.getCell(classificationRow, col).border = thinBorder;
+      }
       const classCell = worksheet.getCell(`B${classificationRow}`);
       classCell.value = 'Bu mesaj/doküman HİZMETE ÖZEL (CONFIDENTIAL) etiketi ile sınıflandırılmıştır.';
       classCell.font = { name: 'Segoe UI', size: 8, bold: true, italic: true };
@@ -814,26 +647,19 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
       const buffer = await workbook.xlsx.writeBuffer();
       const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${holeIdVal}_Sondaj_Log_Raporu.xlsx`;
-      document.body.appendChild(a);
-      a.click();
-      URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    } catch (err) {
-      console.error(err);
-      alert('Excel export failed!');
-    }
+      const a = document.createElement('a'); a.href = url; a.download = `${holeIdVal}_Log.xlsx`; a.click();
+    } catch (err) { console.error(err); }
   };
 
-  const handleAnalyteToggle = (key: string) => {
-    if (selectedAnalytes.includes(key)) {
-      if (selectedAnalytes.length > 1) {
-        setSelectedAnalytes(selectedAnalytes.filter(k => k !== key));
-      }
+  const handleFeatureToggle = (key: string) => {
+    if (selectedFeatures.includes(key)) {
+      if (selectedFeatures.length > 1) setSelectedFeatures(selectedFeatures.filter(k => k !== key));
     } else {
-      setSelectedAnalytes([...selectedAnalytes, key]);
+      if (selectedFeatures.length >= 6) {
+        alert("En fazla 6 özellik seçebilirsiniz! Rapor düzeninin A4 boyutuna sığması için bu sınır konulmuştur.");
+        return;
+      }
+      setSelectedFeatures([...selectedFeatures, key]);
     }
   };
 
@@ -1234,15 +1060,15 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
             flexDirection: 'column',
             gap: '8px'
           }}>
-            {/* Analyte Selection and Style */}
+            {/* Feature Selection for Log and Excel Export */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <span style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>Observe Geochem Analytes (Multiple Selectable)</span>
+                <span style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>Seçilen Sütun ve Rapor Özellikleri (Selected Features for Export & View)</span>
                 <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                  {analytesList.map(a => {
-                    const isChecked = selectedAnalytes.includes(a.key);
+                  {ALL_FEATURES.map(f => {
+                    const isChecked = selectedFeatures.includes(f.key);
                     return (
-                      <label key={a.key} style={{
+                      <label key={f.key} style={{
                         display: 'flex',
                         alignItems: 'center',
                         gap: '4px',
@@ -1259,10 +1085,10 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                         <input
                           type="checkbox"
                           checked={isChecked}
-                          onChange={() => handleAnalyteToggle(a.key)}
+                          onChange={() => handleFeatureToggle(f.key)}
                           style={{ display: 'none' }}
                         />
-                        {a.label.split(' ')[0]}
+                        {f.label}
                       </label>
                     );
                   })}
@@ -1920,7 +1746,7 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                   })}
 
                   {/* Subtle background TCR bars */}
-                  {sortedGeotech.map(g => {
+                  {selectedFeatures.includes('tcrPercent') && sortedGeotech.map(g => {
                     const y = g.from * scaleY + bodyPaddingTop;
                     const h = (g.to - g.from) * scaleY;
                     const tcrBarWidth = Math.max(1, (pos.width - 10) * (g.tcrPercent / 100));
@@ -1940,7 +1766,7 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                   })}
 
                   {/* Continuous RQD Trend Line */}
-                  {points.length > 1 && (
+                  {selectedFeatures.includes('rqdPercent') && points.length > 1 && (
                     <path
                       d={points.map((p, idx) => `${idx === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ')}
                       fill="none"
@@ -1950,7 +1776,7 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
                   )}
 
                   {/* RQD circular markers */}
-                  {points.map(p => (
+                  {selectedFeatures.includes('rqdPercent') && points.map(p => (
                     <circle
                       key={`rqd-circle-${p.id}`}
                       cx={p.x}
@@ -2153,8 +1979,12 @@ export const ColumnLog: React.FC<ColumnLogProps> = ({
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', borderLeft: '1px solid var(--border-light)', paddingLeft: '10px' }}>
               {colPositions['geotech']?.visible && (
                 <>
-                  <div className="legend-item"><span className="legend-color" style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#3b82f6', display: 'inline-block' }}></span><span>TCR %</span></div>
-                  <div className="legend-item"><span className="legend-color" style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#10b981', display: 'inline-block' }}></span><span>RQD %</span></div>
+                  {selectedFeatures.includes('tcrPercent') && (
+                    <div className="legend-item"><span className="legend-color" style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#3b82f6', display: 'inline-block' }}></span><span>TCR %</span></div>
+                  )}
+                  {selectedFeatures.includes('rqdPercent') && (
+                    <div className="legend-item"><span className="legend-color" style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#ff9800', display: 'inline-block' }}></span><span>RQD %</span></div>
+                  )}
                 </>
               )}
               {colPositions['assays']?.visible && (
